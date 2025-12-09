@@ -375,7 +375,7 @@
 
             // The card has fixed dimensions, so html2canvas should capture it cleanly.
             html2canvas(card, {
-                scale: 2,
+                scale: 3,
                 backgroundColor: '#ffffff'
             }).then(canvas => {
                 const imageURL = canvas.toDataURL('image/png');
