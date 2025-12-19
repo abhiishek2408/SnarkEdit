@@ -1,0 +1,122 @@
+<!-- Control Bar (Navbar) for Font, Size, and Alignment -->
+<div class="mb-6 p-4 bg-white/90 rounded-xl shadow-lg control-bar-layout relative">
+    <button id="navbarHomeBtn" class="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold shadow">Home</button>
+    <!-- 1. Font Selector Control -->
+    <div class="flex flex-col items-center">
+        <label for="font-selector" class="text-sm font-semibold text-gray-700 mb-1">Select Font:</label>
+        <select id="font-selector" class="px-3 py-1 border border-gray-300 rounded-lg shadow-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 w-48 sm:w-64">
+            <optgroup label="Sans Serif (Clean)">
+                <option value="montserrat">Montserrat (Default)</option>
+                <option value="roboto">Roboto</option>
+                <option value="opensans">Open Sans</option>
+                <option value="lato">Lato</option>
+                <option value="poppins">Poppins</option>
+                <option value="inter">Inter</option>
+                <option value="notosans">Noto Sans</option>
+                <option value="ubuntu">Ubuntu</option>
+                <option value="sourcesans3">Source Sans 3</option>
+                <option value="outfit">Outfit</option>
+                <option value="firasans">Fira Sans</option>
+                <option value="oswald">Oswald (Condensed)</option>
+                <option value="raleway">Raleway</option>
+                <option value="nunito">Nunito</option>
+                <option value="rubik">Rubik</option>
+                <option value="varelaround">Varela Round</option>
+                <option value="mooli">Mooli</option>
+                <option value="spacegrotesk">Space Grotesk</option>
+                <option value="wixmadefordisplay">WIX Madefor Display</option>
+                <option value="saira">Saira</option>
+                <option value="kanit">Kanit</option>
+                <option value="worksans">Work Sans</option>
+                <option value="heebo">Heebo</option>
+                <option value="prompt">Prompt</option>
+                <option value="titilliumweb">Titillium Web</option>
+                <option value="dmsans">DM Sans</option>
+                <option value="publicsans">Public Sans</option>
+                <option value="exo2">Exo 2</option>
+            </optgroup>
+            <optgroup label="Serif (Classic)">
+                <option value="merriweather">Merriweather</option>
+                <option value="playfairdisplay">Playfair Display</option>
+                <option value="lora">Lora</option>
+                <option value="robotoslab">Roboto Slab</option>
+                <option value="ptserif">PT Serif</option>
+                <option value="alegreya">Alegreya</option>
+                <option value="taviraj">Taviraj</option>
+                <option value="spectral">Spectral</option>
+                <option value="cormorant">Cormorant</option>
+                <option value="ebgaramond">EB Garamond</option>
+                <option value="literata">Literata</option>
+            </optgroup>
+            <optgroup label="Display (Stylized)">
+                <option value="pacifico">Pacifico</option>
+                <option value="dancingscript">Dancing Script</option>
+            </optgroup>
+            <optgroup label="Monospace (Code/Tech)">
+                <option value="robotomono">Roboto Mono</option>
+                <option value="firacode">Fira Code</option>
+                <option value="sourcecodepro">Source Code Pro</option>
+                <option value="ibmplexmono">IBM Plex Mono</option>
+                <option value="inconsolata">Inconsolata</option>
+                <option value="jetbrainsmono">JetBrains Mono</option>
+                <option value="spacemono">Space Mono</option>
+                <option value="majormonodisplay">Major Mono Display</option>
+                <option value="anonymouspro">Anonymous Pro</option>
+                <option value="courierprime">Courier Prime</option>
+            </optgroup>
+        </select>
+    </div>
+    <!-- 2. Size Control Buttons -->
+    <div class="flex flex-col items-center">
+        <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Size:
+            <span id="sizeValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+        </label>
+        <div class="flex space-x-2 items-center">
+            <button id="decreaseSizeBtn" class="px-3 py-1 bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Font Size">
+                A-
+            </button>
+            <button id="increaseSizeBtn" class="px-3 py-1 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Font Size">
+                A+
+            </button>
+        </div>
+    </div>
+    <!-- 2b. Padding Control Buttons -->
+    <div class="flex flex-col items-center">
+        <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Padding:
+            <span id="paddingValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+        </label>
+        <div class="flex space-x-2 items-center">
+            <button id="decreasePaddingBtn" class="px-3 py-1 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Padding">-</button>
+            <button id="increasePaddingBtn" class="px-3 py-1 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Padding">+</button>
+        </div>
+        </div>
+    <!-- 2c. Width & Height Control Buttons -->
+    <div class="flex flex-col items-center">
+        <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Width:
+            <span id="widthValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+        </label>
+        <div class="flex space-x-2 items-center">
+            <button id="decreaseWidthBtn" class="px-3 py-1 bg-orange-500 text-white font-bold rounded-lg shadow-md hover:bg-orange-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Width">-</button>
+            <button id="increaseWidthBtn" class="px-3 py-1 bg-cyan-500 text-white font-bold rounded-lg shadow-md hover:bg-cyan-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Width">+</button>
+        </div>
+    </div>
+    <div class="flex flex-col items-center">
+        <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Height:
+            <span id="heightValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+        </label>
+        <div class="flex space-x-2 items-center">
+            <button id="decreaseHeightBtn" class="px-3 py-1 bg-pink-500 text-white font-bold rounded-lg shadow-md hover:bg-pink-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Height">-</button>
+            <button id="increaseHeightBtn" class="px-3 py-1 bg-lime-500 text-white font-bold rounded-lg shadow-md hover:bg-lime-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Height">+</button>
+        </div>
+    </div>
+    <!-- 3. Justify/Alignment Button -->
+    <div class="flex flex-col items-center">
+        <label class="text-sm font-semibold text-gray-700 mb-1">Alignment:</label>
+        <button id="justifyBtn" class="p-2 bg-purple-500 text-white rounded-lg shadow-md hover:bg-purple-600 transition duration-150 active:scale-95" title="Cycle Alignment (Center, Left, Right)">
+            <!-- Center Align Icon SVG (Default) -->
+            <svg id="justifyIcon" class="justify-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 11H17M7 7H17M7 15H17M9 19H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+</div>
