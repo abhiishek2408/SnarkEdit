@@ -158,142 +158,188 @@
         <!-- 2. Size Control Buttons -->
 
         <!-- Edit Modal (hidden by default) -->
-        <div id="editModal" class="fixed top-0 right-0 h-full w-80 max-w-full z-50 bg-white shadow-2xl border-l border-gray-200 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col gap-6 p-8 hidden">
-                                                                <div class="flex flex-col items-center">
-                                                                    <button id="addImageBtn" class="px-3 py-1 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-800 transition text-sm mb-2">Add Picture</button>
-                                                                    <button id="addVideoBtn" class="px-3 py-1 bg-blue-700 text-white rounded-lg shadow-md hover:bg-blue-800 transition text-sm mb-2">Add Video</button>
-                                                                    <button id="addAudioBtn" class="px-3 py-1 bg-green-700 text-white rounded-lg shadow-md hover:bg-green-800 transition text-sm">Add Audio</button>
-                                                                    <input type="file" id="videoInput" accept="video/*" class="hidden" />
-                                                                    <input type="file" id="audioInput" accept="audio/*" class="hidden" />
-                                                                    <div class="flex flex-col items-center mt-4">
-                                                                        <label for="bgColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change BG Color:</label>
-                                                                        <div class="flex items-center gap-2">
-                                                                            <input type="color" id="bgColorInput" value="#ffffff" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
-                                                                            <button id="resetBgBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="flex flex-col items-center mt-4">
-                                                                        <label for="textColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change Text Color:</label>
-                                                                        <div class="flex items-center gap-2">
-                                                                            <input type="color" id="textColorInput" value="#222222" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
-                                                                            <button id="resetTextColorBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
-                                                                        </div>
-                                                                    </div>
+        <div id="editModal" class="fixed top-0 right-0 h-full w-80 max-w-full z-50 bg-white shadow-2xl border-l border-gray-200 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col gap-6 p-8 hidden overflow-y-auto" style="max-height: 100vh;">
+
+                        <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label for="font-selector" class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                                            Select Font
+                                        </label>
+                                        <select id="font-selector" class="px-1 py-1 border border-gray-300 rounded shadow focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 w-full text-xs">
+                                            <optgroup label="Sans Serif (Clean)">
+                                                <option value="montserrat">Montserrat (Default)</option>
+                                                <option value="roboto">Roboto</option>
+                                                <option value="opensans">Open Sans</option>
+                                                <option value="lato">Lato</option>
+                                                <option value="poppins">Poppins</option>
+                                                <option value="inter">Inter</option>
+                                                <option value="notosans">Noto Sans</option>
+                                                <option value="ubuntu">Ubuntu</option>
+                                                <option value="sourcesans3">Source Sans 3</option>
+                                                <option value="outfit">Outfit</option>
+                                                <option value="firasans">Fira Sans</option>
+                                                <option value="oswald">Oswald (Condensed)</option>
+                                                <option value="raleway">Raleway</option>
+                                                <option value="nunito">Nunito</option>
+                                                <option value="rubik">Rubik</option>
+                                                <option value="varelaround">Varela Round</option>
+                                                <option value="mooli">Mooli</option>
+                                                <option value="spacegrotesk">Space Grotesk</option>
+                                                <option value="wixmadefordisplay">WIX Madefor Display</option>
+                                                <option value="saira">Saira</option>
+                                                <option value="kanit">Kanit</option>
+                                                <option value="worksans">Work Sans</option>
+                                                <option value="heebo">Heebo</option>
+                                                <option value="prompt">Prompt</option>
+                                                <option value="titilliumweb">Titillium Web</option>
+                                                <option value="dmsans">DM Sans</option>
+                                                <option value="publicsans">Public Sans</option>
+                                                <option value="exo2">Exo 2</option>
+                                            </optgroup>
+                                            <optgroup label="Serif (Classic)">
+                                                <option value="merriweather">Merriweather</option>
+                                                <option value="playfairdisplay">Playfair Display</option>
+                                                <option value="lora">Lora</option>
+                                                <option value="robotoslab">Roboto Slab</option>
+                                                <option value="ptserif">PT Serif</option>
+                                                <option value="alegreya">Alegreya</option>
+                                                <option value="taviraj">Taviraj</option>
+                                                <option value="spectral">Spectral</option>
+                                                <option value="cormorant">Cormorant</option>
+                                                <option value="ebgaramond">EB Garamond</option>
+                                                <option value="literata">Literata</option>
+                                            </optgroup>
+                                            <optgroup label="Display (Stylized)">
+                                                <option value="pacifico">Pacifico</option>
+                                                <option value="dancingscript">Dancing Script</option>
+                                            </optgroup>
+                                            <optgroup label="Monospace (Code/Tech)">
+                                                <option value="robotomono">Roboto Mono</option>
+                                                <option value="firacode">Fira Code</option>
+                                                <option value="sourcecodepro">Source Code Pro</option>
+                                                <option value="ibmplexmono">IBM Plex Mono</option>
+                                                <option value="inconsolata">Inconsolata</option>
+                                                <option value="jetbrainsmono">JetBrains Mono</option>
+                                                <option value="spacemono">Space Mono</option>
+                                                <option value="majormonodisplay">Major Mono Display</option>
+                                                <option value="anonymouspro">Anonymous Pro</option>
+                                                <option value="courierprime">Courier Prime</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    
+                                                                <div class="grid grid-cols-2 gap-3 w-full mb-4">
+                                                                    <button id="addImageBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-xl shadow-lg hover:from-gray-800 hover:to-black transition text-base font-semibold">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4a3 3 0 014 0l4 4M4 8h16" /></svg>
+                                                                        Picture
+                                                                    </button>
+                                                                    <button id="addVideoBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-900 transition text-base font-semibold">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6v12" /></svg>
+                                                                        Video
+                                                                    </button>
+                                                                    <button id="addAudioBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-900 transition text-base font-semibold">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13" /></svg>
+                                                                        Audio
+                                                                    </button>
+                                                                    <button id="addTextBoxBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-pink-700 text-white rounded-xl shadow-lg hover:from-pink-600 hover:to-pink-900 transition text-base font-semibold">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8M8 16h8" /></svg>
+                                                                        Text Box
+                                                                    </button>
                                                                 </div>
-                                                <div class="flex flex-col items-center">
-                                                    <label for="font-selector" class="text-sm font-semibold text-gray-700 mb-1">Select Font:</label>
-                                                    <select id="font-selector" class="px-3 py-1 border border-gray-300 rounded-lg shadow-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 w-48 sm:w-64">
-                                                        <optgroup label="Sans Serif (Clean)">
-                                                            <option value="montserrat">Montserrat (Default)</option>
-                                                            <option value="roboto">Roboto</option>
-                                                            <option value="opensans">Open Sans</option>
-                                                            <option value="lato">Lato</option>
-                                                            <option value="poppins">Poppins</option>
-                                                            <option value="inter">Inter</option>
-                                                            <option value="notosans">Noto Sans</option>
-                                                            <option value="ubuntu">Ubuntu</option>
-                                                            <option value="sourcesans3">Source Sans 3</option>
-                                                            <option value="outfit">Outfit</option>
-                                                            <option value="firasans">Fira Sans</option>
-                                                            <option value="oswald">Oswald (Condensed)</option>
-                                                            <option value="raleway">Raleway</option>
-                                                            <option value="nunito">Nunito</option>
-                                                            <option value="rubik">Rubik</option>
-                                                            <option value="varelaround">Varela Round</option>
-                                                            <option value="mooli">Mooli</option>
-                                                            <option value="spacegrotesk">Space Grotesk</option>
-                                                            <option value="wixmadefordisplay">WIX Madefor Display</option>
-                                                            <option value="saira">Saira</option>
-                                                            <option value="kanit">Kanit</option>
-                                                            <option value="worksans">Work Sans</option>
-                                                            <option value="heebo">Heebo</option>
-                                                            <option value="prompt">Prompt</option>
-                                                            <option value="titilliumweb">Titillium Web</option>
-                                                            <option value="dmsans">DM Sans</option>
-                                                            <option value="publicsans">Public Sans</option>
-                                                            <option value="exo2">Exo 2</option>
-                                                        </optgroup>
-                                                        <optgroup label="Serif (Classic)">
-                                                            <option value="merriweather">Merriweather</option>
-                                                            <option value="playfairdisplay">Playfair Display</option>
-                                                            <option value="lora">Lora</option>
-                                                            <option value="robotoslab">Roboto Slab</option>
-                                                            <option value="ptserif">PT Serif</option>
-                                                            <option value="alegreya">Alegreya</option>
-                                                            <option value="taviraj">Taviraj</option>
-                                                            <option value="spectral">Spectral</option>
-                                                            <option value="cormorant">Cormorant</option>
-                                                            <option value="ebgaramond">EB Garamond</option>
-                                                            <option value="literata">Literata</option>
-                                                        </optgroup>
-                                                        <optgroup label="Display (Stylized)">
-                                                            <option value="pacifico">Pacifico</option>
-                                                            <option value="dancingscript">Dancing Script</option>
-                                                        </optgroup>
-                                                        <optgroup label="Monospace (Code/Tech)">
-                                                            <option value="robotomono">Roboto Mono</option>
-                                                            <option value="firacode">Fira Code</option>
-                                                            <option value="sourcecodepro">Source Code Pro</option>
-                                                            <option value="ibmplexmono">IBM Plex Mono</option>
-                                                            <option value="inconsolata">Inconsolata</option>
-                                                            <option value="jetbrainsmono">JetBrains Mono</option>
-                                                            <option value="spacemono">Space Mono</option>
-                                                            <option value="majormonodisplay">Major Mono Display</option>
-                                                            <option value="anonymouspro">Anonymous Pro</option>
-                                                            <option value="courierprime">Courier Prime</option>
-                                                        </optgroup>
-                                                    </select>
-                                                </div>
-                                                <div class="flex flex-col items-center">
-                                                    <label class="text-sm font-semibold text-gray-700 mb-1">Alignment:</label>
-                                                    <button id="justifyBtn" class="p-2 bg-purple-500 text-white rounded-lg shadow-md hover:bg-purple-600 transition duration-150 active:scale-95" title="Cycle Alignment (Center, Left, Right)">
-                                                        <svg id="justifyIcon" class="justify-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M7 11H17M7 7H17M7 15H17M9 19H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                <i id="closeEditModal" class="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-700 transition text-2xl" title="Close Sidebar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-7 h-7">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </i>
-                <div class="flex flex-col items-center">
-                    <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Size:
-                        <span id="sizeValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                    </label>
-                    <div class="flex space-x-2 items-center">
-                        <button id="decreaseSizeBtn" class="px-3 py-1 bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Font Size">A-</button>
-                        <button id="increaseSizeBtn" class="px-3 py-1 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Font Size">A+</button>
-                    </div>
-                </div>
-                <div class="flex flex-col items-center">
-                    <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Padding:
-                        <span id="paddingValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                    </label>
-                    <div class="flex space-x-2 items-center">
-                        <button id="decreasePaddingBtn" class="px-3 py-1 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Padding">-</button>
-                        <button id="increasePaddingBtn" class="px-3 py-1 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Padding">+</button>
-                    </div>
-                </div>
-                <div class="flex flex-col items-center">
-                    <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Width:
-                        <span id="widthValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                    </label>
-                    <div class="flex space-x-2 items-center">
-                        <button id="decreaseWidthBtn" class="px-3 py-1 bg-orange-500 text-white font-bold rounded-lg shadow-md hover:bg-orange-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Width">-</button>
-                        <button id="increaseWidthBtn" class="px-3 py-1 bg-cyan-500 text-white font-bold rounded-lg shadow-md hover:bg-cyan-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Width">+</button>
-                    </div>
-                </div>
-                <div class="flex flex-col items-center">
-                    <label class="text-sm font-semibold text-gray-700 mb-1">Adjust Height:
-                        <span id="heightValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                    </label>
-                    <div class="flex space-x-2 items-center">
-                        <button id="decreaseHeightBtn" class="px-3 py-1 bg-pink-500 text-white font-bold rounded-lg shadow-md hover:bg-pink-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Decrease Height">-</button>
-                        <button id="increaseHeightBtn" class="px-3 py-1 bg-lime-500 text-white font-bold rounded-lg shadow-md hover:bg-lime-600 transition duration-150 active:scale-95 disabled:bg-gray-400" title="Increase Height">+</button>
-                    </div>
-                </div>
-                <button id="closeEditModal" class="mt-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition">Close</button>
+                                                                <input type="file" id="videoInput" accept="video/*" class="hidden" />
+                                                                <input type="file" id="audioInput" accept="audio/*" class="hidden" />
+                                                                    <div class="flex flex-row items-center justify-between gap-6 mt-4 w-full">
+                                                                        <div class="flex flex-col items-center">
+                                                                            <label for="bgColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change BG Color:</label>
+                                                                            <div class="flex items-center gap-2">
+                                                                                <input type="color" id="bgColorInput" value="#ffffff" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
+                                                                                <button id="resetBgBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="flex flex-col items-center">
+                                                                            <label for="textColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change Text Color:</label>
+                                                                            <div class="flex items-center gap-2">
+                                                                                <input type="color" id="textColorInput" value="#222222" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
+                                                                                <button id="resetTextColorBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                             
+
+                                                                    <!-- Controls Section: Grouped and Beautified -->
+                                <div class="w-full grid grid-cols-1 gap-4 mt-2">
+                        
+
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11H17M7 7H17M7 15H17M9 19H15" /></svg>
+                                            Alignment
+                                        </label>
+                                        <button id="justifyBtn" class="p-1 bg-purple-500 text-white rounded shadow hover:bg-purple-600 transition duration-150 active:scale-95 text-xs" title="Cycle Alignment (Center, Left, Right)">
+                                            <svg id="justifyIcon" class="justify-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M7 11H17M7 7H17M7 15H17M9 19H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><text x="4" y="16" font-size="12" fill="currentColor">A-</text></svg>
+                                            Adjust Size <span id="sizeValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+                                        </label>
+                                        <div class="flex space-x-1 items-center">
+                                        <button id="decreaseSizeBtn" class="px-1 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Font Size">A-</button>
+                                        <button id="increaseSizeBtn" class="px-1 py-1 bg-green-500 text-white font-bold rounded shadow hover:bg-green-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Font Size">A+</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="8" width="16" height="8" rx="2" fill="currentColor"/></svg>
+                                            Adjust Padding <span id="paddingValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+                                        </label>
+                                        <div class="flex space-x-1 items-center">
+                                        <button id="decreasePaddingBtn" class="px-1 py-1 bg-yellow-500 text-white font-bold rounded shadow hover:bg-yellow-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Padding">-</button>
+                                        <button id="increasePaddingBtn" class="px-1 py-1 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Padding">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="10" width="16" height="4" rx="2" fill="currentColor"/></svg>
+                                            Adjust Width <span id="widthValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+                                        </label>
+                                        <div class="flex space-x-1 items-center">
+                                        <button id="decreaseWidthBtn" class="px-1 py-1 bg-orange-500 text-white font-bold rounded shadow hover:bg-orange-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Width">-</button>
+                                        <button id="increaseWidthBtn" class="px-1 py-1 bg-cyan-500 text-white font-bold rounded shadow hover:bg-cyan-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Width">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="10" y="4" width="4" height="16" rx="2" fill="currentColor"/></svg>
+                                            Adjust Height <span id="heightValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
+                                        </label>
+                                        <div class="flex space-x-1 items-center">
+                                        <button id="decreaseHeightBtn" class="px-1 py-1 bg-pink-500 text-white font-bold rounded shadow hover:bg-pink-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Height">-</button>
+                                        <button id="increaseHeightBtn" class="px-1 py-1 bg-lime-500 text-white font-bold rounded shadow hover:bg-lime-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Height">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 4h16M4 4v16M20 4v16" /></svg>
+                                            Shade
+                                        </label>
+                                        <button id="applyShadeBtn" class="p-1 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition duration-150 active:scale-95 text-xs flex items-center gap-1 mb-1" title="Apply Shade">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16" /></svg>
+                                            Shade
+                                        </button>
+                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">Capacity</label>
+                                        <div class="flex space-x-1 items-center">
+                                            <button id="decreaseCapacityBtn" class="px-1 py-1 bg-gray-400 text-white rounded shadow hover:bg-gray-500 transition duration-150 text-xs" title="Decrease Capacity">-</button>
+                                            <span id="capacityValue" class="text-xs text-gray-700 font-mono">6px, 0.5</span>
+                                            <button id="increaseCapacityBtn" class="px-1 py-1 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition duration-150 text-xs" title="Increase Capacity">+</button>
+                                        </div>
+                                        </div>
+                                    </div>
+                                    <button id="closeEditModal" class="mt-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition">Close</button>
+                                </div>
             </div>
         </div>
 
@@ -304,15 +350,14 @@
 
         <!-- Uploaded Image (always on top) -->
         <div id="imageWrapper" class="flex justify-center mb-2"></div>
-    <div id="videoWrapper" class="flex justify-center mb-2"></div>
-    <div id="audioWrapper" class="flex justify-center mb-2"></div>
-
+        <div id="audioWrapper" class="flex justify-center mb-2"></div>
         <!-- 2. Quote Text (Now editable and controlled by JS) -->
         <div id="quoteContainer" class="max-w-xs sm:max-w-md font-montserrat quote-container">
             <p id="quoteText" contenteditable="true" class="text-base sm:text-lg text-gray-900 leading-tight tracking-tight text-center">
                 Instagram algorithm is just like a flame look at something for one second and it spreads everywhere.
             </p>
         </div>
+        <div id="videoWrapper" class="flex justify-center mb-2"></div>
     </div>
 
 
@@ -341,11 +386,20 @@
         const bgColorInput = document.getElementById('bgColorInput');
         const resetBgBtn = document.getElementById('resetBgBtn');
         bgColorInput.addEventListener('input', (e) => {
-            memeCard.style.backgroundColor = e.target.value;
+            if (selectedTextBox) {
+                selectedTextBox.style.backgroundColor = e.target.value;
+            } else {
+                memeCard.style.backgroundColor = e.target.value;
+            }
         });
         resetBgBtn.addEventListener('click', () => {
-            memeCard.style.backgroundColor = '';
-            bgColorInput.value = '#ffffff';
+            if (selectedTextBox) {
+                selectedTextBox.style.backgroundColor = '';
+                bgColorInput.value = '#ffffff';
+            } else {
+                memeCard.style.backgroundColor = '';
+                bgColorInput.value = '#ffffff';
+            }
         });
 
         // --- Text Color Change Logic ---
@@ -353,11 +407,20 @@
         const resetTextColorBtn = document.getElementById('resetTextColorBtn');
         const mainText = document.getElementById('quoteText');
         textColorInput.addEventListener('input', (e) => {
-            mainText.style.color = e.target.value;
+            if (selectedTextBox) {
+                selectedTextBox.style.color = e.target.value;
+            } else {
+                mainText.style.color = e.target.value;
+            }
         });
         resetTextColorBtn.addEventListener('click', () => {
-            mainText.style.color = '';
-            textColorInput.value = '#222222';
+            if (selectedTextBox) {
+                selectedTextBox.style.color = '';
+                textColorInput.value = '#222222';
+            } else {
+                mainText.style.color = '';
+                textColorInput.value = '#222222';
+            }
         });
 
         // --- Video & Audio Upload Logic ---
@@ -530,23 +593,27 @@
         }
 
         function applyPadding() {
-            // Remove all Tailwind p-* classes (p-2 to p-16)
-            memeCard.classList.remove('p-2','p-3','p-4','p-5','p-6','p-7','p-8','p-9','p-10','p-11','p-12','p-14','p-16');
-            // Add the new padding class
-            const px = paddingSteps[currentPaddingIndex];
-            // Map px to Tailwind class
-            let padClass = 'p-8';
-            if(px === 8) padClass = 'p-2';
-            else if(px === 12) padClass = 'p-3';
-            else if(px === 16) padClass = 'p-4';
-            else if(px === 20) padClass = 'p-5';
-            else if(px === 24) padClass = 'p-6';
-            else if(px === 32) padClass = 'p-8';
-            else if(px === 40) padClass = 'p-10';
-            else if(px === 48) padClass = 'p-12';
-            else if(px === 56) padClass = 'p-14';
-            else if(px === 64) padClass = 'p-16';
-            memeCard.classList.add(padClass);
+            if (selectedTextBox) {
+                selectedTextBox.style.padding = paddingSteps[currentPaddingIndex] + 'px';
+            } else {
+                // Remove all Tailwind p-* classes (p-2 to p-16)
+                memeCard.classList.remove('p-2','p-3','p-4','p-5','p-6','p-7','p-8','p-9','p-10','p-11','p-12','p-14','p-16');
+                // Add the new padding class
+                const px = paddingSteps[currentPaddingIndex];
+                // Map px to Tailwind class
+                let padClass = 'p-8';
+                if(px === 8) padClass = 'p-2';
+                else if(px === 12) padClass = 'p-3';
+                else if(px === 16) padClass = 'p-4';
+                else if(px === 20) padClass = 'p-5';
+                else if(px === 24) padClass = 'p-6';
+                else if(px === 32) padClass = 'p-8';
+                else if(px === 40) padClass = 'p-10';
+                else if(px === 48) padClass = 'p-12';
+                else if(px === 56) padClass = 'p-14';
+                else if(px === 64) padClass = 'p-16';
+                memeCard.classList.add(padClass);
+            }
             updatePaddingButtons();
         }
 
@@ -578,10 +645,12 @@
         ];
         
         function applyFont(fontName) {
-            // Remove previous font class from the container
-            quoteContainer.classList.remove(...allFontClasses);
-            // Add the new font class
-            quoteContainer.classList.add(`font-${fontName}`);
+            if (selectedTextBox) {
+                selectedTextBox.style.fontFamily = getComputedStyle(document.querySelector(`.font-${fontName}`)).fontFamily;
+            } else {
+                quoteContainer.classList.remove(...allFontClasses);
+                quoteContainer.classList.add(`font-${fontName}`);
+            }
         }
 
         fontSelector.addEventListener('change', (event) => {
@@ -610,12 +679,15 @@
         }
 
         function applySize() {
-            // Remove all existing size classes
-            quoteText.classList.remove(...allSizeClasses);
-            // Add the new size classes
-            const classesToAdd = sizeClasses[currentSizeIndex].value.split(' ');
-            quoteText.classList.add(...classesToAdd);
-            // Update button states
+            if (selectedTextBox) {
+                selectedTextBox.style.fontSize = sizeClasses[currentSizeIndex].px + 'px';
+            } else {
+                // Remove all existing size classes
+                quoteText.classList.remove(...allSizeClasses);
+                // Add the new size classes
+                const classesToAdd = sizeClasses[currentSizeIndex].value.split(' ');
+                quoteText.classList.add(...classesToAdd);
+            }
             updateSizeButtons();
         }
 
@@ -645,13 +717,15 @@
 
         function applyAlignment() {
             const currentClass = alignmentClasses[currentAlignmentIndex];
-            
-            // Remove previous alignment classes
-            quoteText.classList.remove(...alignmentClasses);
-            
-            // Apply new alignment class
-            quoteText.classList.add(currentClass);
-            
+            if (selectedTextBox) {
+                selectedTextBox.style.textAlign = currentClass.replace('text-', '');
+            } else {
+                // Remove previous alignment classes
+                quoteText.classList.remove(...alignmentClasses);
+                
+                // Apply new alignment class
+                quoteText.classList.add(currentClass);
+            }
             // Update icon
             justifyIcon.innerHTML = alignmentIcons[currentClass];
         }
@@ -725,23 +799,26 @@
                 }
 
                 function applyWidthHeight() {
-                    // Set width via inline style
-                    memeCard.style.maxWidth = currentWidth + 'px';
-                    memeCard.style.width = currentWidth + 'px';
-                    // Remove all Tailwind h-* classes
-                    memeCard.classList.remove('h-40','h-48','h-64','h-80','h-96','h-[448px]','h-[512px]');
-                    // Add new height class
-                    let heightClass = 'h-80';
-                    switch(heightSteps[currentHeightIndex]) {
-                        case 160: heightClass = 'h-40'; break;
-                        case 192: heightClass = 'h-48'; break;
-                        case 256: heightClass = 'h-64'; break;
-                        case 320: heightClass = 'h-80'; break;
-                        case 384: heightClass = 'h-96'; break;
-                        case 448: heightClass = 'h-[448px]'; break;
-                        case 512: heightClass = 'h-[512px]'; break;
+                    if (selectedTextBox) {
+                        // Only update width/height, do not touch left/top
+                        selectedTextBox.style.width = currentWidth + 'px';
+                        selectedTextBox.style.height = heightSteps[currentHeightIndex] + 'px';
+                    } else {
+                        memeCard.style.maxWidth = currentWidth + 'px';
+                        memeCard.style.width = currentWidth + 'px';
+                        memeCard.classList.remove('h-40','h-48','h-64','h-80','h-96','h-[448px]','h-[512px]');
+                        let heightClass = 'h-80';
+                        switch(heightSteps[currentHeightIndex]) {
+                            case 160: heightClass = 'h-40'; break;
+                            case 192: heightClass = 'h-48'; break;
+                            case 256: heightClass = 'h-64'; break;
+                            case 320: heightClass = 'h-80'; break;
+                            case 384: heightClass = 'h-96'; break;
+                            case 448: heightClass = 'h-[448px]'; break;
+                            case 512: heightClass = 'h-[512px]'; break;
+                        }
+                        memeCard.classList.add(heightClass);
                     }
-                    memeCard.classList.add(heightClass);
                     updateWidthHeightButtons();
                 }
 
@@ -769,6 +846,203 @@
                         applyWidthHeight();
                     }
                 });
-    </script>
+
+
+
+                const addTextBoxBtn = document.getElementById('addTextBoxBtn');
+
+                addTextBoxBtn.addEventListener('click', () => {
+                    const memeCard = document.getElementById('memeCard');
+                    // Make memeCard relative for absolute children
+                    memeCard.style.position = 'relative';
+                                        // Create a new absolutely positioned, draggable, deletable text box
+                                        const newTextBox = document.createElement('div');
+                                        newTextBox.className = 'absolute';
+                                        newTextBox.style.zIndex = 10;
+                                        // Create a wrapper for editable text
+                                        const textWrapper = document.createElement('div');
+                                        textWrapper.contentEditable = 'true';
+                                        textWrapper.innerText = 'New text box';
+                                        textWrapper.style.minWidth = '80px';
+                                        textWrapper.style.minHeight = '32px';
+                                        textWrapper.style.outline = 'none';
+                                        textWrapper.style.padding = '4px 8px';
+                                        textWrapper.style.cursor = 'text';
+                                        textWrapper.style.background = 'transparent';
+                                        textWrapper.style.color = '#222';
+                                        textWrapper.style.fontSize = '16px';
+                                        textWrapper.style.borderRadius = '4px';
+                                        textWrapper.style.userSelect = 'text';
+                                        textWrapper.addEventListener('mousedown', function(e) {
+                                            e.stopPropagation();
+                                        });
+                                        textWrapper.addEventListener('touchstart', function(e) {
+                                            e.stopPropagation();
+                                        });
+                                        newTextBox.appendChild(textWrapper);
+                                        // Add arrow buttons and delete button (hidden by default, show on hover)
+                                        const directions = [
+                                            {dir: 'left', icon: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4l-5 4 5 4"/></svg>'},
+                                            {dir: 'right', icon: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l5 4-5 4"/></svg>'},
+                                            {dir: 'up', icon: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l4-5 4 5"/></svg>'},
+                                            {dir: 'down', icon: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5l4 5 4-5"/></svg>'}
+                                        ];
+                                        const arrowBar = document.createElement('div');
+                                        arrowBar.style.position = 'absolute';
+                                        arrowBar.style.left = '50%';
+                                        arrowBar.style.top = '-28px';
+                                        arrowBar.style.transform = 'translateX(-50%)';
+                                        arrowBar.style.display = 'flex';
+                                        arrowBar.style.gap = '2px';
+                                        arrowBar.style.opacity = '0';
+                                        arrowBar.style.transition = 'opacity 0.2s';
+                                        directions.forEach(d => {
+                                            const btn = document.createElement('button');
+                                            btn.innerHTML = d.icon;
+                                            btn.title = 'Move ' + d.dir;
+                                            btn.style.background = '#f3f4f6';
+                                            btn.style.border = '1px solid #d1d5db';
+                                            btn.style.borderRadius = '4px';
+                                            btn.style.width = '22px';
+                                            btn.style.height = '22px';
+                                            btn.style.display = 'flex';
+                                            btn.style.alignItems = 'center';
+                                            btn.style.justifyContent = 'center';
+                                            btn.style.cursor = 'pointer';
+                                            btn.onmousedown = (e) => { e.stopPropagation(); };
+                                            btn.onclick = function(e) {
+                                                e.stopPropagation();
+                                                let step = 10;
+                                                let left = parseInt(newTextBox.style.left || '0');
+                                                let top = parseInt(newTextBox.style.top || '0');
+                                                if (d.dir === 'left') left = Math.max(0, left - step);
+                                                if (d.dir === 'right') left = Math.min(memeCard.clientWidth - newTextBox.offsetWidth, left + step);
+                                                if (d.dir === 'up') top = Math.max(0, top - step);
+                                                if (d.dir === 'down') top = Math.min(memeCard.clientHeight - newTextBox.offsetHeight, top + step);
+                                                newTextBox.style.left = left + 'px';
+                                                newTextBox.style.top = top + 'px';
+                                            };
+                                            arrowBar.appendChild(btn);
+                                        });
+                                        // Add delete button to arrowBar
+                                        const delBtn = document.createElement('button');
+                                        delBtn.innerHTML = '&times;';
+                                        delBtn.title = 'Delete';
+                                        delBtn.style.background = '#ef4444';
+                                        delBtn.style.color = '#fff';
+                                        delBtn.style.border = 'none';
+                                        delBtn.style.borderRadius = '4px';
+                                        delBtn.style.width = '22px';
+                                        delBtn.style.height = '22px';
+                                        delBtn.style.display = 'flex';
+                                        delBtn.style.alignItems = 'center';
+                                        delBtn.style.justifyContent = 'center';
+                                        delBtn.style.cursor = 'pointer';
+                                        delBtn.style.fontWeight = 'bold';
+                                        delBtn.onclick = (e) => {
+                                            e.stopPropagation();
+                                            newTextBox.remove();
+                                        };
+                                        arrowBar.appendChild(delBtn);
+                                        newTextBox.appendChild(arrowBar);
+                                        // Show/hide controls on hover
+                                        newTextBox.addEventListener('mouseenter', () => { arrowBar.style.opacity = '1'; });
+                                        newTextBox.addEventListener('mouseleave', () => { arrowBar.style.opacity = '0'; });
+                    // Improved drag logic (whole box except delete button)
+                    let offsetX, offsetY, dragging = false;
+                    function onPointerMove(e) {
+                        if (!dragging) return;
+                        const cardRect = memeCard.getBoundingClientRect();
+                        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                        let x = clientX - cardRect.left - offsetX;
+                        let y = clientY - cardRect.top - offsetY;
+                        x = Math.max(0, Math.min(x, memeCard.clientWidth - newTextBox.offsetWidth));
+                        y = Math.max(0, Math.min(y, memeCard.clientHeight - newTextBox.offsetHeight));
+                        newTextBox.style.left = x + 'px';
+                        newTextBox.style.top = y + 'px';
+                    }
+                    function onPointerUp() {
+                        dragging = false;
+                        newTextBox.style.userSelect = '';
+                        document.removeEventListener('mousemove', onPointerMove);
+                        document.removeEventListener('mouseup', onPointerUp);
+                        document.removeEventListener('touchmove', onPointerMove);
+                        document.removeEventListener('touchend', onPointerUp);
+                    }
+                    // Only start drag if not clicking delete button
+                    newTextBox.addEventListener('mousedown', function(e) {
+                        if (e.target === delBtn) return;
+                        dragging = true;
+                        offsetX = e.clientX - newTextBox.offsetLeft;
+                        offsetY = e.clientY - newTextBox.offsetTop;
+                        newTextBox.style.userSelect = 'none';
+                        document.addEventListener('mousemove', onPointerMove);
+                        document.addEventListener('mouseup', onPointerUp);
+                    });
+                    newTextBox.addEventListener('touchstart', function(e) {
+                        if (e.target === delBtn) return;
+                        dragging = true;
+                        offsetX = e.touches[0].clientX - newTextBox.offsetLeft;
+                        offsetY = e.touches[0].clientY - newTextBox.offsetTop;
+                        newTextBox.style.userSelect = 'none';
+                        document.addEventListener('touchmove', onPointerMove);
+                        document.addEventListener('touchend', onPointerUp);
+                    });
+                    // Prevent text selection while dragging
+                    newTextBox.addEventListener('selectstart', function(e) {
+                        if (dragging) e.preventDefault();
+                    });
+                    memeCard.appendChild(newTextBox);
+                    newTextBox.focus();
+                });
+                
+        // --- Shade & Capacity Logic ---
+        let selectedTextBox = null;
+        let shadeBlur = 6; // px
+        let shadeOpacity = 0.5;
+        const capacityValue = document.getElementById('capacityValue');
+        function updateCapacityDisplay() {
+            capacityValue.textContent = shadeBlur + 'px, ' + shadeOpacity;
+        }
+        function applyShadeToTarget(target) {
+            target.style.textShadow = `2px 2px ${shadeBlur}px rgba(0,0,0,${shadeOpacity})`;
+        }
+        document.getElementById('memeCard').addEventListener('click', function(e) {
+            if (e.target.classList.contains('absolute')) {
+                selectedTextBox = e.target;
+            } else {
+                selectedTextBox = null;
+            }
+        });
+        document.getElementById('applyShadeBtn').addEventListener('click', function() {
+            if (selectedTextBox) {
+                applyShadeToTarget(selectedTextBox);
+            } else {
+                applyShadeToTarget(document.getElementById('quoteText'));
+            }
+        });
+        document.getElementById('increaseCapacityBtn').addEventListener('click', function() {
+            if (shadeBlur < 20) shadeBlur += 2;
+            if (shadeOpacity < 1) shadeOpacity = Math.round((shadeOpacity + 0.1) * 10) / 10;
+            updateCapacityDisplay();
+            if (selectedTextBox) {
+                applyShadeToTarget(selectedTextBox);
+            } else {
+                applyShadeToTarget(document.getElementById('quoteText'));
+            }
+        });
+        document.getElementById('decreaseCapacityBtn').addEventListener('click', function() {
+            if (shadeBlur > 2) shadeBlur -= 2;
+            if (shadeOpacity > 0.1) shadeOpacity = Math.round((shadeOpacity - 0.1) * 10) / 10;
+            updateCapacityDisplay();
+            if (selectedTextBox) {
+                applyShadeToTarget(selectedTextBox);
+            } else {
+                applyShadeToTarget(document.getElementById('quoteText'));
+            }
+        });
+        updateCapacityDisplay();
+        </script>
 </body>
 </html>
