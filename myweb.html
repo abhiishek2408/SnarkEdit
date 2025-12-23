@@ -138,208 +138,228 @@
 <body class="premium-bg min-h-screen flex flex-col items-center justify-center p-4 font-montserrat">
 
     <!-- Unified Top Navbar with All Controls and Buttons -->
-    <div class="mb-6 p-4 bg-white/90 rounded-xl shadow-lg control-bar-layout relative flex flex-wrap items-center gap-4 justify-center">
-        <button id="navbarHomeBtn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold shadow">Home</button>
-            <button id="editBtn" class="px-3 py-1 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition text-sm">Edit</button>
-
-        <button id="templateBtn" class="px-3 py-1 bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition text-sm">Post Template</button>
-        <button id="downloadBtn" class="px-3 py-1 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition flex items-center justify-center" title="Download as Image">
-            <i class="text-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
-                </svg>
-            </i>
+   <div class="mb-10 p-2 bg-white/70 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl control-bar-layout relative flex flex-wrap items-center gap-3 justify-center">
+    <div class="flex items-center gap-2 border-r border-gray-200 pr-3">
+        <button id="navbarHomeBtn" class="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black transition-all text-xs font-bold tracking-wide shadow-sm active:scale-95">
+            HOME
         </button>
-        <input type="file" id="imageInput" accept="image/*" class="hidden" />
-        
-        <!-- Font Selector and Alignment moved to sidebar -->
-        </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+        <button id="editBtn" class="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl shadow-sm hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all text-sm font-semibold active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            Edit Studio
+        </button>
+
+        <button id="templateBtn" class="px-4 py-2 bg-purple-50 text-purple-700 border border-purple-100 rounded-xl shadow-sm hover:bg-purple-600 hover:text-white transition-all text-sm font-semibold active:scale-95">
+            Post Template
+        </button>
+    </div>
+
+    <div class="flex items-center ml-2">
+        <button id="downloadBtn" class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 transition-all flex items-center justify-center active:scale-90" title="Download as Image">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+            </svg>
+        </button>
+    </div>
+
+    <input type="file" id="imageInput" accept="image/*" class="hidden" />
+</div>
 
         <!-- 2. Size Control Buttons -->
 
         <!-- Edit Modal (hidden by default) -->
-        <div id="editModal" class="fixed top-0 right-0 h-full w-80 max-w-full z-50 bg-white shadow-2xl border-l border-gray-200 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col gap-6 p-8 hidden overflow-y-auto" style="max-height: 100vh;">
-
-                        <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label for="font-selector" class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                                            Select Font
-                                        </label>
-                                        <select id="font-selector" class="px-1 py-1 border border-gray-300 rounded shadow focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 w-full text-xs">
-                                            <optgroup label="Sans Serif (Clean)">
-                                                <option value="montserrat">Montserrat (Default)</option>
-                                                <option value="roboto">Roboto</option>
-                                                <option value="opensans">Open Sans</option>
-                                                <option value="lato">Lato</option>
-                                                <option value="poppins">Poppins</option>
-                                                <option value="inter">Inter</option>
-                                                <option value="notosans">Noto Sans</option>
-                                                <option value="ubuntu">Ubuntu</option>
-                                                <option value="sourcesans3">Source Sans 3</option>
-                                                <option value="outfit">Outfit</option>
-                                                <option value="firasans">Fira Sans</option>
-                                                <option value="oswald">Oswald (Condensed)</option>
-                                                <option value="raleway">Raleway</option>
-                                                <option value="nunito">Nunito</option>
-                                                <option value="rubik">Rubik</option>
-                                                <option value="varelaround">Varela Round</option>
-                                                <option value="mooli">Mooli</option>
-                                                <option value="spacegrotesk">Space Grotesk</option>
-                                                <option value="wixmadefordisplay">WIX Madefor Display</option>
-                                                <option value="saira">Saira</option>
-                                                <option value="kanit">Kanit</option>
-                                                <option value="worksans">Work Sans</option>
-                                                <option value="heebo">Heebo</option>
-                                                <option value="prompt">Prompt</option>
-                                                <option value="titilliumweb">Titillium Web</option>
-                                                <option value="dmsans">DM Sans</option>
-                                                <option value="publicsans">Public Sans</option>
-                                                <option value="exo2">Exo 2</option>
-                                            </optgroup>
-                                            <optgroup label="Serif (Classic)">
-                                                <option value="merriweather">Merriweather</option>
-                                                <option value="playfairdisplay">Playfair Display</option>
-                                                <option value="lora">Lora</option>
-                                                <option value="robotoslab">Roboto Slab</option>
-                                                <option value="ptserif">PT Serif</option>
-                                                <option value="alegreya">Alegreya</option>
-                                                <option value="taviraj">Taviraj</option>
-                                                <option value="spectral">Spectral</option>
-                                                <option value="cormorant">Cormorant</option>
-                                                <option value="ebgaramond">EB Garamond</option>
-                                                <option value="literata">Literata</option>
-                                            </optgroup>
-                                            <optgroup label="Display (Stylized)">
-                                                <option value="pacifico">Pacifico</option>
-                                                <option value="dancingscript">Dancing Script</option>
-                                            </optgroup>
-                                            <optgroup label="Monospace (Code/Tech)">
-                                                <option value="robotomono">Roboto Mono</option>
-                                                <option value="firacode">Fira Code</option>
-                                                <option value="sourcecodepro">Source Code Pro</option>
-                                                <option value="ibmplexmono">IBM Plex Mono</option>
-                                                <option value="inconsolata">Inconsolata</option>
-                                                <option value="jetbrainsmono">JetBrains Mono</option>
-                                                <option value="spacemono">Space Mono</option>
-                                                <option value="majormonodisplay">Major Mono Display</option>
-                                                <option value="anonymouspro">Anonymous Pro</option>
-                                                <option value="courierprime">Courier Prime</option>
-                                            </optgroup>
-                                        </select>
+        <!-- Sidebar: Only new design below, old markup removed -->
+        <div id="editModal" class="fixed top-0 right-0 h-full w-72 z-50 bg-gray-50/95 backdrop-blur-lg shadow-2xl border-l border-white transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col hidden overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 bg-white/50 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-800">Design Studio</h2>
+                <button id="closeEditModal" class="p-1 hover:bg-gray-200 rounded-full transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-5 flex flex-col gap-6">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Typography</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="font-selector" class="block text-xs font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-width="2"/></svg>
+                                Font Family
+                            </label>
+                            <select id="font-selector" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all outline-none">
+                                <optgroup label="Sans Serif">
+                                    <option value="montserrat">Montserrat</option>
+                                    <option value="roboto">Roboto</option>
+                                    <option value="poppins">Poppins</option>
+                                    <option value="inter">Inter</option>
+                                    <option value="opensans">Open Sans</option>
+                                    <option value="lato">Lato</option>
+                                    <option value="notosans">Noto Sans</option>
+                                    <option value="ubuntu">Ubuntu</option>
+                                    <option value="sourcesans3">Source Sans 3</option>
+                                    <option value="outfit">Outfit</option>
+                                    <option value="firasans">Fira Sans</option>
+                                    <option value="oswald">Oswald</option>
+                                    <option value="raleway">Raleway</option>
+                                    <option value="nunito">Nunito</option>
+                                    <option value="rubik">Rubik</option>
+                                    <option value="varelaround">Varela Round</option>
+                                    <option value="mooli">Mooli</option>
+                                    <option value="spacegrotesk">Space Grotesk</option>
+                                    <option value="wixmadefordisplay">Wix Madefor Display</option>
+                                    <option value="saira">Saira</option>
+                                    <option value="kanit">Kanit</option>
+                                    <option value="worksans">Work Sans</option>
+                                    <option value="heebo">Heebo</option>
+                                    <option value="prompt">Prompt</option>
+                                    <option value="titilliumweb">Titillium Web</option>
+                                    <option value="dmsans">DM Sans</option>
+                                    <option value="publicsans">Public Sans</option>
+                                    <option value="exo2">Exo 2</option>
+                                </optgroup>
+                                <optgroup label="Serif">
+                                    <option value="playfairdisplay">Playfair Display</option>
+                                    <option value="lora">Lora</option>
+                                    <option value="merriweather">Merriweather</option>
+                                    <option value="taviraj">Taviraj</option>
+                                    <option value="spectral">Spectral</option>
+                                    <option value="cormorant">Cormorant</option>
+                                    <option value="ebgaramond">EB Garamond</option>
+                                    <option value="literata">Literata</option>
+                                    <option value="ptserif">PT Serif</option>
+                                    <option value="alegreya">Alegreya</option>
+                                    <option value="robotoslab">Roboto Slab</option>
+                                </optgroup>
+                                <optgroup label="Cursive">
+                                    <option value="pacifico">Pacifico</option>
+                                    <option value="dancingscript">Dancing Script</option>
+                                </optgroup>
+                                <optgroup label="Monospace">
+                                    <option value="robotomono">Roboto Mono</option>
+                                    <option value="firacode">Fira Code</option>
+                                    <option value="sourcecodepro">Source Code Pro</option>
+                                    <option value="ibmplexmono">IBM Plex Mono</option>
+                                    <option value="inconsolata">Inconsolata</option>
+                                    <option value="jetbrainsmono">JetBrains Mono</option>
+                                    <option value="spacemono">Space Mono</option>
+                                    <option value="majormonodisplay">Major Mono Display</option>
+                                    <option value="anonymouspro">Anonymous Pro</option>
+                                    <option value="courierprime">Courier Prime</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold text-gray-600">Text Color</label>
+                            <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                <input type="color" id="textColorInput" value="#222222" class="w-8 h-8 rounded border-none cursor-pointer">
+                                <button id="resetTextColorBtn" class="text-xs text-indigo-600 font-medium hover:underline">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Media Elements</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="addImageBtn" class="flex flex-col items-center justify-center p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition group">
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4a3 3 0 014 0l4 4M4 8h16" /></svg>
+                            <span class="text-[10px] font-bold text-gray-600">IMAGE</span>
+                        </button>
+                        <button id="addVideoBtn" class="flex flex-col items-center justify-center p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition group">
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6v12" /></svg>
+                            <span class="text-[10px] font-bold text-gray-600">VIDEO</span>
+                        </button>
+                        <button id="addAudioBtn" class="flex flex-col items-center justify-center p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-green-50 hover:border-green-200 transition group">
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-green-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13" /></svg>
+                            <span class="text-[10px] font-bold text-gray-600">AUDIO</span>
+                        </button>
+                        <button id="addTextBoxBtn" class="flex flex-col items-center justify-center p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-pink-50 hover:border-pink-200 transition group">
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-pink-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8M8 16h8" /></svg>
+                            <span class="text-[10px] font-bold text-gray-600">TEXT BOX</span>
+                        </button>
+                    </div>
+                    <input type="file" id="videoInput" accept="video/*" class="hidden" />
+                    <input type="file" id="audioInput" accept="audio/*" class="hidden" />
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Canvas</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-gray-600">Background</label>
+                            <div class="flex gap-2">
+                                <input type="color" id="bgColorInput" value="#ffffff" class="w-6 h-6 rounded cursor-pointer">
+                                <button id="bgImageBtn" class="p-1 hover:bg-gray-100 rounded" title="Upload Background Image">
+                                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4-4a3 3 0 014 0l4 4M4 8h16" stroke-width="2"/></svg>
+                                </button>
+                                <button id="resetBgBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
+                            </div>
+                            <input type="file" id="bgImageInput" accept="image/*" class="hidden" />
+                        </div>
+                        <details class="group">
+                            <summary class="list-none cursor-pointer flex items-center justify-between text-xs font-bold text-indigo-600">
+                                <span>ADVANCED CONTROLS</span>
+                                <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2"/></svg>
+                            </summary>
+                            <div class="mt-4 grid grid-cols-2 gap-3 pt-4 border-t border-gray-50">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[10px] text-gray-400 uppercase">Font Size</span>
+                                    <div class="flex bg-gray-100 rounded-lg overflow-hidden">
+                                        <button id="decreaseSizeBtn" class="flex-1 p-1 hover:bg-gray-200 border-r border-white">-</button>
+                                        <button id="increaseSizeBtn" class="flex-1 p-1 hover:bg-gray-200">+</button>
                                     </div>
-                                    
-                                                                <div class="grid grid-cols-2 gap-3 w-full mb-4">
-                                                                    <button id="addImageBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-xl shadow-lg hover:from-gray-800 hover:to-black transition text-base font-semibold">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4a3 3 0 014 0l4 4M4 8h16" /></svg>
-                                                                        Picture
-                                                                    </button>
-                                                                    <button id="addVideoBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-900 transition text-base font-semibold">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6v12" /></svg>
-                                                                        Video
-                                                                    </button>
-                                                                    <button id="addAudioBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-900 transition text-base font-semibold">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13" /></svg>
-                                                                        Audio
-                                                                    </button>
-                                                                    <button id="addTextBoxBtn" class="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-pink-700 text-white rounded-xl shadow-lg hover:from-pink-600 hover:to-pink-900 transition text-base font-semibold">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8M8 16h8" /></svg>
-                                                                        Text Box
-                                                                    </button>
-                                                                </div>
-                                                                <input type="file" id="videoInput" accept="video/*" class="hidden" />
-                                                                <input type="file" id="audioInput" accept="audio/*" class="hidden" />
-                                                                    <div class="flex flex-row items-center justify-between gap-6 mt-4 w-full">
-                                                                        <div class="flex flex-col items-center">
-                                                                            <label for="bgColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change BG Color:</label>
-                                                                            <div class="flex items-center gap-2">
-                                                                                <input type="color" id="bgColorInput" value="#ffffff" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
-                                                                                <button id="resetBgBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="flex flex-col items-center">
-                                                                            <label for="textColorInput" class="text-sm font-semibold text-gray-700 mb-1">Change Text Color:</label>
-                                                                            <div class="flex items-center gap-2">
-                                                                                <input type="color" id="textColorInput" value="#222222" class="w-8 h-8 border-2 border-gray-300 rounded cursor-pointer">
-                                                                                <button id="resetTextColorBtn" class="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs font-semibold">Reset</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                             
-
-                                                                    <!-- Controls Section: Grouped and Beautified -->
-                                <div class="w-full grid grid-cols-1 gap-4 mt-2">
-                        
-
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11H17M7 7H17M7 15H17M9 19H15" /></svg>
-                                            Alignment
-                                        </label>
-                                        <button id="justifyBtn" class="p-1 bg-purple-500 text-white rounded shadow hover:bg-purple-600 transition duration-150 active:scale-95 text-xs" title="Cycle Alignment (Center, Left, Right)">
-                                            <svg id="justifyIcon" class="justify-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M7 11H17M7 7H17M7 15H17M9 19H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><text x="4" y="16" font-size="12" fill="currentColor">A-</text></svg>
-                                            Adjust Size <span id="sizeValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                                        </label>
-                                        <div class="flex space-x-1 items-center">
-                                        <button id="decreaseSizeBtn" class="px-1 py-1 bg-red-500 text-white font-bold rounded shadow hover:bg-red-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Font Size">A-</button>
-                                        <button id="increaseSizeBtn" class="px-1 py-1 bg-green-500 text-white font-bold rounded shadow hover:bg-green-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Font Size">A+</button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="8" width="16" height="8" rx="2" fill="currentColor"/></svg>
-                                            Adjust Padding <span id="paddingValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                                        </label>
-                                        <div class="flex space-x-1 items-center">
-                                        <button id="decreasePaddingBtn" class="px-1 py-1 bg-yellow-500 text-white font-bold rounded shadow hover:bg-yellow-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Padding">-</button>
-                                        <button id="increasePaddingBtn" class="px-1 py-1 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Padding">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="10" width="16" height="4" rx="2" fill="currentColor"/></svg>
-                                            Adjust Width <span id="widthValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                                        </label>
-                                        <div class="flex space-x-1 items-center">
-                                        <button id="decreaseWidthBtn" class="px-1 py-1 bg-orange-500 text-white font-bold rounded shadow hover:bg-orange-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Width">-</button>
-                                        <button id="increaseWidthBtn" class="px-1 py-1 bg-cyan-500 text-white font-bold rounded shadow hover:bg-cyan-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Width">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="10" y="4" width="4" height="16" rx="2" fill="currentColor"/></svg>
-                                            Adjust Height <span id="heightValue" class="ml-2 text-xs text-gray-500 font-mono align-middle"></span>
-                                        </label>
-                                        <div class="flex space-x-1 items-center">
-                                        <button id="decreaseHeightBtn" class="px-1 py-1 bg-pink-500 text-white font-bold rounded shadow hover:bg-pink-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Decrease Height">-</button>
-                                        <button id="increaseHeightBtn" class="px-1 py-1 bg-lime-500 text-white font-bold rounded shadow hover:bg-lime-600 transition duration-150 active:scale-95 disabled:bg-gray-400 text-xs" title="Increase Height">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white rounded-xl shadow p-1 flex flex-col gap-1 border border-gray-100 text-xs">
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 4h16M4 4v16M20 4v16" /></svg>
-                                            Shade
-                                        </label>
-                                        <button id="applyShadeBtn" class="p-1 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition duration-150 active:scale-95 text-xs flex items-center gap-1 mb-1" title="Apply Shade">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16" /></svg>
-                                            Shade
-                                        </button>
-                                        <label class="flex items-center gap-1 font-semibold text-gray-700 mb-1 text-xs">Capacity</label>
-                                        <div class="flex space-x-1 items-center">
-                                            <button id="decreaseCapacityBtn" class="px-1 py-1 bg-gray-400 text-white rounded shadow hover:bg-gray-500 transition duration-150 text-xs" title="Decrease Capacity">-</button>
-                                            <span id="capacityValue" class="text-xs text-gray-700 font-mono">6px, 0.5</span>
-                                            <button id="increaseCapacityBtn" class="px-1 py-1 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition duration-150 text-xs" title="Increase Capacity">+</button>
-                                        </div>
-                                        </div>
-                                    </div>
-                                    <button id="closeEditModal" class="mt-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition">Close</button>
+                                    <span id="sizeValue" class="text-[10px] text-gray-500 font-mono mt-1"></span>
                                 </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[10px] text-gray-400 uppercase">Padding</span>
+                                    <div class="flex bg-gray-100 rounded-lg overflow-hidden">
+                                        <button id="decreasePaddingBtn" class="flex-1 p-1 hover:bg-gray-200 border-r border-white">-</button>
+                                        <button id="increasePaddingBtn" class="flex-1 p-1 hover:bg-gray-200">+</button>
+                                    </div>
+                                    <span id="paddingValue" class="text-[10px] text-gray-500 font-mono mt-1"></span>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[10px] text-gray-400 uppercase">Width</span>
+                                    <div class="flex bg-gray-100 rounded-lg overflow-hidden">
+                                        <button id="decreaseWidthBtn" class="flex-1 p-1 hover:bg-gray-200 border-r border-white">-</button>
+                                        <button id="increaseWidthBtn" class="flex-1 p-1 hover:bg-gray-200">+</button>
+                                    </div>
+                                    <span id="widthValue" class="text-[10px] text-gray-500 font-mono mt-1"></span>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[10px] text-gray-400 uppercase">Height</span>
+                                    <div class="flex bg-gray-100 rounded-lg overflow-hidden">
+                                        <button id="decreaseHeightBtn" class="flex-1 p-1 hover:bg-gray-200 border-r border-white">-</button>
+                                        <button id="increaseHeightBtn" class="flex-1 p-1 hover:bg-gray-200">+</button>
+                                    </div>
+                                    <span id="heightValue" class="text-[10px] text-gray-500 font-mono mt-1"></span>
+                                </div>
+                                <div class="col-span-2 flex flex-col gap-2 bg-indigo-50 p-2 rounded-lg mt-2">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <button id="justifyBtn" class="p-1 bg-white rounded shadow-sm text-indigo-600">
+                                            <svg id="justifyIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 11H17M7 7H17M7 15H17M9 19H15" stroke-width="2"/></svg>
+                                        </button>
+                                        <button id="applyShadeBtn" class="text-[10px] font-bold px-3 py-1 bg-white rounded shadow-sm text-gray-600 hover:text-indigo-600 transition">SHADE</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1 items-center justify-center">
+                                        <button id="decreaseCapacityBtn" class="px-1 py-1 bg-gray-400 text-white rounded shadow hover:bg-gray-500 transition duration-150 text-xs" title="Decrease Capacity">-</button>
+                                        <span id="capacityValue" class="text-xs text-gray-700 font-mono">6px, 0.5</span>
+                                        <button id="increaseCapacityBtn" class="px-1 py-1 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition duration-150 text-xs" title="Increase Capacity">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+                                    
+                                                              
+                                                                    <!-- Controls Section: Grouped and Beautified -->
+                              
             </div>
         </div>
 
@@ -383,6 +403,24 @@
         });
 
         // --- BG Color Change Logic ---
+                // --- BG Image Logic ---
+                const bgImageBtn = document.getElementById('bgImageBtn');
+                const bgImageInput = document.getElementById('bgImageInput');
+                bgImageBtn.addEventListener('click', () => {
+                    bgImageInput.click();
+                });
+                bgImageInput.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            memeCard.style.backgroundImage = `url('${e.target.result}')`;
+                            memeCard.style.backgroundSize = 'cover';
+                            memeCard.style.backgroundPosition = 'center';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
         const bgColorInput = document.getElementById('bgColorInput');
         const resetBgBtn = document.getElementById('resetBgBtn');
         bgColorInput.addEventListener('input', (e) => {
@@ -568,6 +606,11 @@
                 });
         const quoteContainer = document.getElementById('quoteContainer');
         const quoteText = document.getElementById('quoteText');
+        // Allow main quoteText to be selected
+        quoteText.addEventListener('click', function(e) {
+            selectedTextBox = quoteText;
+            e.stopPropagation();
+        });
         const fontSelector = document.getElementById('font-selector');
         const downloadBtn = document.getElementById('downloadBtn');
         const decreaseSizeBtn = document.getElementById('decreaseSizeBtn');
