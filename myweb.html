@@ -388,9 +388,17 @@
         const editModal = document.getElementById('editModal');
         const closeEditModal = document.getElementById('closeEditModal');
         editBtn.addEventListener('click', () => {
+            // If quoteText is currently selected, remember it
+            const wasQuoteSelected = (selectedTextBox === quoteText);
             editModal.classList.remove('hidden');
             setTimeout(() => {
                 editModal.style.transform = 'translateX(0)';
+                // On Android, re-select quoteText if it was selected before
+                if (wasQuoteSelected) {
+                    selectedTextBox = quoteText;
+                    // Optionally, focus quoteText for visual feedback
+                    quoteText.focus();
+                }
             }, 10);
         });
         closeEditModal.addEventListener('click', () => {
@@ -398,6 +406,30 @@
             setTimeout(() => {
                 editModal.classList.add('hidden');
             }, 300);
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('mousedown', function(event) {
+            if (!editModal.classList.contains('hidden')) {
+                // If click is outside the sidebar and not on the editBtn
+                if (!editModal.contains(event.target) && event.target !== editBtn) {
+                    editModal.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        editModal.classList.add('hidden');
+                    }, 300);
+                }
+            }
+        });
+        // Also handle touch events for mobile
+        document.addEventListener('touchstart', function(event) {
+            if (!editModal.classList.contains('hidden')) {
+                if (!editModal.contains(event.target) && event.target !== editBtn) {
+                    editModal.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        editModal.classList.add('hidden');
+                    }, 300);
+                }
+            }
         });
 
         // --- BG Color Change Logic ---
