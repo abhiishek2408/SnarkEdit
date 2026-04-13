@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image as ImageIcon, X } from 'lucide-react';
 
 const Sidebar = ({ 
   CATEGORIES, 
@@ -31,14 +32,14 @@ const Sidebar = ({
         onClick={() => setShowSidebar(false)}
       ></div>}
       <aside className={`sidebar glass ${showSidebar ? 'show' : ''}`}>
-        <div className="mobile-only" style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
-          <button className="icon-btn" onClick={() => setShowSidebar(false)}>
-            <X size={20} />
-          </button>
-        </div>
-      <div className="sidebar-header">
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Categories</p>
-        <div className="category-list">
+        <div className="sidebar-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categories</p>
+            <button className="icon-btn mobile-only" onClick={() => setShowSidebar(false)} style={{ display: 'none', padding: '4px' }}>
+              <X size={18} />
+            </button>
+          </div>
+          <div className="category-list">
           {CATEGORIES.map(cat => (
             <button 
               key={cat} 
@@ -82,7 +83,11 @@ const Sidebar = ({
               }
             }}
           >
-            <tool.icon size={20} color={activeTool === tool.id || activeFilters[tool.id] ? 'var(--primary)' : 'var(--text-muted)'} />
+            {tool.icon ? (
+              <tool.icon size={20} color={activeTool === tool.id || activeFilters[tool.id] ? 'var(--primary)' : 'var(--text-muted)'} />
+            ) : (
+              <ImageIcon size={20} color="var(--text-muted)" />
+            )}
             <span>{tool.label}</span>
           </button>
         ))}

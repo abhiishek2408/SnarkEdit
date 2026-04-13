@@ -11,10 +11,10 @@ import {
   Navigation, Phone, Shield, Speaker, Tag, Target, Terminal, 
   Thermometer, Tv, User, Video, Watch, Wifi, UtensilsCrossed,
   MoveHorizontal, MoveVertical, AlignLeft, AlignCenter, AlignRight,
-  Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, Pentagon, Magnet, Eraser
+  Activity, Layout, Triangle, Box, Grid, LayoutGrid, Diamond, Award, Leaf, Bookmark, Pentagon, Magnet, Eraser
 } from 'lucide-react';
 
-export const CATEGORIES = ['Cleanup', 'Image', 'Patterns', 'Text', 'Draw', 'Presets', 'Transform', 'Magic Tools'];
+export const CATEGORIES = ['Text', 'Cleanup', 'Image', 'Patterns', 'Draw', 'Presets', 'Transform', 'Magic Tools'];
 
 export const FONTS = [
   'Inter', 'Poppins', 'Montserrat', 'Roboto', 'Open Sans', 'Lato', 'Playfair Display', 
@@ -51,6 +51,7 @@ export const TOOLS_DEFS = [
   { id: 'highlights', label: 'Highlights', icon: Sun, category: 'Image', min: -100, max: 100, default: 0 },
   { id: 'shadows', label: 'Shadows', icon: Moon, category: 'Image', min: -100, max: 100, default: 0 },
   { id: 'clarity', label: 'Clarity', icon: Focus, category: 'Image', min: 0, max: 100, default: 0 },
+  { id: 'invert', label: 'Invert', icon: EyeOff, category: 'Image', min: 0, max: 100, default: 0, unit: '%' },
 
   // Presets
   { id: 'sepia', label: 'Sepia', icon: Camera, category: 'Presets', min: 0, max: 100, default: 0, unit: '%' },
@@ -78,6 +79,7 @@ export const TOOLS_DEFS = [
   { id: 'text-bulge', label: 'Bulge', icon: Maximize, category: 'Text', min: -100, max: 100, default: 0 },
   { id: 'text-outline', label: 'Outline', icon: Square, category: 'Text', min: 0, max: 15, default: 0 },
   { id: 'text-outline-color', label: 'Stroke Color', icon: Palette, category: 'Text' },
+  { id: 'text-squeeze', label: 'Squeeze', icon: Minus, category: 'Text', min: -100, max: 100, default: 0 },
   { id: 'text-glow', label: 'Glow Blur', icon: Sparkles, category: 'Text', min: 0, max: 60, default: 0 },
   { id: 'text-glow-color', label: 'Glow Color', icon: Ghost, category: 'Text' },
 
@@ -99,16 +101,16 @@ export const TOOLS_DEFS = [
 
   // Patterns
   { id: 'p-clean', label: 'Clean White', icon: Square, category: 'Patterns' },
-  { id: 'p-dots', label: 'Polka Dots', icon: GridIcon, category: 'Patterns' },
-  { id: 'p-grid', label: 'Graph Paper', icon: GridIcon, category: 'Patterns' },
+  { id: 'p-dots', label: 'Polka Dots', icon: Grid || LayoutGrid || Square, category: 'Patterns' },
+  { id: 'p-grid', label: 'Graph Paper', icon: Grid || LayoutGrid || Square, category: 'Patterns' },
   { id: 'p-diagonal', label: 'Diagonal', icon: MoveHorizontal, category: 'Patterns' },
-  { id: 'p-check', label: 'Checkered', icon: LayoutPanelTop, category: 'Patterns' },
+  { id: 'p-check', label: 'Checkered', icon: Grid || LayoutGrid || Square, category: 'Patterns' },
   { id: 'p-waves', label: 'Waves', icon: Wind, category: 'Patterns' },
   { id: 'p-stars', label: 'Star Night', icon: Star, category: 'Patterns' },
-  { id: 'p-bricks', label: 'Bricks', icon: Box, category: 'Patterns' },
+  { id: 'p-bricks', label: 'Bricks', icon: Square, category: 'Patterns' },
   { id: 'p-carbon', label: 'Carbon', icon: Zap, category: 'Patterns' },
   { id: 'p-blueprint', label: 'Blueprint', icon: Layout, category: 'Patterns' },
   { id: 'p-luxury', label: 'Luxury', icon: Diamond, category: 'Patterns' },
-  { id: 'p-noise', label: 'Noise', icon: Ghost, category: 'Patterns' },
+  { id: 'p-noise', label: 'Noise', icon: Droplet, category: 'Patterns' },
   { id: 'p-paper', label: 'Fiber Paper', icon: Files, category: 'Patterns' },
 ];

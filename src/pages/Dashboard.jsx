@@ -36,7 +36,7 @@ const TOOLS = TOOLS_DEFS;
 
 function Dashboard() {
   const [image, setImage] = useState(null);
-  const [activeTool, setActiveTool] = useState('add-image-layer');
+  const [activeTool, setActiveTool] = useState('add-text');
   const [showToolSettings, setShowToolSettings] = useState(false);
   
   const handleSelectTool = (toolId) => {
@@ -48,7 +48,7 @@ function Dashboard() {
     }
   };
   
-  const [activeCategory, setActiveCategory] = useState('Image');
+  const [activeCategory, setActiveCategory] = useState('Text');
   const [isProcessing, setIsProcessing] = useState(false);
   const [values, setValues] = useState({});
   const [history, setHistory] = useState([]);
@@ -60,6 +60,28 @@ function Dashboard() {
     text: 'Instagram algorithm is just like a flame look at something for one second and it spreads everywhere.',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
   });
+  const moveLayer = (direction) => {
+    if (!selectedLayerId) return;
+    setLayers(prev => {
+      const idx = prev.findIndex(l => l.id === selectedLayerId);
+      if (idx === -1) return prev;
+      const newLayers = [...prev];
+      if (direction === 'up' && idx < newLayers.length - 1) {
+        [newLayers[idx], newLayers[idx+1]] = [newLayers[idx+1], newLayers[idx]];
+      } else if (direction === 'down' && idx > 0) {
+        [newLayers[idx], newLayers[idx-1]] = [newLayers[idx-1], newLayers[idx]];
+      } else if (direction === 'front') {
+        const item = newLayers.splice(idx, 1)[0];
+        newLayers.push(item);
+      } else if (direction === 'back') {
+        const item = newLayers.splice(idx, 1)[0];
+        newLayers.unshift(item);
+      }
+      return newLayers;
+    });
+    saveToHistory();
+  };
+
   const fileInputRef = useRef(null);
   const avatarInputRef = useRef(null);
   const canvasRef = useRef(null);
@@ -738,6 +760,7 @@ function Dashboard() {
           if (activeTool === 'text-bulge') return { ...l, bulge: Number(val) };
           if (activeTool === 'text-outline') return { ...l, outline: Number(val) };
           if (activeTool === 'text-outline-color') return { ...l, outlineColor: val };
+          if (activeTool === 'text-squeeze') return { ...l, squeeze: Number(val) };
           if (activeTool === 'text-glow') return { ...l, glow: Number(val) };
           if (activeTool === 'text-glow-color') return { ...l, glowColor: val };
           if (activeTool === 'text-opacity' || activeTool === 'img-opacity') return { ...l, opacity: Number(val) };
@@ -1500,14 +1523,21 @@ function Dashboard() {
         )}
 
         <AnimatePresence>
-          {showToolSettings && activeTool && activeCategory !== 'Patterns' && !['add-image-layer', 'add-text', 'img-order', 'remove-bg-layer', 'person-cutout', 'auto-remove', 'autoTone', 'invert', 'emboss', 'edgeDetect'].includes(activeTool) && (
+          {showToolSettings && activeTool && activeCategory !== 'Patterns' && !['add-image-layer', 'add-text', 'remove-bg-layer', 'person-cutout', 'auto-remove', 'autoTone', 'emboss', 'edgeDetect'].includes(activeTool) && (
             <div 
+              className="tool-panel-overlay"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowToolSettings(false);
               }}
-              style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '8vh', paddingLeft: '100px', pointerEvents: 'auto' }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingTop: '80px', paddingRight: '20px', pointerEvents: 'none' }}
             >
-              <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.5rem', width: '400px', boxShadow: 'none' }}>
+              <motion.div 
+                initial={{ x: 300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 300, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()} 
+                style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.2rem', width: '300px', maxWidth: '85vw', boxShadow: 'var(--shadow-premium)' }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', cursor: 'grab' }}>
                   <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800 }}>⚙️ {TOOLS.find(t => t.id === activeTool)?.label || 'Tool Settings'}</h3>
                   <button onClick={() => setShowToolSettings(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: '1' }}>&times;</button>
@@ -1948,11 +1978,11 @@ function Dashboard() {
                     onChange={(e) => updateValue(e.target.value)}
                     style={{ 
                       width: '100%', 
-                      background: '#1a1a1a', 
+                      background: 'var(--bg-card)', 
                       border: '1px solid var(--border)', 
                       borderRadius: '8px', 
                       padding: '0.8rem', 
-                      color: 'white',
+                      color: 'var(--text-main)',
                       fontSize: '0.9rem',
                       outline: 'none',
                       cursor: 'pointer'
@@ -1960,7 +1990,7 @@ function Dashboard() {
                   >
                     <option value="" disabled>Select Font</option>
                     {FONTS.map(f => (
-                      <option key={f} value={f} style={{ fontFamily: f, background: '#1a1a1a' }}>{f}</option>
+                      <option key={f} value={f} style={{ fontFamily: f, background: 'var(--bg-card)', color: 'var(--text-main)' }}>{f}</option>
                     ))}
                   </select>
               </div>
@@ -2022,6 +2052,28 @@ function Dashboard() {
                     </div>
                     <input type="range" min="0" max="1" step="0.01" value={brushOpacity} onChange={(e) => setBrushOpacity(Number(e.target.value))} className="slider" />
                   </div>
+                </div>
+              </div>
+            ) : activeTool === 'img-order' ? (
+              <div style={{ padding: '0.5rem' }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem' }}>LAYER DEPTH</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                  <button className="btn-shape" onClick={() => moveLayer('front')} style={{ padding: '15px' }}>
+                    <Layers size={20} />
+                    <span style={{ fontSize: '0.65rem', display: 'block' }}>TO FRONT</span>
+                  </button>
+                  <button className="btn-shape" onClick={() => moveLayer('back')} style={{ padding: '15px' }}>
+                     <Layers size={20} style={{ opacity: 0.5 }} />
+                     <span style={{ fontSize: '0.65rem', display: 'block' }}>TO BACK</span>
+                  </button>
+                  <button className="btn-shape" onClick={() => moveLayer('up')} style={{ padding: '15px' }}>
+                    <ArrowUp size={20} />
+                    <span style={{ fontSize: '0.65rem', display: 'block' }}>FORWARD</span>
+                  </button>
+                  <button className="btn-shape" onClick={() => moveLayer('down')} style={{ padding: '15px' }}>
+                     <ArrowDown size={20} />
+                     <span style={{ fontSize: '0.65rem', display: 'block' }}>BACKWARD</span>
+                  </button>
                 </div>
               </div>
             ) : activeTool === 'eraser-tool' ? (
@@ -2098,6 +2150,7 @@ function Dashboard() {
                         if (activeTool === 'text-curve') return layer.curve || 0;
                         if (activeTool === 'text-bulge') return layer.bulge || 0;
                         if (activeTool === 'text-outline') return layer.outline || 0;
+                        if (activeTool === 'text-squeeze') return layer.squeeze || 0;
                         if (activeTool === 'text-glow') return layer.glow || 0;
                         if (activeTool === 'letter-spacing') return layer.letterSpacing;
                         if (activeTool === 'line-height') return layer.lineHeight;
@@ -2189,25 +2242,15 @@ function Dashboard() {
                     <p>Create a design from scratch layer by layer with full vector controls.</p>
                   </motion.div>
 
-                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => {
-                    setIsTemplateMode(true);
-                    setIsBlankCanvas(false);
-                    setIsStudioMode(false);
-                  }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(225, 29, 72, 0.4))' }}>
-                      <LayoutPanelTop size={32} />
-                    </div>
-                    <h3>Social Post</h3>
-                    <p>Use premium social media templates for Instagram, LinkedIn, and X.</p>
-                  </motion.div>
                 </div>
               </motion.div>
             ) : isStudioMode && !image ? (
               <motion.div key="studio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="studio-welcome">
                 <div style={{
-                  width: '400px',
-                  background: '#1a1a1a',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  width: '320px',
+                  maxWidth: '90vw',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
                   borderRadius: '1.25rem',
                   padding: '2rem 1.5rem',
                   textAlign: 'center',
@@ -2242,8 +2285,8 @@ function Dashboard() {
                       color: 'white',
                       border: 'none',
                       borderRadius: '16px',
-                      padding: '1.2rem 3rem',
-                      fontSize: '1.1rem',
+                      padding: '1rem 2rem',
+                      fontSize: '0.95rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       boxShadow: 'none',
@@ -2618,8 +2661,10 @@ function Dashboard() {
                           top: 0, 
                           x: layer.x,
                           y: layer.y,
-                          width: layer.width,
-                          height: layer.height,
+                          width: layer.type === 'text' ? 'auto' : layer.width,
+                          height: layer.type === 'text' ? 'auto' : layer.height,
+                          minWidth: layer.type === 'text' ? '120px' : 'none',
+                          minHeight: layer.type === 'text' ? '50px' : 'none',
                           scaleX: (layer.scale || 1) * (layer.flipX || 1),
                           scaleY: (layer.scale || 1) * (layer.flipY || 1),
                           rotate: layer.rotation || 0,
@@ -2633,8 +2678,8 @@ function Dashboard() {
                         <div style={{ 
                           position: 'relative', 
                           padding: 0, 
-                          width: '100%', 
-                          height: '100%',
+                          width: layer.type === 'text' ? 'auto' : '100%', 
+                          height: layer.type === 'text' ? 'auto' : '100%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
@@ -2723,8 +2768,9 @@ function Dashboard() {
                                 cursor: editingTextId === layer.id ? 'text' : 'move',
                                 pointerEvents: selectedLayerId === layer.id ? 'auto' : 'none',
                                 textAlign: layer.textAlign || 'center',
-                                width: '100%',
+                                width: layer.type === 'text' ? 'max-content' : '100%',
                                 height: 'auto',
+                                whiteSpace: 'nowrap',
                                 opacity: layer.opacity !== undefined ? layer.opacity : 1,
                                 position: 'relative',
                                 display: 'flex',
@@ -2746,12 +2792,18 @@ function Dashboard() {
                                       const dist = i - mid;
                                       const normalizedDist = dist / (arr.length || 1);
                                       
-                                      // 1. Arc Calculation (Circular bend)
-                                      const bend = (layer.curve || 0) * normalizedDist;
-                                      const yOffset = Math.pow(normalizedDist, 2) * (layer.curve || 0) * 0.5;
+                                      // Tamed Curve Calculation (Organized Sine-based Arch)
+                                      const curveVal = (layer.curve || 0) * 0.5; // Scale down input
                                       
-                                      // 2. Bulge Calculation (Fish-eye scaling from center)
+                                      // 1. Arch Calculation (Subtle sine bend)
+                                      const yOffset = (Math.cos(normalizedDist * Math.PI) - 1) * curveVal * 2.0;
+                                      
+                                      // 2. Tangent Rotation (Subtle alignment)
+                                      const bend = -Math.sin(normalizedDist * Math.PI) * curveVal * 0.4;
+                                      
+                                      // 3. Bulge & Squeeze Calculation
                                       const bulgeScale = 1 + (Math.cos(normalizedDist * Math.PI) * (layer.bulge || 0) * 0.015);
+                                      const squeezeX = Math.sin(normalizedDist * Math.PI) * (layer.squeeze || 0) * 0.4;
                                       
                                       // 3. Shadow/Glow & Outline Combined
                                       const glow = layer.glow || 0;
@@ -2767,7 +2819,7 @@ function Dashboard() {
                                           letterSpacing: `${layer.letterSpacing || 0}px`,
                                           lineHeight: layer.lineHeight || 1.2,
                                           transform: `
-                                            translateX(${dist * (layer.letterSpacing || 0) * 0.2}px)
+                                            translateX(${dist * (layer.letterSpacing || 0) * 0.2 + squeezeX}px)
                                             translateY(${yOffset}px)
                                             rotate(${bend}deg)
                                             scale(${bulgeScale})
