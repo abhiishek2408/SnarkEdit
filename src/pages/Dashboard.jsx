@@ -60,6 +60,9 @@ function Dashboard() {
     text: 'Instagram algorithm is just like a flame look at something for one second and it spreads everywhere.',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
   });
+  const [exportFormat, setExportFormat] = useState('png');
+  const [exportQuality, setExportQuality] = useState(1.0);
+
   const moveLayer = (direction) => {
     if (!selectedLayerId) return;
     setLayers(prev => {
@@ -556,7 +559,13 @@ function Dashboard() {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
+    setActiveCategory('Transform');
+    setActiveTool('export-design');
+    setShowToolSettings(true);
+  };
+
+  const handleExport = async () => {
     if (!image && !isBlankCanvas && !isTemplateMode) return;
     
     notify("Rendering design for download... 🎨");
@@ -635,8 +644,9 @@ function Dashboard() {
 
 
       const link = document.createElement('a');
-      link.download = `SnarkEdit_${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
+      const ext = exportFormat || 'png';
+      link.download = `SnarkEdit_${Date.now()}.${ext}`;
+      link.href = canvas.toDataURL(`image/${ext === 'jpg' ? 'jpeg' : ext}`, exportQuality || 1.0);
       link.click();
       
       notify("Design saved successfully! 🚀");
@@ -1473,8 +1483,11 @@ function Dashboard() {
         onUndo={() => setHistoryIndex(prev => prev - 1)}
         onRedo={() => setHistoryIndex(prev => prev + 1)}
         image={image}
+        isStudioMode={isStudioMode}
         onDownload={handleDownload}
         onUploadTrigger={() => fileInputRef.current?.click()}
+        showLayerPanel={showLayerPanel}
+        setShowLayerPanel={setShowLayerPanel}
         onHome={() => {
           setIsBlankCanvas(false);
           setIsStudioMode(false);
@@ -2075,6 +2088,54 @@ function Dashboard() {
                      <span style={{ fontSize: '0.65rem', display: 'block' }}>BACKWARD</span>
                   </button>
                 </div>
+              </div>
+            ) : activeTool === 'export-design' ? (
+              <div style={{ padding: '0.5rem' }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem', letterSpacing: '1px' }}>🚀 EXPORT STUDIO</p>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.8rem', fontWeight: 700 }}>SELECT FORMAT</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                    {['png', 'jpg', 'jpeg'].map(f => (
+                      <button 
+                        key={f} 
+                        onClick={() => setExportFormat(f)} 
+                        style={{ 
+                          background: exportFormat === f ? 'var(--primary)' : 'var(--bg-card)', 
+                          border: `1px solid ${exportFormat === f ? 'var(--primary)' : 'var(--border)'}`, 
+                          borderRadius: '10px', 
+                          padding: '12px 5px', 
+                          color: exportFormat === f ? 'white' : 'var(--text-main)', 
+                          cursor: 'pointer', 
+                          fontSize: '0.7rem', 
+                          fontWeight: 800, 
+                          textTransform: 'uppercase' 
+                        }}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {exportFormat !== 'png' && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                       <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 800 }}>QUALITY</p>
+                       <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900 }}>{Math.round(exportQuality * 100)}%</span>
+                    </div>
+                    <input type="range" min="0.1" max="1" step="0.1" value={exportQuality} onChange={(e) => setExportQuality(Number(e.target.value))} className="slider" />
+                  </div>
+                )}
+
+                <button 
+                  className="btn-primary" 
+                  style={{ width: '100%', padding: '1rem', marginTop: '1rem', borderRadius: '12px' }} 
+                  onClick={() => handleExport()}
+                >
+                  <Download size={18} />
+                  <span>DOWNLOAD NOW</span>
+                </button>
               </div>
             ) : activeTool === 'eraser-tool' ? (
               <div style={{ padding: '0.5rem' }}>

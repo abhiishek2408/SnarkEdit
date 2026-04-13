@@ -63,6 +63,8 @@ export const TOOLS_DEFS = [
   { id: 'kodak', label: 'Kodak', icon: ImageIcon, category: 'Presets', min: 0, max: 100, default: 0, unit: '%' },
 
   // Transform
+  { id: 'img-order', label: 'Layer Order', icon: Layers, category: 'Transform' },
+  { id: 'export-design', label: 'Export', icon: Download, category: 'Transform' },
   { id: 'crop', label: 'Crop', icon: Crop, category: 'Transform' },
   { id: 'rotateL', label: 'Rotate L', icon: RotateCcw, category: 'Transform' },
   { id: 'rotateR', label: 'Rotate R', icon: RotateCw, category: 'Transform' },
