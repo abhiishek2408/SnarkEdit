@@ -1,16 +1,20 @@
-import React from 'react';
-import { Smile, Undo, Redo, Download, Image as ImageIcon, Home, Sun, Moon } from 'lucide-react';
+import { Smile, Undo, Redo, Download, Image as ImageIcon, Home, Sun, Moon, Menu, X } from 'lucide-react';
 
-const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, onDownload, onUploadTrigger, onHome, theme, toggleTheme }) => {
+const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, onDownload, onUploadTrigger, onHome, theme, toggleTheme, showSidebar, setShowSidebar }) => {
   return (
     <nav className="navbar glass">
-      <div className="brand" onClick={onHome} style={{ cursor: 'pointer' }}>
-        <div className="brand-icon">
-          <Smile color="white" size={24} />
-        </div>
-        <div className="brand-text">
-          <h1>SnarkEdit</h1>
-          <p>Professional Image Studio</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button className="icon-btn mobile-only" onClick={() => setShowSidebar(!showSidebar)} style={{ display: 'none', border: 'none', background: 'transparent' }}>
+           <Menu size={24} color={showSidebar ? 'var(--primary)' : 'var(--text-main)'} />
+        </button>
+        <div className="brand" onClick={onHome} style={{ cursor: 'pointer' }}>
+          <div className="brand-icon">
+            <Smile color="white" size={24} />
+          </div>
+          <div className="brand-text">
+            <h1>SnarkEdit</h1>
+            <p>Professional Image Studio</p>
+          </div>
         </div>
       </div>
 

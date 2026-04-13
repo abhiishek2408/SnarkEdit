@@ -31,7 +31,8 @@ import LayerPanel from '../components/LayerPanel';
 import { CATEGORIES, FONTS, TOOLS_DEFS } from '../constants/tools';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
-const TOOLS = [...TOOLS_DEFS];
+// Using the exported defs directly to ensure they stay in sync
+const TOOLS = TOOLS_DEFS;
 
 function Dashboard() {
   const [image, setImage] = useState(null);
@@ -102,6 +103,16 @@ function Dashboard() {
   const adjustTimerRef = useRef(null);
   const [editingTextId, setEditingTextId] = useState(null);
   const editingTextRef = useRef(null);
+  const [showSidebar, setShowSidebar] = useState(window.innerWidth > 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) setShowSidebar(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [clipboard, setClipboard] = useState(null);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [brushType, setBrushType] = useState('solid'); // solid, neon, spray, pencil
@@ -1449,10 +1460,14 @@ function Dashboard() {
         }}
         theme={theme}
         toggleTheme={toggleTheme}
+        showSidebar={showSidebar}
+        setShowSidebar={setShowSidebar}
       />
 
       <main className="main-content">
         <Sidebar 
+          showSidebar={showSidebar}
+          setShowSidebar={setShowSidebar}
           CATEGORIES={CATEGORIES}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}

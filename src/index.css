@@ -5,16 +5,16 @@
   --accent: #f43f5e;
   
   --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card: #ffffff;
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border: rgba(0, 0, 0, 0.08);
-  --glass: rgba(255, 255, 255, 0.6);
+  --glass: #ffffff;
   --radius-lg: 1.5rem;
   --radius-xl: 2rem;
   --shadow-premium: none;
-  --tool-bg: rgba(0, 0, 0, 0.03);
-  --input-bg: rgba(0, 0, 0, 0.05);
+  --tool-bg: #f1f5f9;
+  --input-bg: #e2e8f0;
 }
 
 [data-theme='dark'] {
@@ -23,10 +23,10 @@
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.08);
-  --glass: rgba(255, 255, 255, 0.02);
+  --glass: #0a0a0a;
   --shadow-premium: none;
-  --tool-bg: rgba(255, 255, 255, 0.03);
-  --input-bg: rgba(255, 255, 255, 0.05);
+  --tool-bg: #111111;
+  --input-bg: #151515;
 }
 
 * {
@@ -61,8 +61,6 @@ body::-webkit-scrollbar {
 /* Glassmorphism */
 .glass {
   background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
@@ -163,7 +161,7 @@ body::-webkit-scrollbar {
 
 /* Sidebar */
 .sidebar {
-  width: 320px;
+  width: 280px;
   display: flex;
   flex-direction: column;
   height: 75vh;
@@ -701,4 +699,67 @@ body::-webkit-scrollbar {
 
 .blank-canvas-base {
   transition: background 0.3s ease;
+}
+
+/* Mobile Sidebar Responsiveness */
+@media (max-width: 1024px) {
+  .main-content {
+    flex-direction: column;
+    padding: 0;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    max-width: 70%;
+    height: 100vh !important;
+    z-index: 5000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    background: var(--glass) !important;
+    border-right: 1px solid var(--border);
+    display: flex !important;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 4999;
+  }
+  
+  .workspace {
+    padding: 1rem !important;
+    width: 100%;
+    min-height: calc(100vh - 80px);
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    padding: 1rem;
+  }
+  
+  .nav-links {
+    display: none;
+  }
+  
+  .brand-text p {
+    display: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .mobile-only {
+    display: flex !important;
+  }
 }

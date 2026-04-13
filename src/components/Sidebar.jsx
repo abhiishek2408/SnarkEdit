@@ -20,10 +20,22 @@ const Sidebar = ({
   centerLayer, 
   addLayer, 
   applyPattern, 
-  setShowShadeModal 
+  setShowShadeModal,
+  showSidebar,
+  setShowSidebar
 }) => {
   return (
-    <aside className="sidebar glass">
+    <>
+      {showSidebar && <div 
+        className="sidebar-overlay mobile-only" 
+        onClick={() => setShowSidebar(false)}
+      ></div>}
+      <aside className={`sidebar glass ${showSidebar ? 'show' : ''}`}>
+        <div className="mobile-only" style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
+          <button className="icon-btn" onClick={() => setShowSidebar(false)}>
+            <X size={20} />
+          </button>
+        </div>
       <div className="sidebar-header">
         <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Categories</p>
         <div className="category-list">
@@ -76,6 +88,7 @@ const Sidebar = ({
         ))}
       </div>
     </aside>
+    </>
   );
 };
 

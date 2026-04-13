@@ -96,4 +96,19 @@ export const TOOLS_DEFS = [
   { id: 'add-shape', label: 'Add Shape', icon: Square, category: 'Magic Tools' },
   { id: 'bg-changer', label: 'Change BG', icon: Palette, category: 'Magic Tools' },
   { id: 'gradient-bg', label: 'Gradient BG', icon: Wand2, category: 'Magic Tools' },
+
+  // Patterns
+  { id: 'p-clean', label: 'Clean White', icon: Square, category: 'Patterns' },
+  { id: 'p-dots', label: 'Polka Dots', icon: GridIcon, category: 'Patterns' },
+  { id: 'p-grid', label: 'Graph Paper', icon: GridIcon, category: 'Patterns' },
+  { id: 'p-diagonal', label: 'Diagonal', icon: MoveHorizontal, category: 'Patterns' },
+  { id: 'p-check', label: 'Checkered', icon: LayoutPanelTop, category: 'Patterns' },
+  { id: 'p-waves', label: 'Waves', icon: Wind, category: 'Patterns' },
+  { id: 'p-stars', label: 'Star Night', icon: Star, category: 'Patterns' },
+  { id: 'p-bricks', label: 'Bricks', icon: Box, category: 'Patterns' },
+  { id: 'p-carbon', label: 'Carbon', icon: Zap, category: 'Patterns' },
+  { id: 'p-blueprint', label: 'Blueprint', icon: Layout, category: 'Patterns' },
+  { id: 'p-luxury', label: 'Luxury', icon: Diamond, category: 'Patterns' },
+  { id: 'p-noise', label: 'Noise', icon: Ghost, category: 'Patterns' },
+  { id: 'p-paper', label: 'Fiber Paper', icon: Files, category: 'Patterns' },
 ];
