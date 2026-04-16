@@ -1,5 +1,8 @@
 import React from 'react';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { 
+  Image as ImageIcon, X, Undo, Redo, Download, 
+  Sun, Moon, Layers, Layout, Edit3
+} from 'lucide-react';
 
 const Sidebar = ({ 
   CATEGORIES, 
@@ -23,7 +26,20 @@ const Sidebar = ({
   applyPattern, 
   setShowShadeModal,
   showSidebar,
-  setShowSidebar
+  setShowSidebar,
+  onUndo, 
+  onRedo, 
+  onDownload, 
+  historyIndex, 
+  historyLength, 
+  theme, 
+  toggleTheme, 
+  showLayerPanel, 
+  setShowLayerPanel,
+  setIsBlankCanvas,
+  setIsTemplateMode,
+  isBlankCanvas,
+  isTemplateMode
 }) => {
   return (
     <>
@@ -33,6 +49,37 @@ const Sidebar = ({
       ></div>}
       <aside className={`sidebar glass ${showSidebar ? 'show' : ''}`}>
         <div className="sidebar-header">
+          {/* Mobile Specific Header Actions */}
+          <div className="mobile-only" style={{ display: 'none', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+             <p style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary)', letterSpacing: '1px' }}>QUICK ACTIONS</p>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                <button className="icon-btn" onClick={onUndo} disabled={historyIndex <= 0} style={{ width: '100%', height: '45px', borderRadius: '12px' }}><Undo size={20} /></button>
+                <button className="icon-btn" onClick={onRedo} disabled={historyIndex >= historyLength - 1} style={{ width: '100%', height: '45px', borderRadius: '12px' }}><Redo size={20} /></button>
+                <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} style={{ width: '100%', height: '45px', borderRadius: '12px', color: showLayerPanel ? 'var(--primary)' : 'inherit' }}><Layers size={20} /></button>
+                <button className="icon-btn" onClick={toggleTheme} style={{ width: '100%', height: '45px', borderRadius: '12px' }}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
+             </div>
+             
+             <button className="btn-primary" onClick={onDownload} style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
+                <Download size={18} />
+                <span>Export Design</span>
+             </button>
+
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                <button 
+                  onClick={() => { setIsBlankCanvas(false); setIsTemplateMode(false); setShowSidebar(false); }}
+                  style={{ background: !isBlankCanvas && !isTemplateMode ? 'var(--primary)' : 'var(--tool-bg)', color: !isBlankCanvas && !isTemplateMode ? 'white' : 'var(--text-main)', border: 'none', padding: '10px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+                >
+                  <Edit3 size={14} /> Editor
+                </button>
+                <button 
+                  onClick={() => { setIsBlankCanvas(true); setIsTemplateMode(false); setShowSidebar(false); }}
+                  style={{ background: isBlankCanvas ? 'var(--primary)' : 'var(--tool-bg)', color: isBlankCanvas ? 'white' : 'var(--text-main)', border: 'none', padding: '10px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+                >
+                  <Layout size={14} /> Canvas
+                </button>
+             </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categories</p>
             <button className="icon-btn mobile-only" onClick={() => setShowSidebar(false)} style={{ display: 'none', padding: '4px' }}>

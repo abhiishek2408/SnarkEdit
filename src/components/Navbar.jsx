@@ -4,7 +4,7 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
   return (
     <nav className="navbar glass">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button className="icon-btn mobile-only" onClick={() => setShowSidebar(!showSidebar)} style={{ display: 'none', border: 'none', background: 'transparent' }}>
+        <button className="icon-btn mobile-only" onClick={() => setShowSidebar(!showSidebar)} style={{ border: 'none', background: 'transparent' }}>
            <Menu size={24} color={showSidebar ? 'var(--primary)' : 'var(--text-main)'} />
         </button>
         <div className="brand" onClick={onHome} style={{ cursor: 'pointer' }}>
@@ -18,7 +18,7 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
         </div>
       </div>
 
-      <div className="nav-links">
+      <div className="nav-links desktop-only">
         <a href="#" className={!isTemplateMode && !isBlankCanvas ? 'active' : ''} onClick={() => {
           setIsTemplateMode(false);
           setIsBlankCanvas(false);
@@ -29,7 +29,7 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
         }}>Blank Canvas</a>
       </div>
 
-      <div className="nav-actions">
+      <div className="nav-actions desktop-only">
         <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} title={showLayerPanel ? 'Hide Layers' : 'Show Layers'} style={{ color: showLayerPanel ? 'var(--primary)' : 'inherit' }}>
           <Layers size={18} />
         </button>

@@ -1524,6 +1524,19 @@ function Dashboard() {
           addLayer={addLayer}
           applyPattern={applyPattern}
           setShowShadeModal={setShowShadeModal}
+          onUndo={() => setHistoryIndex(prev => prev - 1)}
+          onRedo={() => setHistoryIndex(prev => prev + 1)}
+          onDownload={handleDownload}
+          historyIndex={historyIndex}
+          historyLength={history.length}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          showLayerPanel={showLayerPanel}
+          setShowLayerPanel={setShowLayerPanel}
+          setIsBlankCanvas={setIsBlankCanvas}
+          setIsTemplateMode={setIsTemplateMode}
+          isBlankCanvas={isBlankCanvas}
+          isTemplateMode={isTemplateMode}
         />
 
         {showLayerPanel && (

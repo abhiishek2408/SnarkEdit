@@ -766,4 +766,7 @@ body::-webkit-scrollbar {
   .mobile-only {
     display: flex !important;
   }
+  .desktop-only {
+    display: none !important;
+  }
 }
