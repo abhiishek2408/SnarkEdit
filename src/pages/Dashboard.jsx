@@ -1414,7 +1414,7 @@ function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', background: '#1a1a1a', border: '1px solid #10b981', padding: '6px 14px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none', zIndex: 10000, boxShadow: 'none' }}
+              style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', background: 'var(--bg-card)', border: '1px solid #10b981', padding: '6px 14px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'none', zIndex: 10000, boxShadow: 'none' }}
             >
                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
                <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Auto-Save Active</span>
@@ -1427,10 +1427,10 @@ function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: '#000000', zIndex: 20000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}
+            style={{ position: 'fixed', inset: 0, background: 'var(--bg-main)', zIndex: 20000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}
           >
             <div className="loader"></div>
-            <p style={{ color: 'white', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '1px' }}>AI MAGIC IN PROGRESS...</p>
+            <p style={{ color: 'var(--text-main)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '1px' }}>AI MAGIC IN PROGRESS...</p>
           </motion.div>
         )}
 
@@ -1837,7 +1837,7 @@ function Dashboard() {
                             document.getElementById('deg-val').innerText = `${dir.deg}°`;
                             changeBackground(`linear-gradient(${dir.deg}deg, ${start} 0%, ${end} 100%)`);
                           }}
-                          style={{ height: '30px', background: '#222', border: '1px solid var(--border)', borderRadius: '6px', color: 'white', fontSize: '14px', cursor: 'pointer' }}
+                          style={{ height: '30px', background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '14px', cursor: 'pointer' }}
                         >
                           {dir.label}
                         </button>
@@ -1871,7 +1871,7 @@ function Dashboard() {
                       value={canvasBg} 
                       placeholder="#hexcode"
                       onChange={(e) => changeBackground(e.target.value)}
-                      style={{ flex: 1, background: '#111', border: '1px solid var(--border)', borderRadius: '8px', padding: '0 12px', color: 'white', fontSize: '0.8rem', outline: 'none' }}
+                      style={{ flex: 1, background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0 12px', color: 'var(--text-main)', fontSize: '0.8rem', outline: 'none' }}
                     />
                   </div>
                 </div>
@@ -1912,7 +1912,7 @@ function Dashboard() {
                         type="number" 
                         value={canvasSize.width}
                         onChange={(e) => setCanvasSize({ ...canvasSize, width: parseInt(e.target.value) || 0 })}
-                        style={{ width: '100%', padding: '0.6rem', background: '#111', border: '1px solid var(--border)', borderRadius: '8px', color: 'white', fontSize: '0.8rem' }}
+                        style={{ width: '100%', padding: '0.6rem', background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)', fontSize: '0.8rem' }}
                       />
                     </div>
                     <div style={{ flex: 1 }}>
@@ -1921,7 +1921,7 @@ function Dashboard() {
                         type="number" 
                         value={canvasSize.height}
                         onChange={(e) => setCanvasSize({ ...canvasSize, height: parseInt(e.target.value) || 0 })}
-                        style={{ width: '100%', padding: '0.6rem', background: '#111', border: '1px solid var(--border)', borderRadius: '8px', color: 'white', fontSize: '0.8rem' }}
+                        style={{ width: '100%', padding: '0.6rem', background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)', fontSize: '0.8rem' }}
                       />
                     </div>
                   </div>
@@ -2044,7 +2044,7 @@ function Dashboard() {
                   <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.6rem', fontWeight: 700 }}>PRESET SIZES</p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                     {[2, 10, 35, 90].map(s => (
-                      <button key={s} onClick={() => { setBrushSize(s); triggerBrushPreview(); }} style={{ background: brushSize === s ? 'var(--primary)' : '#222', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px 5px', color: 'white', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 800, transition: 'all 0.2s' }}>
+                      <button key={s} onClick={() => { setBrushSize(s); triggerBrushPreview(); }} style={{ background: brushSize === s ? 'var(--primary)' : 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 5px', color: brushSize === s ? 'white' : 'var(--text-main)', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 800, transition: 'all 0.2s' }}>
                         {s === 2 ? 'THIN' : s === 10 ? 'MED' : s === 35 ? 'BOLD' : 'HUGE'}
                       </button>
                     ))}
@@ -2060,7 +2060,7 @@ function Dashboard() {
                   </div>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input type="color" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ width: '50px', height: '45px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer' }} />
-                    <input type="text" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ flex: 1, background: '#111', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.8rem', fontWeight: 700 }} />
+                    <input type="text" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ flex: 1, background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text-main)', fontSize: '0.8rem', fontWeight: 700 }} />
                   </div>
                 </div>
 
@@ -3362,7 +3362,7 @@ function Dashboard() {
                     display: flex !important;
                     align-items: flex-start;
                     justify-content: center;
-                    padding: 20px 100px 100px 100px;
+                    padding: 20px;
                     background-color: var(--bg-main);
                     background-image: 
                       linear-gradient(45deg, var(--border) 25%, transparent 25%),
@@ -3747,8 +3747,8 @@ function Dashboard() {
           }}
           style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', pointerEvents: 'auto' }}
         >
-          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', width: '90%', maxWidth: '350px', boxShadow: 'var(--shadow-premium)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', cursor: 'grab' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.75rem', width: '90%', maxWidth: '280px', boxShadow: 'var(--shadow-premium)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', cursor: 'grab' }}>
               <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', fontWeight: 800 }}>🎨 Pattern Settings</h3>
               <div style={{ display: 'flex', gap: '0.4rem', cursor: 'default' }}>
                 <button onClick={() => { setCurrentPattern(null); setCanvasBg('#ffffff'); setShowShadeModal(false); }} style={{ padding: '2px 8px', fontSize: '0.6rem', background: 'rgba(239, 68, 68, 0.2)', border: 'none', borderRadius: '4px', color: '#f87171', cursor: 'pointer' }}>Clear</button>
@@ -3757,7 +3757,7 @@ function Dashboard() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.4rem', cursor: 'default' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '50vh', overflowY: 'auto', paddingRight: '0.4rem', cursor: 'default' }}>
               
               <div style={{ background: 'var(--tool-bg)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
@@ -3787,7 +3787,7 @@ function Dashboard() {
               </div>
 
               {['top', 'bottom', 'left', 'right', 'center'].map(dir => (
-                <div key={dir} style={{ background: 'var(--tool-bg)', padding: '0.5rem', borderRadius: '6px' }}>
+                <div key={dir} style={{ background: 'var(--tool-bg)', padding: '0.35rem 0.5rem', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()}>
                       <input 

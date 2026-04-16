@@ -18,16 +18,6 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
         </div>
       </div>
 
-      <div className="nav-links desktop-only">
-        <a href="#" className={!isTemplateMode && !isBlankCanvas ? 'active' : ''} onClick={() => {
-          setIsTemplateMode(false);
-          setIsBlankCanvas(false);
-        }}>Editor</a>
-        <a href="#" className={isBlankCanvas ? 'active' : ''} onClick={() => {
-          setIsBlankCanvas(true);
-          setIsTemplateMode(false);
-        }}>Blank Canvas</a>
-      </div>
 
       <div className="nav-actions desktop-only">
         <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} title={showLayerPanel ? 'Hide Layers' : 'Show Layers'} style={{ color: showLayerPanel ? 'var(--primary)' : 'inherit' }}>

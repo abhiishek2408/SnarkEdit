@@ -28,7 +28,7 @@ const LayerPanel = ({
       width: '240px',
       position: 'absolute',
       right: '1rem',
-      top: '6.5rem',
+      top: '7.5rem',
       zIndex: 100,
       padding: '1rem',
       maxHeight: '400px',
