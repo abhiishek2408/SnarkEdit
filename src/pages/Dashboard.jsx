@@ -82,6 +82,7 @@ function Dashboard() {
   const [patternOpacity, setPatternOpacity] = useState(0.4);
   const [patternColor, setPatternColor] = useState('#000000');
   const [currentPattern, setCurrentPattern] = useState(null);
+  const [patternRotation, setPatternRotation] = useState(0);
   const [patternShades, setPatternShades] = useState({
     top: { enabled: false, color: '#ffffff', spread: 100 },
     bottom: { enabled: false, color: '#ffffff', spread: 100 },
@@ -1119,8 +1120,9 @@ function Dashboard() {
     return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0,0,0';
   };
 
-  const getPatternCSS = (patternId, scale, opacity, colorHex, shades) => {
+  const getPatternCSS = (patternId, scale, opacity, colorHex, shades, rotation) => {
     const s = scale || 1;
+    const r = rotation || 0;
     const o = opacity !== undefined ? opacity : 0.4;
     const rgb = hexToRgb(colorHex || '#000000');
     const color = `rgba(${rgb}, ${o})`;
@@ -1147,7 +1149,11 @@ function Dashboard() {
       'p-luxury': `linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a) ${10 * s}px ${10 * s}px 0 0 / ${20 * s}px ${20 * s}px #000000`,
       'p-triangles': `url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIzNCIgdmlld0JveD0iMCAwIDIwIDM0Ij48ZyBmaWxsPSIjY2JkNWUxIiBmaWxsLW9wYWNpdHk9IjAuNCI+PHBhdGggZD0iTTAgMEwyMCAxMEwyMCAzNEwwIDI0eiIvPjwvZz48L3N2Zz4=') 0 0 / ${20 * s}px ${34 * s}px #ffffff`,
       'p-stripe-thick': `repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 ${10 * s}px, #ffffff ${10 * s}px, #ffffff ${20 * s}px)`,
-      'p-modern': `radial-gradient(circle at 100% 100%, #ffffff 0, #ffffff ${3 * s}px, transparent ${3 * s}px) 0 0 / ${20 * s}px ${20 * s}px, radial-gradient(circle at 0 0, #ffffff 0, #ffffff ${3 * s}px, transparent ${3 * s}px) 0 0 / ${20 * s}px ${20 * s}px, #f1f5f9`
+      'p-modern': `radial-gradient(circle at 100% 100%, #ffffff 0, #ffffff ${3 * s}px, transparent ${3 * s}px) 0 0 / ${20 * s}px ${20 * s}px, radial-gradient(circle at 0 0, #ffffff 0, #ffffff ${3 * s}px, transparent ${3 * s}px) 0 0 / ${20 * s}px ${20 * s}px, #f1f5f9`,
+      'p-polar-square': `conic-gradient(from ${45 + r}deg, ${color} 0deg 90deg, #ffffff 90deg 180deg, ${color} 180deg 270deg, #ffffff 270deg 360deg) 0 0 / ${40 * s}px ${40 * s}px`,
+      'p-polar-triangle': `conic-gradient(from ${r}deg, ${color} 0deg 120deg, #ffffff 120deg 240deg, ${color} 240deg 360deg) 0 0 / ${50 * s}px ${50 * s}px`,
+      'p-polar-hexagon': `conic-gradient(from ${r}deg, ${color} 0deg 60deg, #ffffff 60deg 120deg, ${color} 120deg 180deg, #ffffff 180deg 240deg, ${color} 240deg 300deg, #ffffff 300deg 360deg) 0 0 / ${60 * s}px ${60 * s}px`,
+      'p-polar-pentagon': `conic-gradient(from ${r}deg, ${color} 0deg 72deg, #ffffff 72deg 144deg, ${color} 144deg 216deg, #ffffff 216deg 288deg, ${color} 288deg 360deg) 0 0 / ${55 * s}px ${55 * s}px`
     };
 
     let shadeGradients = '';
@@ -1164,14 +1170,14 @@ function Dashboard() {
 
   const applyPattern = (patternId) => {
     setCurrentPattern(patternId);
-    setCanvasBg(getPatternCSS(patternId, patternScale, patternOpacity, patternColor, patternShades));
+    setCanvasBg(getPatternCSS(patternId, patternScale, patternOpacity, patternColor, patternShades, patternRotation));
   };
 
   useEffect(() => {
     if (currentPattern) {
-      setCanvasBg(getPatternCSS(currentPattern, patternScale, patternOpacity, patternColor, patternShades));
+      setCanvasBg(getPatternCSS(currentPattern, patternScale, patternOpacity, patternColor, patternShades, patternRotation));
     }
-  }, [patternScale, currentPattern, patternOpacity, patternColor, patternShades]);
+  }, [patternScale, currentPattern, patternOpacity, patternColor, patternShades, patternRotation]);
 
   const applyTemplate = (toolId) => {
     if (toolId.startsWith('t-')) {
@@ -3876,9 +3882,19 @@ function Dashboard() {
                     <input type="range" min="0" max="1" step="0.05" value={patternOpacity} onChange={(e) => setPatternOpacity(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)', height: '4px' }} onPointerDown={(e) => e.stopPropagation()} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Base Color</span>
-                  <input type="color" value={patternColor} onChange={(e) => setPatternColor(e.target.value)} style={{ width: '30px', height: '18px', border: 'none', borderRadius: '4px', background: 'none', padding: 0, cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()} />
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.6rem', marginBottom: '0.6rem', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Rotate</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 700 }}>{patternRotation}°</span>
+                    </div>
+                    <input type="range" min="0" max="360" step="1" value={patternRotation} onChange={(e) => setPatternRotation(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)', height: '4px' }} onPointerDown={(e) => e.stopPropagation()} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '5px 8px', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Tint</span>
+                    <input type="color" value={patternColor} onChange={(e) => setPatternColor(e.target.value)} style={{ width: '24px', height: '24px', border: 'none', borderRadius: '50%', background: 'none', padding: 0, cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()} />
+                  </div>
                 </div>
               </div>
 

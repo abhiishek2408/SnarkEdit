@@ -124,4 +124,8 @@ export const TOOLS_DEFS = [
   { id: 'p-luxury', label: 'Luxury', icon: Diamond, category: 'Patterns' },
   { id: 'p-noise', label: 'Noise', icon: Droplet, category: 'Patterns' },
   { id: 'p-paper', label: 'Fiber Paper', icon: Files, category: 'Patterns' },
+  { id: 'p-polar-square', label: 'Polar Square', icon: Square, category: 'Patterns' },
+  { id: 'p-polar-triangle', label: 'Polar Triangle', icon: Triangle, category: 'Patterns' },
+  { id: 'p-polar-hexagon', label: 'Polar Hexagon', icon: Hexagon, category: 'Patterns' },
+  { id: 'p-polar-pentagon', label: 'Polar Pentagon', icon: Pentagon, category: 'Patterns' },
 ];
