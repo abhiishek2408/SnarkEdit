@@ -10,7 +10,7 @@ import {
   Camera, LayoutPanelTop, Fingerprint, Focus, 
   Glasses, Hand, Highlighter, Map, MessageSquare, Mic, Music, 
   Navigation, Phone, Shield, Speaker, Tag, Target, Terminal, 
-  Thermometer, Tv, User, Video, Watch, Wifi, Zap as Flash, UtensilsCrossed,
+  Thermometer, Tv, User, Video, Watch, Wifi, UtensilsCrossed,
   MoveHorizontal, MoveVertical, AlignLeft, AlignCenter, AlignRight,
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
@@ -789,10 +789,15 @@ function Dashboard() {
           if (activeTool === 'letter-spacing') return { ...l, letterSpacing: Number(val) };
           if (activeTool === 'line-height') return { ...l, lineHeight: Number(val) };
           if (activeTool === 'text-align') return { ...l, textAlign: val };
-          if (activeTool === 'text-curve') return { ...l, curve: Number(val) };
+          if (activeTool === 'text-arc-z') return { ...l, curve: Number(val) };
+          if (activeTool === 'text-arc-x') return { ...l, arcX: Number(val) };
+          if (activeTool === 'text-arc-y') return { ...l, arcY: Number(val) };
           if (activeTool === 'brush-type') { setBrushType(val); return l; }
           if (activeTool === 'text-bulge') return { ...l, bulge: Number(val) };
-          if (activeTool === 'text-bulge') return { ...l, bulge: Number(val) };
+          if (activeTool === 'text-twist') return { ...l, twist: Number(val) };
+          if (activeTool === 'text-emboss') return { ...l, emboss: Number(val) };
+          if (activeTool === 'text-rotate-x') return { ...l, rotateX: Number(val) };
+          if (activeTool === 'text-rotate-y') return { ...l, rotateY: Number(val) };
           if (activeTool === 'text-outline') return { ...l, outline: Number(val) };
           if (activeTool === 'text-outline-color') return { ...l, outlineColor: val };
           if (activeTool === 'text-squeeze') return { ...l, squeeze: Number(val) };
@@ -2004,12 +2009,13 @@ function Dashboard() {
                   ))}
                 </div>
               </div>
-            ) : activeTool === 'text-color' || activeTool === 'img-outline-color' || activeTool === 'text-outline-color' || activeTool === 'text-glow-color' ? (
+            ) : activeTool === 'text-color' || activeTool === 'img-outline-color' || activeTool === 'text-outline-color' || activeTool === 'text-glow-color' || activeTool === 'brush-color' ? (
               <div className="color-panel">
                 <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1rem' }}>
                    {activeTool === 'text-color' ? 'Text Color' : 
                     activeTool === 'text-outline-color' ? 'Outline Color' :
-                    activeTool === 'text-glow-color' ? 'Glow Color' : 'Layer Color'}
+                    activeTool === 'text-glow-color' ? 'Glow Color' : 
+                    activeTool === 'brush-color' ? 'Brush Color' : 'Layer Color'}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
                   {['#ffffff', '#000000', '#94a3b8', '#475569', '#3b82f6', '#0ea5e9', '#06b6d4', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1'].map(color => (
@@ -2020,7 +2026,52 @@ function Dashboard() {
                     />
                   ))}
                 </div>
-                <input type="color" style={{ width: '100%', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} onChange={(e) => updateValue(e.target.value)} />
+                <input 
+                  type="color" 
+                  value={
+                    activeTool === 'brush-color' ? brushColor : 
+                    (layers.find(l => l.id === selectedLayerId)?.color || '#000000')
+                  }
+                  style={{ width: '100%', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
+                  onChange={(e) => updateValue(e.target.value)} 
+                />
+                
+                {activeTool === 'text-glow-color' && (
+                  <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Sparkles size={14} color="var(--primary)" />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 800 }}>GLOW INTENSITY</span>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 900 }}>{layers.find(l => l.id === selectedLayerId)?.glow || 0}px</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="60" 
+                      value={layers.find(l => l.id === selectedLayerId)?.glow || 0}
+                      onChange={(e) => setLayers(prev => prev.map(l => l.id === selectedLayerId ? { ...l, glow: Number(e.target.value) } : l))}
+                      className="slider"
+                    />
+                    <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.6rem' }}>Adjust how much the light spreads from the text.</p>
+                  </div>
+                )}
+
+                {activeTool === 'text-outline-color' && (
+                  <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Square size={14} color="var(--primary)" />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 800 }}>OUTLINE THICKNESS</span>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 900 }}>{layers.find(l => l.id === selectedLayerId)?.outline || 0}px</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="15" 
+                      value={layers.find(l => l.id === selectedLayerId)?.outline || 0}
+                      onChange={(e) => setLayers(prev => prev.map(l => l.id === selectedLayerId ? { ...l, outline: Number(e.target.value) } : l))}
+                      className="slider"
+                    />
+                  </div>
+                )}
               </div>
             ) : activeTool === 'font-family' ? (
               <div style={{ padding: '0.5rem' }}>
@@ -2220,7 +2271,9 @@ function Dashboard() {
                       if (selectedLayerId && layer) {
                         if (layer.filters && layer.filters[activeTool] !== undefined) return layer.filters[activeTool];
                         if (activeTool === 'font-size') return layer.fontSize;
-                        if (activeTool === 'text-curve') return layer.curve || 0;
+                        if (activeTool === 'text-arc-z') return layer.curve || 0;
+                        if (activeTool === 'text-arc-x') return layer.arcX || 0;
+                        if (activeTool === 'text-arc-y') return layer.arcY || 0;
                         if (activeTool === 'letter-spacing') return layer.letterSpacing;
                         if (activeTool === 'line-height') return layer.lineHeight;
                         if (activeTool === 'text-opacity') return layer.opacity;
@@ -2247,8 +2300,14 @@ function Dashboard() {
                       if (selectedLayerId && layer) {
                         if (layer.filters && layer.filters[activeTool] !== undefined) return layer.filters[activeTool];
                         if (activeTool === 'font-size') return layer.fontSize;
-                        if (activeTool === 'text-curve') return layer.curve || 0;
+                        if (activeTool === 'text-arc-z') return layer.curve || 0;
+                        if (activeTool === 'text-arc-x') return layer.arcX || 0;
+                        if (activeTool === 'text-arc-y') return layer.arcY || 0;
                         if (activeTool === 'text-bulge') return layer.bulge || 0;
+                        if (activeTool === 'text-twist') return layer.twist || 0;
+                        if (activeTool === 'text-emboss') return layer.emboss || 0;
+                        if (activeTool === 'text-rotate-x') return layer.rotateX || 0;
+                        if (activeTool === 'text-rotate-y') return layer.rotateY || 0;
                         if (activeTool === 'text-outline') return layer.outline || 0;
                         if (activeTool === 'text-squeeze') return layer.squeeze || 0;
                         if (activeTool === 'text-glow') return layer.glow || 0;
@@ -2847,9 +2906,9 @@ function Dashboard() {
                               contentEditable={editingTextId === layer.id}
                               suppressContentEditableWarning
                               onMouseDown={(e) => {
-                                // Double click to edit, single click to select
+                                // Once selected, any click enters edit mode
                                 if (selectedLayerId === layer.id) {
-                                   if (e.detail === 2) setEditingTextId(layer.id);
+                                   setEditingTextId(layer.id);
                                 }
                               }}
                               onBlur={(e) => {
@@ -2885,31 +2944,46 @@ function Dashboard() {
                                   width: '100%',
                                   perspective: '1200px',
                                   transformStyle: 'preserve-3d',
-                                  pointerEvents: 'none'
+                                  pointerEvents: 'none',
+                                  transform: `rotateX(${layer.rotateX || 0}deg) rotateY(${layer.rotateY || 0}deg)`
                                 }}>
                                    {layer.data.split('').map((char, i, arr) => {
                                       const mid = (arr.length - 1) / 2;
                                       const dist = i - mid;
                                       const normalizedDist = dist / (arr.length || 1);
                                       
-                                      // Tamed Curve Calculation (Organized Sine-based Arch)
-                                      const curveVal = (layer.curve || 0) * 0.5; // Scale down input
+                                      // Triple Arc Logic (Z = Vertical Arch, X = Perspective Depth, Y = Cylinder Wrap)
+                                      const arcZ = (layer.curve || 0) * 0.8;
+                                      const arcX = (layer.arcX || 0) * 0.4;
+                                      const arcY = (layer.arcY || 0) * 0.4;
+
+                                      const yOffset = (Math.cos(normalizedDist * Math.PI) - 1) * arcZ;
+                                      const xOffset = (Math.cos(normalizedDist * Math.PI) - 1) * arcX;
+                                      const zOffset = (Math.cos(normalizedDist * Math.PI) - 1) * arcY;
                                       
-                                      // 1. Arch Calculation (Subtle sine bend)
-                                      const yOffset = (Math.cos(normalizedDist * Math.PI) - 1) * curveVal * 2.0;
+                                      // Bulge & Squeeze (Integrated with Arcs)
+                                      const bulgeScale = 1 + (Math.cos(normalizedDist * Math.PI) * (layer.bulge || 0) * 0.01);
+                                      const squeezeX = Math.sin(normalizedDist * Math.PI) * (layer.squeeze || 0) * 0.3;
                                       
-                                      // 2. Tangent Rotation (Subtle alignment)
-                                      const bend = -Math.sin(normalizedDist * Math.PI) * curveVal * 0.4;
-                                      
-                                      // 3. Bulge & Squeeze Calculation
-                                      const bulgeScale = 1 + (Math.cos(normalizedDist * Math.PI) * (layer.bulge || 0) * 0.015);
-                                      const squeezeX = Math.sin(normalizedDist * Math.PI) * (layer.squeeze || 0) * 0.4;
-                                      
-                                      // 3. Shadow/Glow & Outline Combined
                                       const glow = layer.glow || 0;
                                       const glowCol = layer.glowColor || 'rgba(59, 130, 246, 0.5)';
                                       const outline = layer.outline || 0;
                                       const outCol = layer.outlineColor || '#000000';
+                                      
+                                      const emboss = layer.emboss || 0;
+                                      let embossShadow = 'none';
+                                      if (emboss !== 0) {
+                                        const off = Math.abs(emboss) * 0.2;
+                                        const op = Math.min(0.6, Math.abs(emboss) * 0.08);
+                                        if (emboss > 0) {
+                                          embossShadow = `-${off}px -${off}px ${off}px rgba(255,255,255,${op}), ${off}px ${off}px ${off}px rgba(0,0,0,${op*1.5})`;
+                                        } else {
+                                          embossShadow = `${off}px ${off}px ${off}px rgba(255,255,255,${op}), -${off}px -${off}px ${off}px rgba(0,0,0,${op*1.5})`;
+                                        }
+                                      }
+
+                                      const glowShadow = glow > 0 ? `0 0 ${glow}px ${glowCol}, 0 0 ${glow/2}px ${glowCol}` : null;
+                                      const finalShadow = [glowShadow, embossShadow !== 'none' ? embossShadow : null].filter(Boolean).join(', ') || 'none';
 
                                       return (
                                         <span key={i} style={{
@@ -2919,15 +2993,15 @@ function Dashboard() {
                                           letterSpacing: `${layer.letterSpacing || 0}px`,
                                           lineHeight: layer.lineHeight || 1.2,
                                           transform: `
-                                            translateX(${dist * (layer.letterSpacing || 0) * 0.2 + squeezeX}px)
+                                            translateX(${dist * (layer.letterSpacing || 0) * 0.1 + squeezeX + xOffset}px)
                                             translateY(${yOffset}px)
-                                            rotate(${bend}deg)
+                                            translateZ(${zOffset}px)
                                             scale(${bulgeScale})
-                                            perspective(500px) rotateX(${(layer.bulge || 0) * 0.15}deg)
+                                            skewX(${layer.twist || 0}deg)
                                           `,
-                                          textShadow: glow > 0 ? `0 0 ${glow}px ${glowCol}, 0 0 ${glow/2}px ${glowCol}` : 'none',
+                                          textShadow: finalShadow,
                                           WebkitTextStroke: outline > 0 ? `${outline}px ${outCol}` : 'none',
-                                          transition: 'transform 0.2s ease-out'
+                                          transition: 'transform 0.1s ease-out'
                                         }}>
                                           {char}
                                         </span>

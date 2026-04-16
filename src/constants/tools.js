@@ -11,7 +11,8 @@ import {
   Navigation, Phone, Shield, Speaker, Tag, Target, Terminal, 
   Thermometer, Tv, User, Video, Watch, Wifi, UtensilsCrossed,
   MoveHorizontal, MoveVertical, AlignLeft, AlignCenter, AlignRight,
-  Activity, Layout, Triangle, Box, Grid, LayoutGrid, Diamond, Award, Leaf, Bookmark, Pentagon, Magnet, Eraser
+  Activity, Layout, Triangle, Box, Grid, LayoutGrid, Diamond, Award, Leaf, Bookmark, Pentagon, Magnet, Eraser,
+  ArrowUp
 } from 'lucide-react';
 
 export const CATEGORIES = ['Text', 'Cleanup', 'Image', 'Patterns', 'Draw', 'Presets', 'Transform', 'Magic Tools'];
@@ -77,8 +78,14 @@ export const TOOLS_DEFS = [
   { id: 'font-size', label: 'Font Size', icon: Maximize, category: 'Text', min: 10, max: 200, default: 32 },
   { id: 'text-color', label: 'Color', icon: Palette, category: 'Text' },
   { id: 'font-family', label: 'Font', icon: Type, category: 'Text' },
-  { id: 'text-curve', label: 'Curve Arc', icon: Activity, category: 'Text', min: -150, max: 150, default: 0 },
+  { id: 'text-arc-z', label: 'Arc (Z) - Up/Down', icon: Activity, category: 'Text', min: -150, max: 150, default: 0 },
+  { id: 'text-arc-y', label: 'Arc (Y) - Cylinder', icon: MoveHorizontal, category: 'Text', min: -100, max: 100, default: 0 },
+  { id: 'text-arc-x', label: 'Arc (X) - Depth', icon: MoveVertical, category: 'Text', min: -100, max: 100, default: 0 },
   { id: 'text-bulge', label: 'Bulge', icon: Maximize, category: 'Text', min: -100, max: 100, default: 0 },
+  { id: 'text-twist', label: 'Text Twist', icon: RotateCw, category: 'Text', min: -100, max: 100, default: 0 },
+  { id: 'text-emboss', label: 'Emboss / Engrave', icon: Box, category: 'Text', min: -20, max: 20, default: 0 },
+  { id: 'text-rotate-x', label: '3D Tilt (X)', icon: ArrowUp, category: 'Text', min: -90, max: 90, default: 0 },
+  { id: 'text-rotate-y', label: '3D Tilt (Y)', icon: ArrowRight, category: 'Text', min: -90, max: 90, default: 0 },
   { id: 'text-outline', label: 'Outline', icon: Square, category: 'Text', min: 0, max: 15, default: 0 },
   { id: 'text-outline-color', label: 'Stroke Color', icon: Palette, category: 'Text' },
   { id: 'text-squeeze', label: 'Squeeze', icon: Minus, category: 'Text', min: -100, max: 100, default: 0 },
@@ -89,7 +96,9 @@ export const TOOLS_DEFS = [
   { id: 'draw-none', label: 'None', icon: MousePointer2, category: 'Draw' },
   { id: 'brush-tool', label: 'Brush', icon: PenTool, category: 'Draw' },
   { id: 'brush-type', label: 'Brush Texture', icon: Activity, category: 'Draw' },
-  { id: 'brush-size', label: 'Size', icon: Maximize, category: 'Draw', min: 1, max: 100, default: 10 },
+  { id: 'brush-size', label: 'Size', icon: Maximize, category: 'Draw', min: 1, max: 250, default: 10 },
+  { id: 'brush-opacity', label: 'Opacity', icon: Ghost, category: 'Draw', min: 0, max: 1, step: 0.01, default: 1 },
+  { id: 'brush-blur', label: 'Hardness', icon: Target, category: 'Draw', min: 0, max: 50, default: 0 },
   { id: 'brush-color', label: 'Color', icon: Palette, category: 'Draw' },
   { id: 'eraser-tool', label: 'Eraser', icon: Eraser, category: 'Draw' },
   { id: 'lasso-regular', label: 'Lasso', icon: MousePointer2, category: 'Draw' },

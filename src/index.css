@@ -593,6 +593,15 @@ body::-webkit-scrollbar {
   padding: 1rem;
 }
 
+/* Global Visibility Utils */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: block;
+}
+
 .project-card {
   background: var(--bg-card);
   border: 1px solid rgba(0, 0, 0, 0.15);
@@ -720,7 +729,14 @@ body::-webkit-scrollbar {
 .btn-shape:hover {
   background: rgba(59, 130, 246, 0.1);
   border-color: var(--primary);
-  color: white;
+  color: var(--primary);
+}
+
+.btn-shape.active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .blank-canvas-base {

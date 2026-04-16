@@ -19,7 +19,7 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
       </div>
 
 
-      <div className="nav-actions desktop-only">
+      <div className="nav-actions desktop-only" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
         <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} title={showLayerPanel ? 'Hide Layers' : 'Show Layers'} style={{ color: showLayerPanel ? 'var(--primary)' : 'inherit' }}>
           <Layers size={18} />
         </button>
