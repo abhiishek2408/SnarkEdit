@@ -195,10 +195,13 @@ function Dashboard() {
   const imageRefState = useRef(image);
   const canvasBgRef = useRef(canvasBg);
 
+  const isBlankCanvasRef = useRef(isBlankCanvas);
+
   useEffect(() => { canvasSizeRef.current = canvasSize; }, [canvasSize]);
   useEffect(() => { layersRef.current = layers; }, [layers]);
   useEffect(() => { imageRefState.current = image; }, [image]);
   useEffect(() => { canvasBgRef.current = canvasBg; }, [canvasBg]);
+  useEffect(() => { isBlankCanvasRef.current = isBlankCanvas; }, [isBlankCanvas]);
 
   // 1. Auto-Save & Recovery
   useEffect(() => {
@@ -464,9 +467,9 @@ function Dashboard() {
           
           // Use refs for latest state to avoid stale closure
           const currentImage = imageRefState.current;
-          const currentStudioMode = isStudioMode;
+          const currentIsBlank = isBlankCanvasRef.current;
           
-          if (currentStudioMode || !currentImage) {
+          if (!currentImage && !currentIsBlank) {
             // This is the first main image for the project
             const newSize = { width: finalW, height: finalH };
             const newValues = { ...valuesRef.current, resize: 0.55 };
