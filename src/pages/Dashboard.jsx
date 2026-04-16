@@ -93,7 +93,7 @@ function Dashboard() {
   // UI Overlays Sync States
   const [showToolSettings, internalSetShowToolSettings] = useState(false);
   const [showSidebar, internalSetShowSidebar] = useState(window.innerWidth > 1024);
-  const [showLayerPanel, internalSetShowLayerPanel] = useState(true);
+  const [showLayerPanel, internalSetShowLayerPanel] = useState(false);
   const [showShadeModal, internalSetShowShadeModal] = useState(false);
 
   const closeAllOverlays = () => {
@@ -2923,6 +2923,7 @@ function Dashboard() {
                                             translateY(${yOffset}px)
                                             rotate(${bend}deg)
                                             scale(${bulgeScale})
+                                            perspective(500px) rotateX(${(layer.bulge || 0) * 0.15}deg)
                                           `,
                                           textShadow: glow > 0 ? `0 0 ${glow}px ${glowCol}, 0 0 ${glow/2}px ${glowCol}` : 'none',
                                           WebkitTextStroke: outline > 0 ? `${outline}px ${outCol}` : 'none',
@@ -3859,6 +3860,19 @@ function Dashboard() {
           </motion.div>
         </div>
       )}
+      {/* SVG Filters for Advanced Effects */}
+      <svg style={{ visibility: 'hidden', position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <filter id="text-bulge-filter">
+             <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur" />
+             <feSpecularLighting in="blur" surfaceScale="5" specularConstant=".75" specularExponent="20" lightingColor="#bbbbbb" result="specOut">
+               <fePointLight x="-5000" y="-10000" z="20000" />
+             </feSpecularLighting>
+             <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" />
+             <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litGraphic" />
+          </filter>
+        </defs>
+      </svg>
     </div>
   );
 }
