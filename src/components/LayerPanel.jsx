@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Layers, Eye, EyeOff, Trash2, GripVertical, 
-  Type, ImageIcon, MousePointer2 
+  Type, ImageIcon, MousePointer2, X
 } from 'lucide-react';
 import { motion, Reorder } from 'framer-motion';
 
@@ -9,7 +9,8 @@ const LayerPanel = ({
   layers, 
   setLayers, 
   selectedLayerId, 
-  setSelectedLayerId 
+  setSelectedLayerId,
+  setShowLayerPanel
 }) => {
   if (layers.length === 0) return null;
 
@@ -27,7 +28,7 @@ const LayerPanel = ({
       width: '240px',
       position: 'absolute',
       right: '1rem',
-      top: '5rem',
+      top: '6.5rem',
       zIndex: 100,
       padding: '1rem',
       maxHeight: '400px',
@@ -36,9 +37,29 @@ const LayerPanel = ({
       gap: '0.8rem',
       boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-        <Layers size={14} color="var(--primary)" />
-        <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Layers</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Layers size={14} color="var(--primary)" />
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-main)' }}>Layers</span>
+        </div>
+        <button 
+          onClick={() => setShowLayerPanel(false)}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: 'var(--text-muted)', 
+            cursor: 'pointer',
+            padding: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            transition: 'all 0.2s'
+          }}
+          className="close-panel-btn"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       <Reorder.Group axis="y" values={layers} onReorder={setLayers} style={{ listStyle: 'none', padding: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '4px' }}>
@@ -100,6 +121,7 @@ const LayerPanel = ({
       <style>{`
         .layer-item-row:hover .delete-hover { opacity: 1 !important; }
         .layer-item-row.active { box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .close-panel-btn:hover { background: var(--tool-bg); color: #ef4444; }
       `}</style>
     </div>
   );

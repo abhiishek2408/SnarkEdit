@@ -1532,6 +1532,7 @@ function Dashboard() {
             setLayers={setLayers} 
             selectedLayerId={selectedLayerId} 
             setSelectedLayerId={setSelectedLayerId} 
+            setShowLayerPanel={setShowLayerPanel}
           />
         )}
 
@@ -1836,7 +1837,7 @@ function Dashboard() {
               <div className="bg-controls">
                 <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1rem' }}>Studio Backdrops</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                  {['#ffffff', '#f8fafc', '#1a1a1a', '#3b82f6', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6'].map(color => (
+                  {['#ffffff', '#f8fafc', '#e2e8f0', '#94a3b8', '#1a1a1a', '#000000', '#3b82f6', '#0ea5e9', '#06b6d4', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#f43f5e', '#ec4899', '#d946ef', '#a855f7'].map(color => (
                     <button 
                       key={color} 
                       onClick={() => changeBackground(color)}
@@ -1973,11 +1974,11 @@ function Dashboard() {
                     activeTool === 'text-glow-color' ? 'Glow Color' : 'Layer Color'}
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                  {['#ffffff', '#000000', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'].map(color => (
+                  {['#ffffff', '#000000', '#94a3b8', '#475569', '#3b82f6', '#0ea5e9', '#06b6d4', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1'].map(color => (
                     <button 
                       key={color} 
                       onClick={() => updateValue(color)}
-                      style={{ height: '30px', borderRadius: '6px', background: color, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+                      style={{ height: '30px', borderRadius: '6px', background: color, border: '1px solid var(--border)', cursor: 'pointer' }}
                     />
                   ))}
                 </div>
@@ -3334,9 +3335,9 @@ function Dashboard() {
                 )}
 
                 {isProcessing && (
-                  <div style={{ position: 'absolute', inset: 0, background: '#000000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '0', zIndex: 1002 }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '0', zIndex: 1002 }}>
                     <div className="loader" style={{ marginBottom: '1.5rem' }}></div>
-                    <p style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white', letterSpacing: '3px', textShadow: 'none' }}>RENDERING DESIGN...</p>
+                    <p style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '3px', textShadow: 'none' }}>RENDERING DESIGN...</p>
                   </div>
                 )}
                 
@@ -3405,15 +3406,15 @@ function Dashboard() {
                     position: fixed;
                     bottom: 2.5rem;
                     right: 2.5rem;
-                    background: #000000;
+                    background: var(--bg-card);
                     padding: 0.4rem 1rem;
                     border-radius: 1.25rem;
-                    border: 1px solid rgba(255,255,255,0.12);
+                    border: 1px solid var(--border);
                     display: flex;
                     align-items: center;
                     gap: 0.6rem;
                     z-index: 2500;
-                    box-shadow: none;
+                    box-shadow: var(--shadow-premium);
                   }
                   
                   .zoom-group {
@@ -3439,7 +3440,7 @@ function Dashboard() {
                   
                   .zoom-btn-p:hover {
                     opacity: 1;
-                    background: rgba(255,255,255,0.1);
+                    background: var(--tool-bg);
                   }
 
                   .zoom-value {
@@ -3470,7 +3471,7 @@ function Dashboard() {
                   .divider {
                     width: 1px;
                     height: 24px;
-                    background: rgba(255,255,255,0.1);
+                    background: var(--border);
                     margin: 0 0.25rem;
                   }
 
@@ -3543,12 +3544,12 @@ function Dashboard() {
               zIndex: 9999,
               top: '100px', 
               right: '20px', 
-              background: '#0a0f14', 
+              background: 'var(--bg-card)', 
               borderRadius: '24px',
               padding: '1.5rem',
               width: '300px',
-              boxShadow: 'none',
-              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: 'var(--shadow-premium)',
+              border: '1px solid var(--border)',
               pointerEvents: 'auto',
               touchAction: 'none'
             }}
@@ -3560,12 +3561,12 @@ function Dashboard() {
               if (!layer) return null;
               return (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.8rem', cursor: 'grab' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.8rem', cursor: 'grab' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <GripVertical size={16} color="var(--text-muted)" />
                       <PenTool size={20} color="var(--primary)" />
                     </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white', letterSpacing: '1px' }}>SHAPE CONTROLS</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '1px' }}>SHAPE CONTROLS</span>
                   </div>
 
                   <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '12px', scrollbarWidth: 'none' }} className="modal-scroll-area">
@@ -3643,7 +3644,7 @@ function Dashboard() {
                         <input 
                           type="color" value={layer.filters?.['img-outline-color'] || '#ffffff'}
                           onChange={(e) => updateLayerFilter(layer.id, 'img-outline-color', e.target.value)}
-                          style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', cursor: 'pointer', background: 'none' }}
+                          style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid var(--border)', cursor: 'pointer', background: 'none' }}
                         />
                       </div>
                       {!layer.data?.startsWith('line-') && (
@@ -3686,7 +3687,7 @@ function Dashboard() {
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.2rem' }}>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
                     <button 
                       onClick={() => setSelectedLayerId(null)}
                       style={{ width: '100%', padding: '0.9rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 10px 20px rgba(59, 130, 246, 0.3)' }}
@@ -3731,49 +3732,49 @@ function Dashboard() {
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowShadeModal(false);
           }}
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000000', pointerEvents: 'auto' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', pointerEvents: 'auto' }}
         >
-          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: '#1a1a1a', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', width: '90%', maxWidth: '350px', boxShadow: 'none' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', width: '90%', maxWidth: '350px', boxShadow: 'var(--shadow-premium)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', cursor: 'grab' }}>
-              <h3 style={{ fontSize: '1rem', color: 'white', fontWeight: 800 }}>🎨 Pattern Settings</h3>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', fontWeight: 800 }}>🎨 Pattern Settings</h3>
               <div style={{ display: 'flex', gap: '0.4rem', cursor: 'default' }}>
                 <button onClick={() => { setCurrentPattern(null); setCanvasBg('#ffffff'); setShowShadeModal(false); }} style={{ padding: '2px 8px', fontSize: '0.6rem', background: 'rgba(239, 68, 68, 0.2)', border: 'none', borderRadius: '4px', color: '#f87171', cursor: 'pointer' }}>Clear</button>
-                <button onClick={() => { setPatternScale(1); setPatternOpacity(0.4); setPatternColor('#000000'); Object.keys(patternShades).forEach(key => setPatternShades(prev => ({ ...prev, [key]: { ...prev[key], enabled: false } }))); }} style={{ padding: '2px 8px', fontSize: '0.6rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}>Reset</button>
+                <button onClick={() => { setPatternScale(1); setPatternOpacity(0.4); setPatternColor('#000000'); Object.keys(patternShades).forEach(key => setPatternShades(prev => ({ ...prev, [key]: { ...prev[key], enabled: false } }))); }} style={{ padding: '2px 8px', fontSize: '0.6rem', background: 'var(--tool-bg)', border: 'none', borderRadius: '4px', color: 'var(--text-main)', cursor: 'pointer' }}>Reset</button>
                 <button onClick={() => setShowShadeModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer', lineHeight: '1' }}>&times;</button>
               </div>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.4rem', cursor: 'default' }}>
               
-              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.6rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ background: 'var(--tool-bg)', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)' }}>Size</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Size</span>
                       <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 700 }}>{Math.round(patternScale * 100)}%</span>
                     </div>
                     <input type="range" min="0.2" max="5" step="0.1" value={patternScale} onChange={(e) => setPatternScale(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)', height: '4px' }} onPointerDown={(e) => e.stopPropagation()} />
                   </div>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)' }}>Opacity</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Opacity</span>
                       <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 700 }}>{Math.round(patternOpacity * 100)}%</span>
                     </div>
                     <input type="range" min="0" max="1" step="0.05" value={patternOpacity} onChange={(e) => setPatternOpacity(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)', height: '4px' }} onPointerDown={(e) => e.stopPropagation()} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)' }}>Base Color</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Base Color</span>
                   <input type="color" value={patternColor} onChange={(e) => setPatternColor(e.target.value)} style={{ width: '30px', height: '18px', border: 'none', borderRadius: '4px', background: 'none', padding: 0, cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()} />
                 </div>
               </div>
 
               <div style={{ padding: '0.2rem 0' }}>
-                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 800, letterSpacing: '0.5px' }}>MULTIPLE SHADES</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.5px' }}>MULTIPLE SHADES</span>
               </div>
 
               {['top', 'bottom', 'left', 'right', 'center'].map(dir => (
-                <div key={dir} style={{ background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '6px' }}>
+                <div key={dir} style={{ background: 'var(--tool-bg)', padding: '0.5rem', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }} onPointerDown={(e) => e.stopPropagation()}>
                       <input 
