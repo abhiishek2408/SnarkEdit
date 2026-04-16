@@ -37,17 +37,6 @@ const TOOLS = TOOLS_DEFS;
 function Dashboard() {
   const [image, setImage] = useState(null);
   const [activeTool, setActiveTool] = useState('add-text');
-  const [showToolSettings, setShowToolSettings] = useState(false);
-  
-  const handleSelectTool = (toolId) => {
-    setActiveTool(toolId);
-    if (toolId && toolId !== 'draw-none') {
-      setShowToolSettings(true);
-    } else {
-      setShowToolSettings(false);
-    }
-  };
-  
   const [activeCategory, setActiveCategory] = useState('Text');
   const [isProcessing, setIsProcessing] = useState(false);
   const [values, setValues] = useState({});
@@ -62,6 +51,89 @@ function Dashboard() {
   });
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState(1.0);
+  const [theme, setTheme] = useState('light');
+  const [canvasBg, setCanvasBg] = useState('transparent');
+  const [layers, setLayers] = useState([]); 
+  const [selectedLayerId, setSelectedLayerId] = useState(null);
+  const [isBlankCanvas, setIsBlankCanvas] = useState(false);
+  const [isStudioMode, setIsStudioMode] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
+  const [drawPaths, setDrawPaths] = useState([]);
+  const [currentPath, setCurrentPath] = useState(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [brushSize, setBrushSize] = useState(10);
+  const [brushColor, setBrushColor] = useState('#3b82f6');
+  const [brushOpacity, setBrushOpacity] = useState(1);
+  const [brushHardness, setBrushHardness] = useState(0);
+  const [isAdjustingBrush, setIsAdjustingBrush] = useState(false);
+  const [lassoPoints, setLassoPoints] = useState([]);
+  const [editingTextId, setEditingTextId] = useState(null);
+  const [clipboard, setClipboard] = useState(null);
+  const [brushType, setBrushType] = useState('solid'); 
+  const [alignmentGuides, setAlignmentGuides] = useState({ x: null, y: null });
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [isCleaningMode, setIsCleaningMode] = useState(false);
+  const [cleaningPaths, setCleaningPaths] = useState([]);
+  const [isSmartCleaning, setIsSmartCleaning] = useState(false);
+  const [projectSettings, setProjectSettings] = useState({ width: 800, height: 800, name: 'Untitled Design' });
+  const [notification, setNotification] = useState(null);
+  const [showGrid, setShowGrid] = useState(false);
+  const [patternScale, setPatternScale] = useState(1);
+  const [patternOpacity, setPatternOpacity] = useState(0.4);
+  const [patternColor, setPatternColor] = useState('#000000');
+  const [currentPattern, setCurrentPattern] = useState(null);
+  const [patternShades, setPatternShades] = useState({
+    top: { enabled: false, color: '#ffffff', spread: 100 },
+    bottom: { enabled: false, color: '#ffffff', spread: 100 },
+    left: { enabled: false, color: '#ffffff', spread: 100 },
+    right: { enabled: false, color: '#ffffff', spread: 100 },
+    center: { enabled: false, color: '#ffffff', spread: 100 }
+  });
+
+  // UI Overlays Sync States
+  const [showToolSettings, internalSetShowToolSettings] = useState(false);
+  const [showSidebar, internalSetShowSidebar] = useState(window.innerWidth > 1024);
+  const [showLayerPanel, internalSetShowLayerPanel] = useState(true);
+  const [showShadeModal, internalSetShowShadeModal] = useState(false);
+
+  const closeAllOverlays = () => {
+    internalSetShowSidebar(false);
+    internalSetShowLayerPanel(false);
+    internalSetShowToolSettings(false);
+    internalSetShowShadeModal(false);
+  };
+
+  const setShowToolSettings = (val) => {
+    if (val) {
+      if (window.innerWidth <= 1024) closeAllOverlays();
+      else { internalSetShowLayerPanel(false); internalSetShowShadeModal(false); }
+    }
+    internalSetShowToolSettings(val);
+  };
+  const setShowSidebar = (val) => {
+    if (val && window.innerWidth <= 1024) closeAllOverlays();
+    internalSetShowSidebar(val);
+  };
+  const setShowLayerPanel = (val) => {
+    if (val) {
+      if (window.innerWidth <= 1024) closeAllOverlays();
+      else { internalSetShowToolSettings(false); internalSetShowShadeModal(false); }
+    }
+    internalSetShowLayerPanel(val);
+  };
+  const setShowShadeModal = (val) => {
+    if (val) closeAllOverlays();
+    internalSetShowShadeModal(val);
+  };
+
+  const handleSelectTool = (toolId) => {
+    setActiveTool(toolId);
+    if (toolId && toolId !== 'draw-none') {
+      setShowToolSettings(true);
+    } else {
+      setShowToolSettings(false);
+    }
+  };
 
   const moveLayer = (direction) => {
     if (!selectedLayerId) return;
@@ -91,8 +163,6 @@ function Dashboard() {
   const valuesRef = useRef({});
   useEffect(() => { valuesRef.current = values; }, [values]);
 
-  const [theme, setTheme] = useState('light');
-
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -101,13 +171,6 @@ function Dashboard() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  const [canvasBg, setCanvasBg] = useState('transparent');
-  const [layers, setLayers] = useState([]); // Multiple elements (Text, Stickers, Images)
-  const [selectedLayerId, setSelectedLayerId] = useState(null);
-  const [isBlankCanvas, setIsBlankCanvas] = useState(false);
-  const [isStudioMode, setIsStudioMode] = useState(false);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
-
   // Reset tool when switching to Draw category
   useEffect(() => {
     if (activeCategory === 'Draw') {
@@ -115,20 +178,8 @@ function Dashboard() {
     }
   }, [activeCategory]);
 
-  // Drawing States
-  const [drawPaths, setDrawPaths] = useState([]);
-  const [currentPath, setCurrentPath] = useState(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [brushSize, setBrushSize] = useState(10);
-  const [brushColor, setBrushColor] = useState('#3b82f6');
-  const [brushOpacity, setBrushOpacity] = useState(1);
-  const [brushHardness, setBrushHardness] = useState(0);
-  const [isAdjustingBrush, setIsAdjustingBrush] = useState(false);
-  const [lassoPoints, setLassoPoints] = useState([]);
   const adjustTimerRef = useRef(null);
-  const [editingTextId, setEditingTextId] = useState(null);
   const editingTextRef = useRef(null);
-  const [showSidebar, setShowSidebar] = useState(window.innerWidth > 1024);
 
   useEffect(() => {
     const handleResize = () => {
@@ -137,17 +188,6 @@ function Dashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const [clipboard, setClipboard] = useState(null);
-  const [showLayerPanel, setShowLayerPanel] = useState(true);
-  const [brushType, setBrushType] = useState('solid'); // solid, neon, spray, pencil
-  const [alignmentGuides, setAlignmentGuides] = useState({ x: null, y: null });
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
-
-  // Magic Cleaning States
-  const [isCleaningMode, setIsCleaningMode] = useState(false);
-  const [cleaningPaths, setCleaningPaths] = useState([]);
-  const [isSmartCleaning, setIsSmartCleaning] = useState(false);
 
   const canvasSizeRef = useRef(canvasSize);
   const layersRef = useRef(layers);
@@ -328,21 +368,6 @@ function Dashboard() {
     setIsDrawing(false);
     setCurrentPath(null);
   };
-  const [projectSettings, setProjectSettings] = useState({ width: 800, height: 800, name: 'Untitled Design' });
-  const [notification, setNotification] = useState(null);
-  const [showGrid, setShowGrid] = useState(false);
-  const [patternScale, setPatternScale] = useState(1);
-  const [patternOpacity, setPatternOpacity] = useState(0.4);
-  const [patternColor, setPatternColor] = useState('#000000');
-  const [currentPattern, setCurrentPattern] = useState(null);
-  const [patternShades, setPatternShades] = useState({
-    top: { enabled: false, color: '#ffffff', spread: 100 },
-    bottom: { enabled: false, color: '#ffffff', spread: 100 },
-    left: { enabled: false, color: '#ffffff', spread: 100 },
-    right: { enabled: false, color: '#ffffff', spread: 100 },
-    center: { enabled: false, color: '#ffffff', spread: 100 }
-  });
-  const [showShadeModal, setShowShadeModal] = useState(false);
 
   const extractSelection = () => {
     if (lassoPoints.length < 3) {
@@ -3747,7 +3772,7 @@ function Dashboard() {
           }}
           style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', pointerEvents: 'auto' }}
         >
-          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.75rem', width: '90%', maxWidth: '280px', boxShadow: 'var(--shadow-premium)' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} drag dragMomentum={false} dragElastic={0} style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.65rem', width: '90%', maxWidth: window.innerWidth <= 768 ? '240px' : '280px', boxShadow: 'var(--shadow-premium)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', cursor: 'grab' }}>
               <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', fontWeight: 800 }}>🎨 Pattern Settings</h3>
               <div style={{ display: 'flex', gap: '0.4rem', cursor: 'default' }}>

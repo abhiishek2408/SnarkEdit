@@ -297,6 +297,13 @@ body::-webkit-scrollbar {
   overflow-y: auto;
 }
 
+@media (max-width: 768px) {
+  .tool-controls {
+    padding: 0.8rem;
+    max-height: 40vh;
+  }
+}
+
 .control-header {
   display: flex;
   justify-content: space-between;
@@ -729,8 +736,8 @@ body::-webkit-scrollbar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 240px;
-    max-width: 70%;
+    width: 210px;
+    max-width: 65%;
     height: 100vh !important;
     z-index: 5000;
     transform: translateX(-100%);
@@ -776,6 +783,13 @@ body::-webkit-scrollbar {
 }
 
 @media (max-width: 1024px) {
+  .layer-panel {
+    width: 200px !important;
+    max-height: 350px !important;
+    padding: 0.75rem !important;
+    top: 6.5rem !important;
+    right: 0.5rem !important;
+  }
   .mobile-only {
     display: flex !important;
   }
