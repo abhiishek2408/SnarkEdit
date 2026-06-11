@@ -611,7 +611,7 @@ function Dashboard() {
 
       const canvas = await html2canvas(element, {
         useCORS: true,
-        scale: 3,
+        scale: 1,
         // html2canvas only accepts simple colors, not gradients or complex values
         backgroundColor: (!canvasBg || canvasBg === 'transparent' || canvasBg.includes('gradient') || canvasBg.includes('repeating') || canvasBg.includes('linear') || canvasBg.includes('radial') || canvasBg.includes('url')) ? null : canvasBg,
         logging: false,
