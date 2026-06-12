@@ -15,7 +15,7 @@ import {
   ArrowUp
 } from 'lucide-react';
 
-export const CATEGORIES = ['Text', 'Cleanup', 'Image', 'Patterns', 'Draw', 'Presets', 'Transform', 'Magic Tools'];
+export const CATEGORIES = ['Text', 'Image', 'Cleanup', 'Patterns', 'Draw', 'Presets', 'Transform', 'Magic Tools'];
 
 export const FONTS = [
   'Inter', 'Poppins', 'Montserrat', 'Roboto', 'Open Sans', 'Lato', 'Playfair Display', 
@@ -31,8 +31,16 @@ export const FONTS = [
 ];
 
 export const TOOLS_DEFS = [
+  // Collage Maker
+  { id: 'collage-templates', label: 'Classic Grid', icon: LayoutGrid, category: 'Collage Maker' },
+  { id: 'collage-story', label: 'IG Story', icon: Layout, category: 'Collage Maker' },
+  { id: 'collage-moodboard', label: 'Moodboard', icon: Layers, category: 'Collage Maker' },
+  { id: 'collage-filmstrip', label: 'Film Strip', icon: ImageIcon, category: 'Collage Maker' },
+  { id: 'collage-freestyle', label: 'Freestyle', icon: MousePointer2, category: 'Collage Maker' },
+  { id: 'collage-2-horizontal', label: '2 Horizontal', icon: Layout, category: 'Collage Maker' },
+  { id: 'collage-2-vertical', label: '2 Vertical', icon: Layout, category: 'Collage Maker' },
+
   // Cleanup Category (AI Magic)
-  { id: 'remove-bg-layer', label: 'Magic Remove BG', icon: Wand2, category: 'Cleanup' },
   { id: 'object-remover', label: 'Object Eraser', icon: Eraser, category: 'Cleanup' },
   { id: 'auto-tune', label: 'Magic Polish', icon: Sparkles, category: 'Cleanup' },
   { id: 'denoise', label: 'Denoise AI', icon: Zap, category: 'Cleanup' },
@@ -41,6 +49,7 @@ export const TOOLS_DEFS = [
 
   // Image Category Tools
   { id: 'add-image-layer', label: 'Add Image', icon: ImageIcon, category: 'Image' },
+  { id: 'remove-bg-layer', label: 'Remove BG', icon: Wand2, category: 'Image' },
   { id: 'brightness', label: 'Brightness', icon: Sun, category: 'Image', min: -100, max: 100, default: 0, unit: '%' },
   { id: 'contrast', label: 'Contrast', icon: Contrast, category: 'Image', min: -100, max: 100, default: 0, unit: '%' },
   { id: 'saturation', label: 'Saturation', icon: Droplet, category: 'Image', min: -100, max: 100, default: 0, unit: '%' },
@@ -65,13 +74,11 @@ export const TOOLS_DEFS = [
 
   // Transform
   { id: 'img-order', label: 'Layer Order', icon: Layers, category: 'Transform' },
-  { id: 'export-design', label: 'Export', icon: Download, category: 'Transform' },
-  { id: 'crop', label: 'Crop', icon: Crop, category: 'Transform' },
+  { id: 'crop', label: 'Crop', icon: Crop, category: 'Image' },
   { id: 'rotateL', label: 'Rotate L', icon: RotateCcw, category: 'Transform' },
   { id: 'rotateR', label: 'Rotate R', icon: RotateCw, category: 'Transform' },
   { id: 'flipH', label: 'Flip H', icon: FlipHorizontal, category: 'Transform' },
   { id: 'flipV', label: 'Flip V', icon: FlipVertical, category: 'Transform' },
-  { id: 'resize', label: 'Resize', icon: Maximize, category: 'Transform', min: 0.1, max: 2, default: 1, step: 0.1 },
 
   // Text
   { id: 'add-text', label: 'Add Text', icon: Type, category: 'Text' },
@@ -95,11 +102,8 @@ export const TOOLS_DEFS = [
   // Draw Tools
   { id: 'draw-none', label: 'None', icon: MousePointer2, category: 'Draw' },
   { id: 'brush-tool', label: 'Brush', icon: PenTool, category: 'Draw' },
-  { id: 'brush-type', label: 'Brush Texture', icon: Activity, category: 'Draw' },
   { id: 'brush-size', label: 'Size', icon: Maximize, category: 'Draw', min: 1, max: 250, default: 10 },
   { id: 'brush-opacity', label: 'Opacity', icon: Ghost, category: 'Draw', min: 0, max: 1, step: 0.01, default: 1 },
-  { id: 'brush-blur', label: 'Hardness', icon: Target, category: 'Draw', min: 0, max: 50, default: 0 },
-  { id: 'brush-color', label: 'Color', icon: Palette, category: 'Draw' },
   { id: 'eraser-tool', label: 'Eraser', icon: Eraser, category: 'Draw' },
   { id: 'lasso-regular', label: 'Lasso', icon: MousePointer2, category: 'Draw' },
   { id: 'lasso-polygonal', label: 'Poly Lasso', icon: Pentagon, category: 'Draw' },
@@ -109,6 +113,7 @@ export const TOOLS_DEFS = [
   { id: 'add-shape', label: 'Add Shape', icon: Square, category: 'Magic Tools' },
   { id: 'bg-changer', label: 'Change BG', icon: Palette, category: 'Magic Tools' },
   { id: 'gradient-bg', label: 'Gradient BG', icon: Wand2, category: 'Magic Tools' },
+  { id: 'upload-bg-image', label: 'Upload BG', icon: ImageIcon, category: 'Magic Tools' },
 
   // Patterns
   { id: 'p-clean', label: 'Clean White', icon: Square, category: 'Patterns' },

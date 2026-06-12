@@ -15,7 +15,7 @@ import {
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
   Database, ShieldCheck, StickyNote, ChevronLeft, ChevronRight, Parentheses, ArrowUp, ArrowLeft, ArrowDown, CornerDownRight, CornerDownLeft, CornerUpLeft, CornerUpRight, Eraser,
-  Pentagon, Magnet, PlusCircle, LayoutList
+  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
@@ -39,6 +39,7 @@ function Dashboard() {
   const [activeTool, setActiveTool] = useState('add-text');
   const [activeCategory, setActiveCategory] = useState('Text');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bgRemovalAnimation, setBgRemovalAnimation] = useState(null);
   const [values, setValues] = useState({});
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -51,7 +52,7 @@ function Dashboard() {
   });
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState(1.0);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const [canvasBg, setCanvasBg] = useState('transparent');
   const [layers, setLayers] = useState([]); 
   const [selectedLayerId, setSelectedLayerId] = useState(null);
@@ -93,9 +94,10 @@ function Dashboard() {
 
   // UI Overlays Sync States
   const [showToolSettings, internalSetShowToolSettings] = useState(false);
-  const [showSidebar, internalSetShowSidebar] = useState(window.innerWidth > 1024);
+  const [showSidebar, internalSetShowSidebar] = useState(false);
   const [showLayerPanel, internalSetShowLayerPanel] = useState(false);
   const [showShadeModal, internalSetShowShadeModal] = useState(false);
+  const [shapeControlTab, setShapeControlTab] = useState('layouts');
 
   const closeAllOverlays = () => {
     internalSetShowSidebar(false);
@@ -127,8 +129,118 @@ function Dashboard() {
     internalSetShowShadeModal(val);
   };
 
+  const applyCollage = (type) => {
+    setIsBlankCanvas(true);
+    let newCanvasSize = { width: 800, height: 800 };
+    let newBg = 'transparent';
+    let newLayers = [];
+
+    const createShapeLayer = (idOffset, x, y, width, height, color = '#e2e8f0') => ({
+      id: Date.now() + idOffset,
+      type: 'shape',
+      data: 'square',
+      x, y, width, height,
+      rotation: 0, scale: 1, opacity: 1, shadow: 0,
+      color,
+      zIndex: idOffset,
+      locked: true,
+      isPlaceholder: true
+    });
+
+    switch (type) {
+      case 'collage-templates':
+        newCanvasSize = { width: 800, height: 800 };
+        newBg = '#ffffff';
+        newLayers = [
+          createShapeLayer(1, 20, 20, 370, 370, '#f1f5f9'),
+          createShapeLayer(2, 410, 20, 370, 370, '#e2e8f0'),
+          createShapeLayer(3, 20, 410, 370, 370, '#e2e8f0'),
+          createShapeLayer(4, 410, 410, 370, 370, '#f1f5f9')
+        ];
+        break;
+      case 'collage-story':
+        newCanvasSize = { width: 1080, height: 1920 };
+        newBg = 'linear-gradient(135deg, #ff7a18, #af002d 31.25%, #319197 100%)';
+        newLayers = [
+          createShapeLayer(1, 140, 300, 800, 1000, '#ffffff'),
+          { ...createShapeLayer(2, 140, 1350, 800, 200, '#ffffff'), opacity: 0.8 },
+          { ...createShapeLayer(3, 140, 150, 120, 120, '#ffffff'), data: 'circle' }
+        ];
+        break;
+      case 'collage-moodboard':
+        newCanvasSize = { width: 1200, height: 800 };
+        newBg = '#f8fafc';
+        newLayers = [
+          { ...createShapeLayer(1, 50, 50, 400, 500, '#fbcfe8'), rotation: -5, shadow: 10 },
+          { ...createShapeLayer(2, 400, 150, 350, 450, '#bfdbfe'), rotation: 8, shadow: 10 },
+          { ...createShapeLayer(3, 700, 50, 450, 350, '#bbf7d0'), rotation: -3, shadow: 10 },
+          { ...createShapeLayer(4, 650, 420, 500, 350, '#fef08a'), rotation: 4, shadow: 10 },
+          { ...createShapeLayer(5, 100, 500, 350, 250, '#e9d5ff'), rotation: -10, shadow: 10 },
+        ];
+        break;
+      case 'collage-filmstrip':
+        newCanvasSize = { width: 400, height: 1200 };
+        newBg = '#000000';
+        newLayers = [
+          createShapeLayer(1, 40, 40, 320, 346, '#ffffff'),
+          createShapeLayer(2, 40, 426, 320, 346, '#ffffff'),
+          createShapeLayer(3, 40, 812, 320, 346, '#ffffff'),
+        ];
+        break;
+      case 'collage-freestyle':
+        newCanvasSize = { width: 1000, height: 1000 };
+        newBg = '#fdf2f8';
+        newLayers = [
+          { ...createShapeLayer(1, 300, 300, 400, 400, '#fbcfe8'), data: 'circle' },
+          { ...createShapeLayer(2, 100, 100, 300, 200, '#f9a8d4'), rotation: 15 },
+        ];
+        break;
+      case 'collage-2-horizontal':
+        newCanvasSize = { width: 800, height: 600 };
+        newBg = '#ffffff';
+        newLayers = [
+          createShapeLayer(1, 20, 20, 370, 560, '#f1f5f9'),
+          createShapeLayer(2, 410, 20, 370, 560, '#e2e8f0'),
+        ];
+        break;
+      case 'collage-2-vertical':
+        newCanvasSize = { width: 600, height: 800 };
+        newBg = '#ffffff';
+        newLayers = [
+          createShapeLayer(1, 20, 20, 560, 370, '#f1f5f9'),
+          createShapeLayer(2, 20, 410, 560, 370, '#e2e8f0'),
+        ];
+        break;
+      default:
+        break;
+    }
+    setCanvasSize(newCanvasSize);
+    setCanvasBg(newBg);
+    setLayers(newLayers);
+    setImage(null);
+    if (newLayers.length > 0) {
+      setSelectedLayerId(newLayers[0].id);
+      setShapeControlTab('layouts');
+    }
+    notify("Collage Template Applied! 🖼️");
+  };
+
   const handleSelectTool = (toolId) => {
+    if (toolId?.startsWith('collage-')) {
+      applyCollage(toolId);
+      setActiveTool(toolId);
+      setShowToolSettings(false);
+      return;
+    }
+
+    if (!image && !isBlankCanvas && !isTemplateMode && !isStudioMode) {
+      notify("Please open a canvas or upload an image first! 🎨");
+      return;
+    }
     setActiveTool(toolId);
+    if (toolId === 'brush-blur') {
+      setBrushType('solid');
+    }
     if (toolId && toolId !== 'draw-none') {
       setShowToolSettings(true);
     } else {
@@ -137,7 +249,10 @@ function Dashboard() {
   };
 
   const moveLayer = (direction) => {
-    if (!selectedLayerId) return;
+    if (!selectedLayerId) {
+      notify("Please select a layer first! 👆");
+      return;
+    }
     setLayers(prev => {
       const idx = prev.findIndex(l => l.id === selectedLayerId);
       if (idx === -1) return prev;
@@ -159,7 +274,17 @@ function Dashboard() {
   };
 
   const fileInputRef = useRef(null);
+  const bgInputRef = useRef(null);
   const avatarInputRef = useRef(null);
+
+  const handleBgUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const url = URL.createObjectURL(e.target.files[0]);
+      setCanvasBg(`url(${url})`);
+      notify("Background Image Applied! 🖼️");
+      e.target.value = null;
+    }
+  };
   const canvasRef = useRef(null);
   const valuesRef = useRef({});
   useEffect(() => { valuesRef.current = values; }, [values]);
@@ -184,11 +309,19 @@ function Dashboard() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 1024) setShowSidebar(true);
+      // Sidebar visibility is now manually toggled
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (image || isBlankCanvas || isTemplateMode || isStudioMode) {
+      internalSetShowSidebar(true);
+    } else {
+      internalSetShowSidebar(false);
+    }
+  }, [image, isBlankCanvas, isTemplateMode, isStudioMode]);
 
   const canvasSizeRef = useRef(canvasSize);
   const layersRef = useRef(layers);
@@ -564,7 +697,13 @@ function Dashboard() {
     notify(selectedLayerId ? "AI Processing Layer... 🪄" : "AI Processing Image... 🪄");
     
     try {
-      const resultBlob = await removeBackground(targetImage);
+      // Convert data URL to Blob
+      const res = await fetch(targetImage);
+      const blob = await res.blob();
+      
+      // Use frontend imgly background removal
+      const resultBlob = await removeBackground(blob);
+      
       const resultData = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
@@ -579,6 +718,15 @@ function Dashboard() {
         setImage(resultData);
         addToHistory(resultData);
       }
+      
+      setBgRemovalAnimation({
+        oldImage: targetImage,
+        layerId: selectedLayerId
+      });
+      setTimeout(() => {
+        setBgRemovalAnimation(null);
+      }, 2000);
+
       notify("Background removed successfully! ✨");
     } catch (err) {
       console.error(err);
@@ -678,7 +826,7 @@ function Dashboard() {
       link.href = canvas.toDataURL(`image/${ext === 'jpg' ? 'jpeg' : ext}`, exportQuality || 1.0);
       link.click();
       
-      notify("Design saved successfully! 🚀");
+      notify("Design saved successfully!");
     } catch (err) {
       console.error("Export error:", err);
       notify("Export failed. Try simplifying filters first.");
@@ -972,16 +1120,17 @@ function Dashboard() {
       let sx, sy, sw, sh;
       
       if (activeLayer) {
-        // Find how much of the original image the current layer width/height represents
-        // This is tricky if it's already been scaled.
-        // For simplicity, we assume crop box (x,y) is relative to canvas,
-        // and layer (x,y) is also relative to canvas.
-        const relX = crop.x - activeLayer.x;
-        const relY = crop.y - activeLayer.y;
+        const scale = activeLayer.scale || 1;
+        const boundW = activeLayer.width * scale;
+        const boundH = activeLayer.height * scale;
+        const boundX = activeLayer.x - (boundW - activeLayer.width) / 2;
+        const boundY = activeLayer.y - (boundH - activeLayer.height) / 2;
+
+        const relX = crop.x - boundX;
+        const relY = crop.y - boundY;
         
-        // Scale to original pixel dimensions
-        const ratioX = img.width / activeLayer.width;
-        const ratioY = img.height / activeLayer.height;
+        const ratioX = img.width / boundW;
+        const ratioY = img.height / boundH;
         
         sx = relX * ratioX;
         sy = relY * ratioY;
@@ -1006,7 +1155,15 @@ function Dashboard() {
       
       if (activeLayer) {
         setLayers(prev => prev.map(l => (
-          l.id === selectedLayerId ? { ...l, data: croppedData, width: crop.width, height: crop.height, x: crop.x, y: crop.y } : l
+          l.id === activeLayer.id ? { 
+            ...l, 
+            data: croppedData, 
+            width: crop.width, 
+            height: crop.height,
+            x: crop.x,
+            y: crop.y,
+            scale: 1 
+          } : l
         )));
       } else {
         setImage(croppedData);
@@ -1026,7 +1183,7 @@ function Dashboard() {
   const deleteLayer = (id) => {
     setLayers(layers.filter(l => l.id !== id));
   };
-  const centerLayer = (axis, id) => {
+  const centerLayer = (alignment, id) => {
     if (!id) return;
 
     setLayers(prev => prev.map(l => {
@@ -1047,8 +1204,16 @@ function Dashboard() {
         const scaledWidth = lWidth * (l.scale || 1);
         const scaledHeight = lHeight * (l.scale || 1);
         
-        const newX = axis === 'horizontal' || axis === 'both' ? (canvasWidth - scaledWidth) / 2 : l.x;
-        const newY = axis === 'vertical' || axis === 'both' ? (canvasHeight - scaledHeight) / 2 : l.y;
+        let newX = l.x;
+        let newY = l.y;
+
+        if (alignment === 'left') newX = 0;
+        if (alignment === 'right') newX = canvasWidth - scaledWidth;
+        if (alignment === 'horizontal' || alignment === 'both') newX = (canvasWidth - scaledWidth) / 2;
+
+        if (alignment === 'top') newY = 0;
+        if (alignment === 'bottom') newY = canvasHeight - scaledHeight;
+        if (alignment === 'vertical' || alignment === 'both') newY = (canvasHeight - scaledHeight) / 2;
 
         return { ...l, x: newX, y: newY };
       }
@@ -1208,7 +1373,12 @@ function Dashboard() {
       if (toolId === 'crop') {
         const layer = layers.find(l => l.id === selectedLayerId);
         if (layer && layer.type === 'image') {
-          setCrop({ x: layer.x, y: layer.y, width: layer.width, height: layer.height });
+          const scale = layer.scale || 1;
+          const w = layer.width * scale;
+          const h = layer.height * scale;
+          const x = layer.x - (w - layer.width) / 2;
+          const y = layer.y - (h - layer.height) / 2;
+          setCrop({ x, y, width: w, height: h });
           setIsCropping(true);
           return;
         }
@@ -1232,7 +1402,8 @@ function Dashboard() {
 
     switch (toolId) {
       case 'crop': 
-        if (image) {
+        if (image || isBlankCanvas) {
+          setCrop({ x: 0, y: 0, width: canvasSize.width, height: canvasSize.height });
           setIsCropping(true);
         } else {
           notify("Upload an image first to use crop! 🖼️");
@@ -1417,6 +1588,217 @@ function Dashboard() {
     };
   };
 
+  const renderShapeControls = (layer, isSidebarMode = false) => {
+    const nudgeLayer = (dx, dy) => {
+      setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, x: (l.x || 0) + dx, y: (l.y || 0) + dy } : l));
+    };
+
+    return (
+      <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.8rem', cursor: isSidebarMode ? 'default' : 'grab' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {!isSidebarMode && <GripVertical size={16} color="var(--text-muted)" />}
+            <PenTool size={20} color="var(--primary)" />
+          </div>
+          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '1px' }}>{isSidebarMode ? 'COLLAGE' : 'SHAPE CONTROLS'}</span>
+        </div>
+
+        <div className="category-list" style={{ marginBottom: '1rem', marginTop: 0 }}>
+          <button 
+            onClick={() => setShapeControlTab('layouts')}
+            className={`category-btn ${shapeControlTab === 'layouts' ? 'active' : ''}`}
+          >LAYOUTS</button>
+          <button 
+            onClick={() => setShapeControlTab('style')}
+            className={`category-btn ${shapeControlTab === 'style' ? 'active' : ''}`}
+          >STYLE</button>
+          <button 
+            onClick={() => setShapeControlTab('position')}
+            className={`category-btn ${shapeControlTab === 'position' ? 'active' : ''}`}
+          >POSITION</button>
+        </div>
+
+        <div style={{ maxHeight: isSidebarMode ? 'calc(100vh - 230px)' : '300px', overflowY: 'auto', paddingRight: '12px', scrollbarWidth: 'none' }} className="modal-scroll-area">
+          {shapeControlTab === 'layouts' ? (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>COLLAGE TEMPLATES</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                {TOOLS.filter(t => t.category === 'Collage Maker').map(tool => (
+                  <button 
+                    key={tool.id} 
+                    className={`tool-item ${activeTool === tool.id ? 'active' : ''}`}
+                    onClick={() => {
+                      applyCollage(tool.id);
+                      setActiveTool(tool.id);
+                    }}
+                    style={{ padding: '0.8rem 0.5rem', height: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: activeTool === tool.id ? 'rgba(59, 130, 246, 0.1)' : 'var(--bg-main)', border: activeTool === tool.id ? '1px solid var(--primary)' : '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer' }}
+                  >
+                    <tool.icon size={20} color={activeTool === tool.id ? 'var(--primary)' : 'var(--text-muted)'} />
+                    <span style={{ fontSize: '0.65rem', textAlign: 'center', color: activeTool === tool.id ? 'var(--primary)' : 'var(--text-main)', fontWeight: 600 }}>{tool.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : shapeControlTab === 'style' ? (
+            <>
+              {/* Basics Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>BASICS</p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Palette size={14} color="var(--text-muted)" />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Shape Color</span>
+                  </div>
+                  <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: layer.color || '#3b82f6', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
+                    <input 
+                      type="color" value={layer.color || '#3b82f6'}
+                      onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, color: e.target.value } : l))}
+                      style={{ position: 'absolute', top: '-10px', left: '-10px', width: '100px', height: '100px', cursor: 'pointer', opacity: 0 }}
+                    />
+                    <Plus size={16} color="#ffffff" style={{ pointerEvents: 'none', mixBlendMode: 'difference' }} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '0.6rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Ghost size={14} color="var(--text-muted)" />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Opacity</span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{Math.round((layer.opacity || 1) * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="1" step="0.01" value={layer.opacity || 1}
+                    onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, opacity: parseFloat(e.target.value) } : l))}
+                    className="vector-slider"
+                  />
+                </div>
+              </div>
+
+              {/* Vector Line Specific Section */}
+              {layer.data?.startsWith('line-') && (
+                <div style={{ marginBottom: '1.8rem' }}>
+                  <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>VECTOR PATH</p>
+                  {[
+                    { id: 'line-density', label: 'Wavelength', icon: MoveHorizontal, min: 2, max: 200 },
+                    { id: 'line-thickness', label: 'Weight', icon: Minus, min: 1, max: 30 },
+                    { id: 'line-amplitude', label: 'Wave Height', icon: MoveVertical, min: 0, max: 200 }
+                  ].map(tool => (
+                    <div key={tool.id} style={{ marginBottom: '1.2rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <tool.icon size={20} color={activeTool === tool.id || activeFilters[tool.id] ? 'var(--primary)' : 'var(--text-muted)'} />
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>{tool.label}</span>
+                        </div>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{layer.filters?.[tool.id] || 0}</span>
+                      </div>
+                      <input 
+                        type="range"
+                        min={tool.min}
+                        max={tool.max}
+                        step={1}
+                        value={layer.filters?.[tool.id] || 0}
+                        onChange={(e) => updateLayerFilter(layer.id, tool.id, parseInt(e.target.value))}
+                        className="vector-slider"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Stroke / Outline Section */}
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>STROKE & STYLE</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Palette size={14} color="var(--text-muted)" />
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Stroke Color</span>
+                  </div>
+                  <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', border: '2px solid var(--border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: layer.filters?.['img-outline-color'] || '#ffffff', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
+                    <input 
+                      type="color" value={layer.filters?.['img-outline-color'] || '#ffffff'}
+                      onChange={(e) => updateLayerFilter(layer.id, 'img-outline-color', e.target.value)}
+                      style={{ position: 'absolute', top: '-10px', left: '-10px', width: '100px', height: '100px', cursor: 'pointer', opacity: 0 }}
+                    />
+                    <Plus size={16} color="#ffffff" style={{ pointerEvents: 'none', mixBlendMode: 'difference' }} />
+                  </div>
+                </div>
+                {!layer.data?.startsWith('line-') && (
+                  <div style={{ marginBottom: '0.6rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Maximize size={14} color="var(--text-muted)" />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Corner Radius</span>
+                      </div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{layer.borderRadius || 0}</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="200" value={layer.borderRadius || 0}
+                      onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, borderRadius: parseInt(e.target.value) } : l))}
+                      className="vector-slider"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Alignment Section */}
+              <div style={{ marginBottom: '1.2rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>ALIGNMENT</p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '8px' }}>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('left', layer.id)} title="Align Left" className="align-btn" style={{ height: '40px' }}><AlignLeft size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('horizontal', layer.id)} title="Center Horizontal" className="align-btn" style={{ height: '40px' }}><AlignCenter size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('right', layer.id)} title="Align Right" className="align-btn" style={{ height: '40px' }}><AlignRight size={16} /></button>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '8px' }}>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('top', layer.id)} title="Align Top" className="align-btn" style={{ height: '40px' }}><ArrowUp size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('vertical', layer.id)} title="Center Vertical" className="align-btn" style={{ height: '40px' }}><AlignVerticalJustifyCenter size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('bottom', layer.id)} title="Align Bottom" className="align-btn" style={{ height: '40px' }}><ArrowDown size={16} /></button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('both', layer.id)} title="Center Both" className="align-btn" style={{ height: '40px' }}><Maximize size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => bringToFront(layer.id)} title="Bring to Front" className="align-btn" style={{ height: '40px' }}><Layers size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)} title="Delete Layer" className="align-btn" style={{ color: '#ef4444', height: '40px' }}><Trash2 size={16} /></button>
+                </div>
+              </div>
+
+              {/* Nudge Section */}
+              <div style={{ marginBottom: '1.2rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>NUDGE (1px)</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 40px)', gap: '8px', justifyContent: 'center' }}>
+                  <div></div>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => nudgeLayer(0, -1)} title="Nudge Up" className="align-btn" style={{ height: '40px' }}><ArrowUp size={16} /></button>
+                  <div></div>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => nudgeLayer(-1, 0)} title="Nudge Left" className="align-btn" style={{ height: '40px' }}><ArrowLeft size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => nudgeLayer(0, 1)} title="Nudge Down" className="align-btn" style={{ height: '40px' }}><ArrowDown size={16} /></button>
+                  <button onPointerDown={(e) => e.stopPropagation()} onClick={() => nudgeLayer(1, 0)} title="Nudge Right" className="align-btn" style={{ height: '40px' }}><ArrowRight size={16} /></button>
+                </div>
+              </div>
+
+              {/* Transform Section */}
+              <div style={{ marginBottom: '0.2rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '0.6rem', letterSpacing: '1px' }}>TRANSFORM</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, rotation: (l.rotation || 0) + 90 } : l))} title="Rotate Clockwise" className="align-btn" style={{ height: '40px' }}><RotateCw size={14} /></button>
+                  <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, rotation: (l.rotation || 0) - 90 } : l))} title="Rotate Counter-Clockwise" className="align-btn" style={{ height: '40px' }}><RotateCcw size={14} /></button>
+                  <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, flipX: (l.flipX || 1) * -1 } : l))} title="Flip Horizontal" className="align-btn" style={{ height: '40px' }}><FlipHorizontal size={14} /></button>
+                  <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, flipY: (l.flipY || 1) * -1 } : l))} title="Flip Vertical" className="align-btn" style={{ height: '40px' }}><FlipVertical size={14} /></button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        
+
+      </>
+    );
+  };
+
   return (
     <div className="app-container">
       <style>{`
@@ -1445,6 +1827,13 @@ function Dashboard() {
         accept="image/*" 
         style={{ visibility: 'hidden', position: 'absolute', width: '0', height: '0' }} 
       />
+      <input 
+        type="file" 
+        ref={bgInputRef} 
+        onChange={handleBgUpload} 
+        accept="image/*" 
+        style={{ visibility: 'hidden', position: 'absolute', width: '0', height: '0' }} 
+      />
 
       {/* Global Status Overlay (Auto-save) */}
       <AnimatePresence>
@@ -1461,17 +1850,7 @@ function Dashboard() {
          )}
       </AnimatePresence>
       <AnimatePresence>
-        {isProcessing && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'var(--bg-main)', zIndex: 20000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}
-          >
-            <div className="loader"></div>
-            <p style={{ color: 'var(--text-main)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '1px' }}>AI MAGIC IN PROGRESS...</p>
-          </motion.div>
-        )}
+
 
         {isCleaningMode && (
           <motion.div 
@@ -1540,43 +1919,98 @@ function Dashboard() {
       />
 
       <main className="main-content">
-        <Sidebar 
-          showSidebar={showSidebar}
-          setShowSidebar={setShowSidebar}
-          CATEGORIES={CATEGORIES}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          TOOLS={TOOLS}
-          activeTool={activeTool}
-          setActiveTool={handleSelectTool}
-          activeFilters={activeFilters}
-          toggleFilter={toggleFilter}
-          handleRemoveBG={handleRemoveBG}
-          handleAutoTone={handleAutoTone}
-          handleMagicClean={handleMagicClean}
-          applyTemplate={applyTemplate}
-          applyTransform={applyTransform}
-          fileInputRef={fileInputRef}
-          selectedLayerId={selectedLayerId}
-          bringToFront={bringToFront}
-          centerLayer={centerLayer}
-          addLayer={addLayer}
-          applyPattern={applyPattern}
-          setShowShadeModal={setShowShadeModal}
-          onUndo={() => setHistoryIndex(prev => prev - 1)}
-          onRedo={() => setHistoryIndex(prev => prev + 1)}
-          onDownload={handleDownload}
-          historyIndex={historyIndex}
-          historyLength={history.length}
-          theme={theme}
-          toggleTheme={toggleTheme}
-          showLayerPanel={showLayerPanel}
-          setShowLayerPanel={setShowLayerPanel}
-          setIsBlankCanvas={setIsBlankCanvas}
-          setIsTemplateMode={setIsTemplateMode}
-          isBlankCanvas={isBlankCanvas}
-          isTemplateMode={isTemplateMode}
-        />
+        {!showSidebar && (image || isBlankCanvas || isTemplateMode || isStudioMode) && (
+          <motion.div 
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -50, opacity: 0 }}
+            onClick={() => setShowSidebar(true)}
+            style={{
+              position: 'fixed',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'white',
+              padding: '10px 14px 10px 6px',
+              borderTopRightRadius: '20px',
+              borderBottomRightRadius: '20px',
+              cursor: 'pointer',
+              zIndex: 1000,
+              boxShadow: '4px 0 12px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.paddingLeft = '10px';
+              e.currentTarget.style.paddingRight = '18px';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.paddingLeft = '6px';
+              e.currentTarget.style.paddingRight = '14px';
+            }}
+          >
+            <svg width="0" height="0" style={{ position: 'absolute' }}>
+              <linearGradient id="brain-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f59e0b" />
+                <stop offset="30%" stopColor="#ec4899" />
+                <stop offset="70%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#3b82f6" />
+              </linearGradient>
+            </svg>
+            <Brain size={20} color="url(#brain-gradient)" strokeWidth={2.5} />
+          </motion.div>
+        )}
+
+        {(image || isBlankCanvas || isTemplateMode || isStudioMode) && (
+          activeCategory === 'Collage Maker' && selectedLayerId && layers.find(l => l.id === selectedLayerId)?.type === 'shape' ? (
+          <div className="sidebar glass" style={{ display: 'flex', flexDirection: 'column', zIndex: 100, padding: '1.5rem', flexShrink: 0, overflowY: 'auto' }}>
+            {renderShapeControls(layers.find(l => l.id === selectedLayerId), true)}
+          </div>
+        ) : (
+          <Sidebar 
+            showSidebar={showSidebar}
+            setShowSidebar={setShowSidebar}
+            CATEGORIES={CATEGORIES}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            TOOLS={TOOLS}
+            activeTool={activeTool}
+            setActiveTool={handleSelectTool}
+            activeFilters={activeFilters}
+            toggleFilter={toggleFilter}
+            handleRemoveBG={handleRemoveBG}
+            handleAutoTone={handleAutoTone}
+            handleMagicClean={handleMagicClean}
+            applyTemplate={applyTemplate}
+            applyTransform={applyTransform}
+            fileInputRef={fileInputRef}
+            bgInputRef={bgInputRef}
+            selectedLayerId={selectedLayerId}
+            bringToFront={bringToFront}
+            centerLayer={centerLayer}
+            addLayer={addLayer}
+            applyPattern={applyPattern}
+            setShowShadeModal={setShowShadeModal}
+            onUndo={() => setHistoryIndex(prev => prev - 1)}
+            onRedo={() => setHistoryIndex(prev => prev + 1)}
+            onDownload={handleDownload}
+            historyIndex={historyIndex}
+            historyLength={history.length}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            showLayerPanel={showLayerPanel}
+            setShowLayerPanel={setShowLayerPanel}
+            setIsBlankCanvas={setIsBlankCanvas}
+            setIsTemplateMode={setIsTemplateMode}
+            isBlankCanvas={isBlankCanvas}
+            isTemplateMode={isTemplateMode}
+            isStudioMode={isStudioMode}
+            image={image}
+          />
+          )
+        )}
 
         {showLayerPanel && (
           <LayerPanel 
@@ -1595,18 +2029,18 @@ function Dashboard() {
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowToolSettings(false);
               }}
-              style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingTop: '80px', paddingRight: '20px', pointerEvents: 'none' }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', paddingTop: '80px', paddingLeft: '300px', pointerEvents: 'none' }}
             >
               <motion.div 
-                initial={{ x: 300, opacity: 0 }}
+                initial={{ x: -300, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 300, opacity: 0 }}
+                exit={{ x: -300, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()} 
                 style={{ pointerEvents: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.2rem', width: '300px', maxWidth: '85vw', boxShadow: 'var(--shadow-premium)' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', cursor: 'grab' }}>
                   <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800 }}>⚙️ {TOOLS.find(t => t.id === activeTool)?.label || 'Tool Settings'}</h3>
-                  <button onClick={() => setShowToolSettings(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: '1' }}>&times;</button>
+                  <button className="icon-btn" onClick={() => setShowToolSettings(false)} style={{ background: 'var(--tool-bg)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
                 </div>
                 <div className="tool-controls" onPointerDown={(e) => e.stopPropagation()} style={{ cursor: 'default', padding: '0.2rem', border: 'none', background: 'transparent', width: '100%', maxHeight: '75vh', overflowY: 'auto' }}>
           {activeTool === 'img-align' ? (
@@ -1654,7 +2088,7 @@ function Dashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                   {[
                     // Trending & Engagement
-                    '🔥', '✨', '🚀', '💯', '💎', '⚡', '🌟', '💥', '🎉', '🎈',
+                    '🔥', '✨', '💯', '💎', '⚡', '🌟', '💥', '🎉', '🎈',
                     // Reactions & Feedback 
                     '❤️', '✅', '❌', '⚠️', '🔔', '📌', '🌈', '🌙', '☀️', '☁️',
                     // Business & Growth
@@ -1987,7 +2421,29 @@ function Dashboard() {
                         key={r.label}
                         className="btn-shape"
                         style={{ padding: '0.5rem', fontSize: '0.6rem' }}
-                        onClick={() => setCrop(prev => ({ ...prev, width: r.w, height: r.h }))}
+                        onClick={() => {
+                          const layer = selectedLayerId ? layers.find(l => l.id === selectedLayerId) : null;
+                          const scale = layer ? (layer.scale || 1) : 1;
+                          const boundW = layer ? layer.width * scale : canvasSize.width;
+                          const boundH = layer ? layer.height * scale : canvasSize.height;
+                          const boundX = layer ? layer.x - (boundW - layer.width) / 2 : 0;
+                          const boundY = layer ? layer.y - (boundH - layer.height) / 2 : 0;
+
+                          if (r.label === 'Free') {
+                            setCrop({ x: boundX, y: boundY, width: boundW, height: boundH });
+                          } else {
+                            const targetRatio = r.w / r.h;
+                            let newW = boundW;
+                            let newH = boundW / targetRatio;
+                            if (newH > boundH) {
+                              newH = boundH;
+                              newW = boundH * targetRatio;
+                            }
+                            const newX = boundX + (boundW - newW) / 2;
+                            const newY = boundY + (boundH - newH) / 2;
+                            setCrop({ x: newX, y: newY, width: newW, height: newH });
+                          }
+                        }}
                       >
                         {r.label}
                       </button>
@@ -2035,15 +2491,26 @@ function Dashboard() {
                     />
                   ))}
                 </div>
-                <input 
-                  type="color" 
-                  value={
-                    activeTool === 'brush-color' ? brushColor : 
-                    (layers.find(l => l.id === selectedLayerId)?.color || '#000000')
-                  }
-                  style={{ width: '100%', height: '40px', border: 'none', background: 'transparent', cursor: 'pointer' }} 
-                  onChange={(e) => updateValue(e.target.value)} 
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '0.5rem', background: 'var(--input-bg)', padding: '10px', borderRadius: '12px' }}>
+                  <label style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    background: 'var(--bg-card)', border: '1px dashed var(--text-muted)',
+                    cursor: 'pointer', position: 'relative', overflow: 'hidden', flexShrink: 0
+                  }}>
+                    <Plus size={18} color="var(--text-muted)" />
+                    <input 
+                      type="color" 
+                      value={
+                        activeTool === 'brush-color' ? brushColor : 
+                        (layers.find(l => l.id === selectedLayerId)?.color || '#000000')
+                      }
+                      style={{ position: 'absolute', opacity: 0, width: '200%', height: '200%', cursor: 'pointer', top: '-50%', left: '-50%' }} 
+                      onChange={(e) => updateValue(e.target.value)} 
+                    />
+                  </label>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 700 }}>Custom Color</span>
+                </div>
                 
                 {activeTool === 'text-glow-color' && (
                   <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
@@ -2143,9 +2610,42 @@ function Dashboard() {
                       <button key={c} onClick={() => setBrushColor(c)} style={{ height: '32px', borderRadius: '8px', background: c, border: brushColor === c ? '3px solid white' : '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', boxShadow: brushColor === c ? '0 0 15px rgba(255,255,255,0.3)' : 'none' }} />
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="color" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ width: '50px', height: '45px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer' }} />
-                    <input type="text" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ flex: 1, background: 'var(--tool-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text-main)', fontSize: '0.8rem', fontWeight: 700 }} />
+                  <div 
+                    style={{ position: 'relative', width: '100%', height: '56px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '16px', cursor: 'pointer', overflow: 'hidden', transition: 'all 0.3s' }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
+                  >
+                    <input type="color" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2, left: 0, top: 0 }} />
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1.5px dashed rgba(255,255,255,0.3)', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, transition: 'all 0.3s' }}>
+                      <Plus size={16} color="rgba(255,255,255,0.8)" />
+                    </div>
+                    <span style={{ color: '#ffffff', fontSize: '0.9rem', fontWeight: 600, zIndex: 1, letterSpacing: '0.3px' }}>Custom Color</span>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.6rem', fontWeight: 700 }}>BRUSH TEXTURE</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                    {['solid', 'neon', 'spray', 'pencil'].map(t => (
+                      <button 
+                        key={t} 
+                        onClick={() => setBrushType(t)} 
+                        style={{ 
+                          background: brushType === t ? 'var(--primary)' : 'var(--tool-bg)', 
+                          border: '1px solid var(--border)', 
+                          borderRadius: '10px', 
+                          padding: '10px 5px', 
+                          color: brushType === t ? 'white' : 'var(--text-main)', 
+                          cursor: 'pointer', 
+                          fontSize: '0.65rem', 
+                          fontWeight: 800, 
+                          transition: 'all 0.2s',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {t}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -2190,7 +2690,7 @@ function Dashboard() {
               </div>
             ) : activeTool === 'export-design' ? (
               <div style={{ padding: '0.5rem' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem', letterSpacing: '1px' }}>🚀 EXPORT STUDIO</p>
+                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem', letterSpacing: '1px' }}>EXPORT STUDIO</p>
                 
                 <div style={{ marginBottom: '1.5rem' }}>
                   <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.8rem', fontWeight: 700 }}>SELECT FORMAT</p>
@@ -2230,7 +2730,10 @@ function Dashboard() {
                 <button 
                   className="btn-primary" 
                   style={{ width: '100%', padding: '1rem', marginTop: '1rem', borderRadius: '12px' }} 
-                  onClick={() => handleExport()}
+                  onClick={() => {
+                    handleExport();
+                    setActiveTool(null);
+                  }}
                 >
                   <Download size={18} />
                   <span>DOWNLOAD NOW</span>
@@ -2387,8 +2890,8 @@ function Dashboard() {
                 </div>
                 
                 <div className="dashboard-grid">
-                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => { setIsStudioMode(true); fileInputRef.current?.click(); }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.4))' }}>
+                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => { setIsStudioMode(true); }}>
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.4))' }}>
                       <ImageIcon size={32} />
                     </div>
                     <h3>Edit Photo</h3>
@@ -2397,92 +2900,106 @@ function Dashboard() {
 
                   <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => {
                     setImage(null);
-                    setCanvasBg('#ffffff');
                     setLayers([]);
                     setIsTemplateMode(false);
                     setIsBlankCanvas(true);
                     setIsStudioMode(false);
                   }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.4))' }}>
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(219, 39, 119, 0.2), rgba(190, 24, 93, 0.4))' }}>
                       <PenTool size={32} />
                     </div>
                     <h3>Blank Canvas</h3>
                     <p>Create a design from scratch layer by layer with full vector controls.</p>
                   </motion.div>
 
+                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => {
+                    setActiveCategory('Collage Maker');
+                    applyCollage('collage-templates');
+                  }}>
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.4))' }}>
+                      <GridIcon size={32} />
+                    </div>
+                    <h3>Collage Maker</h3>
+                    <p>Create stunning photo collages with pre-built templates and grids.</p>
+                  </motion.div>
                 </div>
               </motion.div>
             ) : isStudioMode && !image ? (
               <motion.div key="studio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="studio-welcome">
-                <div style={{
-                  width: '320px',
-                  maxWidth: '90vw',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '1.25rem',
-                  padding: '2rem 1.5rem',
-                  textAlign: 'center',
-                  boxShadow: 'none',
-                  position: 'relative',
-                  marginTop: '4rem'
-                }}>
-                  <div style={{ 
-                    width: '60px', 
-                    height: '60px', 
-                    background: 'var(--primary)', 
-                    borderRadius: '18px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    margin: '0 auto 1.2rem',
-                    boxShadow: 'none'
-                  }}>
-                    <Camera size={28} color="white" />
-                  </div>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.8rem' }}>Photo Editor Studio</h2>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
-                    Upload a high-quality photo to begin professional retouching and design.
-                  </p>
-                  
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                <div style={{ width: '600px', maxWidth: '90vw', marginTop: '1rem' }}>
+                  <div 
                     onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)'; }}
+                    onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                      e.currentTarget.style.background = 'var(--bg-card)';
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                         const file = e.dataTransfer.files[0];
+                         const dataTransfer = new DataTransfer();
+                         dataTransfer.items.add(file);
+                         if (fileInputRef.current) {
+                           fileInputRef.current.files = dataTransfer.files;
+                           const event = new Event('change', { bubbles: true });
+                           fileInputRef.current.dispatchEvent(event);
+                         }
+                      }
+                    }}
                     style={{
-                      background: 'var(--primary)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '16px',
-                      padding: '1rem 2rem',
-                      fontSize: '0.95rem',
-                      fontWeight: 800,
+                      background: 'var(--bg-card)',
+                      border: '2px dashed var(--border)',
+                      borderRadius: '2rem',
+                      padding: '5rem 4rem',
+                      textAlign: 'center',
                       cursor: 'pointer',
-                      boxShadow: 'none',
+                      position: 'relative',
+                      minHeight: '400px',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '1rem',
-                      margin: '0 auto'
+                      justifyContent: 'center',
+                      transition: 'all 0.3s ease'
                     }}
                   >
-                    <Download size={20} />
-                    Upload Pick to Edit
-                  </motion.button>
+                    <div style={{ 
+                      width: '80px', 
+                      height: '80px', 
+                      background: 'rgba(59, 130, 246, 0.1)', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      margin: '0 auto 1.5rem',
+                      boxShadow: 'none'
+                    }}>
+                      <ImageIcon size={36} color="var(--primary)" />
+                    </div>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.8rem', color: 'var(--text-main)' }}>Upload your image</h2>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', fontSize: '1rem', lineHeight: '1.6', maxWidth: '80%' }}>
+                      Drag and drop your file here or click to browse. Supports high-quality PNG, JPG, or WebP.
+                    </p>
+                    
+                    <div 
+                      style={{
+                        background: 'var(--primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '16px',
+                        padding: '1rem 2.5rem',
+                        fontSize: '1rem',
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.8rem',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <Download size={20} />
+                      Browse Files
+                    </div>
+                  </div>
                   
-                  <button 
-                    onClick={() => setIsStudioMode(false)}
-                    style={{ 
-                      marginTop: '2rem', 
-                      background: 'transparent', 
-                      border: 'none', 
-                      color: 'var(--text-muted)', 
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      textDecoration: 'underline'
-                    }}
-                  >
-                    Back to Selection
-                  </button>
                 </div>
               </motion.div>
             ) : isTemplateMode ? (
@@ -2578,7 +3095,7 @@ function Dashboard() {
                     top: '-30px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: '#3b82f6',
+                    background: 'var(--primary)',
                     color: 'white',
                     padding: '2px 10px',
                     borderRadius: '20px',
@@ -2681,6 +3198,41 @@ function Dashboard() {
                       />
                     )}
 
+                    {bgRemovalAnimation && !bgRemovalAnimation.layerId && (
+                      <>
+                        <motion.img
+                          src={bgRemovalAnimation.oldImage}
+                          initial={{ clipPath: 'inset(0 0 0 0)' }}
+                          animate={{ clipPath: 'inset(0 100% 0 0)' }}
+                          transition={{ duration: 2, ease: 'linear' }}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'fill',
+                            zIndex: 2,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                        <motion.div
+                          initial={{ left: '100%' }}
+                          animate={{ left: '0%' }}
+                          transition={{ duration: 2, ease: 'linear' }}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            width: '3px',
+                            background: '#fff',
+                            boxShadow: '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)',
+                            zIndex: 3,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      </>
+                    )}
+
                     
                     {isBlankCanvas && !image && (
                       <div 
@@ -2726,19 +3278,41 @@ function Dashboard() {
 
                          if (path.type === 'spray') return (
                            <g key={`ps-${i}`}>
-                             {path.points.filter((_, idx) => idx % 4 === 0).map((p, idx) => (
-                               Array.from({ length: 5 }).map((_, sid) => (
-                                 <circle 
-                                   key={`${idx}-${sid}`}
-                                   cx={p.x + (Math.random() - 0.5) * path.size * 1.5} 
-                                   cy={p.y + (Math.random() - 0.5) * path.size * 1.5} 
-                                   r={Math.random() * 1.5 + 0.5} 
-                                   fill={path.color} 
-                                   style={{ opacity: Math.random() * 0.4 }}
-                                 />
-                               ))
-                             ))}
+                             {path.points.filter((_, idx) => idx % 2 === 0).map((p, idx) => {
+                               return Array.from({ length: 6 }).map((_, sid) => {
+                                 const seed = p.x * 12.9898 + p.y * 78.233 + sid * 137.54;
+                                 const rand1 = Math.abs(Math.sin(seed)) * 43758.5453 % 1;
+                                 const rand2 = Math.abs(Math.cos(seed)) * 43758.5453 % 1;
+                                 const rand3 = Math.abs(Math.sin(seed * 2)) * 43758.5453 % 1;
+                                 const rand4 = Math.abs(Math.cos(seed * 2)) * 43758.5453 % 1;
+                                 
+                                 return (
+                                   <circle 
+                                     key={`${idx}-${sid}`}
+                                     cx={p.x + (rand1 - 0.5) * path.size * 1.8} 
+                                     cy={p.y + (rand2 - 0.5) * path.size * 1.8} 
+                                     r={rand3 * (path.size * 0.15) + 0.5} 
+                                     fill={path.color} 
+                                     style={{ opacity: rand4 * 0.6 + 0.1 }}
+                                   />
+                                 );
+                               });
+                             })}
                            </g>
+                         );
+
+                         if (path.type === 'pencil') return (
+                           <path 
+                             key={`pp-${i}`}
+                             d={d}
+                             stroke={path.color}
+                             strokeWidth={Math.max(1, path.size * 0.3)}
+                             strokeOpacity={path.opacity * 0.8}
+                             fill="none"
+                             strokeLinecap="square"
+                             strokeLinejoin="bevel"
+                             style={{ filter: 'url(#pencil-texture)' }}
+                           />
                          );
 
                          return (
@@ -2786,7 +3360,7 @@ function Dashboard() {
                     {layers.map((layer, index) => (
                       <motion.div
                         key={layer.id}
-                        drag
+                        drag={!layer.locked && editingTextId !== layer.id}
                         dragElastic={0}
                         onDrag={(e, info) => {
                           const centerX = canvasSize.width / 2;
@@ -2836,8 +3410,8 @@ function Dashboard() {
                           scaleX: (layer.scale || 1) * (layer.flipX || 1),
                           scaleY: (layer.scale || 1) * (layer.flipY || 1),
                           rotate: layer.rotation || 0,
-                          zIndex: selectedLayerId === layer.id ? 999 : (index + 5),
-                          cursor: editingTextId === layer.id ? 'text' : 'move',
+                          zIndex: selectedLayerId === layer.id ? 9999 : index + 5,
+                          cursor: editingTextId === layer.id ? 'text' : (layer.locked ? 'default' : 'move'),
                           touchAction: 'none',
                           userSelect: editingTextId === layer.id ? 'text' : 'none',
                           WebkitUserSelect: editingTextId === layer.id ? 'text' : 'none'
@@ -2870,6 +3444,54 @@ function Dashboard() {
                             </div>
                           )}
 
+                          {layer.isPlaceholder && (
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.onchange = (ev) => {
+                                  const file = ev.target.files[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (readEv) => {
+                                      const dataUrl = readEv.target.result;
+                                      setLayers(prev => prev.map(l => 
+                                        l.id === layer.id 
+                                          ? { ...l, type: 'image', data: dataUrl, isPlaceholder: false, color: null, objectFit: 'cover', wasPlaceholder: true, originalColor: layer.color } 
+                                          : l
+                                      ));
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                };
+                                input.click();
+                              }}
+                              style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                background: 'var(--primary)',
+                                color: 'white',
+                                padding: '0.6rem 1rem',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                zIndex: 10,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                pointerEvents: 'auto'
+                              }}
+                            >
+                              <ImageIcon size={16} />
+                              Add Photo
+                            </div>
+                          )}
 
                           
                           {layer.type === 'image' && (
@@ -2907,6 +3529,44 @@ function Dashboard() {
                                   zIndex: 1
                                 }} 
                               />
+
+                              
+                              {bgRemovalAnimation && bgRemovalAnimation.layerId === layer.id && (
+                                <>
+                                  <motion.img
+                                    src={bgRemovalAnimation.oldImage}
+                                    initial={{ clipPath: 'inset(0 0 0 0)' }}
+                                    animate={{ clipPath: 'inset(0 100% 0 0)' }}
+                                    transition={{ duration: 2, ease: 'linear' }}
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'fill',
+                                      zIndex: 2,
+                                      pointerEvents: 'none',
+                                      borderRadius: `${layer.borderRadius || 0}px`,
+                                      transform: `scale(${layer.flipX || 1}, ${layer.flipY || 1})`
+                                    }}
+                                  />
+                                  <motion.div
+                                    initial={{ left: '100%' }}
+                                    animate={{ left: '0%' }}
+                                    transition={{ duration: 2, ease: 'linear' }}
+                                    style={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      bottom: 0,
+                                      width: '3px',
+                                      background: '#fff',
+                                      boxShadow: '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)',
+                                      zIndex: 3,
+                                      pointerEvents: 'none'
+                                    }}
+                                  />
+                                </>
+                              )}
                             </>
                           )}
                           {layer.type === 'text' && (
@@ -3192,7 +3852,13 @@ function Dashboard() {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteLayer(layer.id);
+                                if (layer.wasPlaceholder) {
+                                  setLayers(prev => prev.map(l => 
+                                    l.id === layer.id ? { ...l, type: 'shape', data: 'square', isPlaceholder: true, color: l.originalColor, wasPlaceholder: undefined, originalColor: undefined } : l
+                                  ));
+                                } else {
+                                  deleteLayer(layer.id);
+                                }
                               }}
                               style={{ 
                                 position: 'absolute', 
@@ -3314,7 +3980,8 @@ function Dashboard() {
                     ))}
                   </div>
                 </div>
-                
+
+
 
 
                 {isCropping && (
@@ -3351,18 +4018,6 @@ function Dashboard() {
 
                 {isCropping && (
                   <motion.div 
-                    drag
-                    dragConstraints={selectedLayerId ? false : imageRef}
-                    dragElastic={0}
-                    dragMomentum={false}
-                    onDrag={(e, info) => {
-                      const zoom = values.resize || 0.55;
-                      setCrop(prev => ({ 
-                        ...prev, 
-                        x: Math.max(0, Math.min(prev.x + info.delta.x / zoom, canvasSize.width - prev.width)),
-                        y: Math.max(0, Math.min(prev.y + info.delta.y / zoom, canvasSize.height - prev.height))
-                      }));
-                    }}
                     style={{
                       position: 'absolute',
                       top: `${crop.y}px`,
@@ -3371,7 +4026,6 @@ function Dashboard() {
                       height: `${crop.height}px`,
                       border: '2px solid white',
                       boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
-                      cursor: 'move',
                       zIndex: 1006
                     }}
                   >
@@ -3393,21 +4047,30 @@ function Dashboard() {
                             const dx = info.delta.x / zoom;
                             const dy = info.delta.y / zoom;
 
+                            const layer = selectedLayerId ? layers.find(l => l.id === selectedLayerId) : null;
+                            const scale = layer ? (layer.scale || 1) : 1;
+                            const boundW = layer ? layer.width * scale : canvasSize.width;
+                            const boundH = layer ? layer.height * scale : canvasSize.height;
+                            const boundX = layer ? layer.x - (boundW - layer.width) / 2 : 0;
+                            const boundY = layer ? layer.y - (boundH - layer.height) / 2 : 0;
+
                             if (h.pos.includes('t')) {
-                              const actualDy = Math.min(dy, height - 50);
+                              const actualDy = Math.max(boundY - y, Math.min(dy, height - 50));
                               y += actualDy;
                               height -= actualDy;
                             }
                             if (h.pos.includes('b')) {
-                              height = Math.max(50, height + dy);
+                              const maxDy = (boundY + boundH) - (y + height);
+                              height = Math.max(50, height + Math.min(dy, maxDy));
                             }
                             if (h.pos.includes('l')) {
-                              const actualDx = Math.min(dx, width - 50);
+                              const actualDx = Math.max(boundX - x, Math.min(dx, width - 50));
                               x += actualDx;
                               width -= actualDx;
                             }
                             if (h.pos.includes('r')) {
-                              width = Math.max(50, width + dx);
+                              const maxDx = (boundX + boundW) - (x + width);
+                              width = Math.max(50, width + Math.min(dx, maxDx));
                             }
                             return { x, y, width, height };
                           });
@@ -3653,7 +4316,7 @@ function Dashboard() {
 
       {/* Truly Global Shape Controls Modal (Outside any transformed container) */}
       <AnimatePresence>
-        {selectedLayerId && layers.find(l => l.id === selectedLayerId)?.type === 'shape' && (
+        {activeCategory !== 'Collage Maker' && selectedLayerId && layers.find(l => l.id === selectedLayerId)?.type === 'shape' && (
           <motion.div
             drag
             dragMomentum={false}
@@ -3681,142 +4344,7 @@ function Dashboard() {
             {(() => {
               const layer = layers.find(l => l.id === selectedLayerId);
               if (!layer) return null;
-              return (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.8rem', cursor: 'grab' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <GripVertical size={16} color="var(--text-muted)" />
-                      <PenTool size={20} color="var(--primary)" />
-                    </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '1px' }}>SHAPE CONTROLS</span>
-                  </div>
-
-                  <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '12px', scrollbarWidth: 'none' }} className="modal-scroll-area">
-                    {/* Basics Section */}
-                    <div style={{ marginBottom: '1.8rem' }}>
-                      <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>BASICS</p>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.2rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Palette size={14} color="var(--text-muted)" />
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Shape Color</span>
-                        </div>
-                        <input 
-                          type="color" value={layer.color || '#3b82f6'}
-                          onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, color: e.target.value } : l))}
-                          style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', cursor: 'pointer', background: 'none' }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '1.2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Ghost size={14} color="var(--text-muted)" />
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Opacity</span>
-                          </div>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{Math.round((layer.opacity || 1) * 100)}%</span>
-                        </div>
-                        <input 
-                          type="range" min="0" max="1" step="0.01" value={layer.opacity || 1}
-                          onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, opacity: parseFloat(e.target.value) } : l))}
-                          className="vector-slider"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Vector Line Specific Section */}
-                    {layer.data?.startsWith('line-') && (
-                      <div style={{ marginBottom: '1.8rem' }}>
-                        <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>VECTOR PATH</p>
-                        {[
-                          { id: 'line-density', label: 'Wavelength', icon: MoveHorizontal, min: 2, max: 200 },
-                          { id: 'line-thickness', label: 'Weight', icon: Minus, min: 1, max: 30 },
-                          { id: 'line-amplitude', label: 'Wave Height', icon: MoveVertical, min: 0, max: 200 }
-                        ].map(tool => (
-                          <div key={tool.id} style={{ marginBottom: '1.2rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <tool.icon size={20} color={activeTool === tool.id || activeFilters[tool.id] ? 'var(--primary)' : 'var(--text-muted)'} />
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>{tool.label}</span>
-                              </div>
-                              <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{layer.filters?.[tool.id] || 0}</span>
-                            </div>
-                            <input 
-                              type="range"
-                              min={tool.min}
-                              max={tool.max}
-                              step={1}
-                              value={layer.filters?.[tool.id] || 0}
-                              onChange={(e) => updateLayerFilter(layer.id, tool.id, parseInt(e.target.value))}
-                              className="vector-slider"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Stroke / Outline Section */}
-                    <div style={{ marginBottom: '1.8rem' }}>
-                      <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>STROKE & STYLE</p>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.2rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Palette size={14} color="var(--text-muted)" />
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Stroke Color</span>
-                        </div>
-                        <input 
-                          type="color" value={layer.filters?.['img-outline-color'] || '#ffffff'}
-                          onChange={(e) => updateLayerFilter(layer.id, 'img-outline-color', e.target.value)}
-                          style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid var(--border)', cursor: 'pointer', background: 'none' }}
-                        />
-                      </div>
-                      {!layer.data?.startsWith('line-') && (
-                        <div style={{ marginBottom: '1.2rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <Maximize size={14} color="var(--text-muted)" />
-                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>Corner Radius</span>
-                            </div>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 900 }}>{layer.borderRadius || 0}</span>
-                          </div>
-                          <input 
-                            type="range" min="0" max="200" value={layer.borderRadius || 0}
-                            onChange={(e) => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, borderRadius: parseInt(e.target.value) } : l))}
-                            className="vector-slider"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Alignment Section */}
-                    <div style={{ marginBottom: '1.2rem' }}>
-                      <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>ALIGNMENT</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                        <button onPointerDown={(e) => e.stopPropagation()} onClick={() => centerLayer('both', layer.id)} title="Center Element" className="align-btn" style={{ height: '40px' }}><AlignCenter size={14} /></button>
-                        <button onPointerDown={(e) => e.stopPropagation()} onClick={() => bringToFront(layer.id)} title="Top Layer" className="align-btn" style={{ height: '40px' }}><Layers size={14} /></button>
-                        <button onPointerDown={(e) => e.stopPropagation()} onClick={() => deleteLayer(layer.id)} title="Delete" className="align-btn" style={{ color: '#ef4444', height: '40px' }}><Trash2 size={14} /></button>
-                      </div>
-                    </div>
-
-                    {/* Transform Section */}
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <p style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '1rem', letterSpacing: '1px' }}>TRANSFORM</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                        <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, rotation: (l.rotation || 0) + 90 } : l))} title="Rotate Clockwise" className="align-btn" style={{ height: '40px' }}><RotateCw size={14} /></button>
-                        <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, rotation: (l.rotation || 0) - 90 } : l))} title="Rotate Counter-Clockwise" className="align-btn" style={{ height: '40px' }}><RotateCcw size={14} /></button>
-                        <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, flipX: (l.flipX || 1) * -1 } : l))} title="Flip Horizontal" className="align-btn" style={{ height: '40px' }}><FlipHorizontal size={14} /></button>
-                        <button onClick={() => setLayers(prev => prev.map(l => l.id === layer.id ? { ...l, flipY: (l.flipY || 1) * -1 } : l))} title="Flip Vertical" className="align-btn" style={{ height: '40px' }}><FlipVertical size={14} /></button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
-                    <button 
-                      onClick={() => setSelectedLayerId(null)}
-                      style={{ width: '100%', padding: '0.9rem', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 10px 20px rgba(59, 130, 246, 0.3)' }}
-                    >APPLY CHANGES</button>
-                  </div>
-                </>
-              );
+              return renderShapeControls(layer, false);
             })()}
           </motion.div>
         )}
@@ -3834,7 +4362,7 @@ function Dashboard() {
               bottom: '8rem', /* Move up to avoid zoom bar */
               left: '50%',
               transform: 'translateX(-50%)',
-              background: '#3b82f6',
+              background: 'var(--primary)',
               color: 'white',
               padding: '0.8rem 1.5rem',
               borderRadius: '1rem',

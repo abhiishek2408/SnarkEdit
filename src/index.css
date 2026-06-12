@@ -1,32 +1,32 @@
 :root {
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
+  --primary: #ec4899;
+  --primary-hover: #db2777;
   --secondary: #8b5cf6;
   --accent: #f43f5e;
   
-  --bg-main: #f8fafc;
+  --bg-main: #f4f7fb;
   --bg-card: #ffffff;
   --text-main: #0f172a;
   --text-muted: #64748b;
-  --border: rgba(0, 0, 0, 0.08);
-  --glass: #ffffff;
+  --border: rgba(0, 0, 0, 0.06);
+  --glass: rgba(255, 255, 255, 0.85);
   --radius-lg: 1.5rem;
   --radius-xl: 2rem;
-  --shadow-premium: none;
-  --tool-bg: #f1f5f9;
-  --input-bg: #e2e8f0;
+  --shadow-premium: 0 12px 40px -12px rgba(0,0,0,0.08);
+  --tool-bg: #f8fafc;
+  --input-bg: #f1f5f9;
 }
 
 [data-theme='dark'] {
   --bg-main: #000000;
-  --bg-card: #000000;
+  --bg-card: #121212;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.08);
-  --glass: #0a0a0a;
+  --border: rgba(255, 255, 255, 0.12);
+  --glass: #121212;
   --shadow-premium: none;
-  --tool-bg: #111111;
-  --input-bg: #151515;
+  --tool-bg: #1a1a1a;
+  --input-bg: #222222;
 }
 
 * {
@@ -63,6 +63,9 @@ body::-webkit-scrollbar {
   background: var(--glass);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-premium);
 }
 
 /* Navbar */
@@ -70,7 +73,18 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.8rem 1rem 0.8rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: -1rem -1rem 0 -1rem;
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .brand {
@@ -97,8 +111,8 @@ body::-webkit-scrollbar {
 }
 
 .brand-text p {
-  font-size: 0.6rem;
-  letter-spacing: 2px;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
   color: var(--text-muted);
   text-transform: uppercase;
 }
@@ -391,12 +405,34 @@ body::-webkit-scrollbar {
   padding: 0.5rem 1rem;
 }
 
+/* Alignment Buttons */
+.align-btn {
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+}
+.align-btn:hover {
+  background: var(--primary);
+  color: white !important;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
 /* Footer Style Modernization */
 .footer {
   padding: 4rem 2rem 2rem;
   background: var(--bg-card);
   border-top: 1px solid var(--border);
-  margin-top: 4rem;
+  margin: 4rem -1rem -1rem -1rem;
+  border-radius: 0 !important;
 }
 
 .footer-content {
@@ -458,8 +494,10 @@ body::-webkit-scrollbar {
   padding-top: 2rem;
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  gap: 1.5rem;
 }
 
 .social-links {
@@ -571,6 +609,12 @@ body::-webkit-scrollbar {
   50% { transform: scale(1.8); opacity: 0.1; }
 }
 
+/* Range Sliders */
+input[type="range"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -581,14 +625,14 @@ body::-webkit-scrollbar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
   width: 100%;
   padding: 1rem;
 }
@@ -604,7 +648,7 @@ body::-webkit-scrollbar {
 
 .project-card {
   background: var(--bg-card);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
   padding: 2.5rem 2rem;
   border-radius: 32px;
   text-align: center;

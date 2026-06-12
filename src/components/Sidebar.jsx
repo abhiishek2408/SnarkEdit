@@ -19,6 +19,7 @@ const Sidebar = ({
   applyTemplate, 
   applyTransform, 
   fileInputRef, 
+  bgInputRef,
   selectedLayerId, 
   bringToFront, 
   centerLayer, 
@@ -39,7 +40,9 @@ const Sidebar = ({
   setIsBlankCanvas,
   setIsTemplateMode,
   isBlankCanvas,
-  isTemplateMode
+  isTemplateMode,
+  isStudioMode,
+  image
 }) => {
   return (
     <>
@@ -47,7 +50,7 @@ const Sidebar = ({
         className="sidebar-overlay mobile-only" 
         onClick={() => setShowSidebar(false)}
       ></div>}
-      <aside className={`sidebar glass ${showSidebar ? 'show' : ''}`}>
+      <aside className={`sidebar glass ${showSidebar ? 'show' : ''}`} style={{ display: showSidebar ? 'flex' : 'none' }}>
         <div className="sidebar-header">
           {/* Mobile Specific Header Actions */}
           <div className="mobile-only" style={{ flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
@@ -59,7 +62,7 @@ const Sidebar = ({
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '100%', height: '45px', borderRadius: '12px' }}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
              </div>
              
-             <button className="btn-primary" onClick={onDownload} style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
+             <button className="btn-primary" onClick={onDownload} disabled={!(image || isBlankCanvas || isTemplateMode)} style={{ width: '100%', justifyContent: 'center', padding: '12px', opacity: !(image || isBlankCanvas || isTemplateMode) ? 0.5 : 1, cursor: !(image || isBlankCanvas || isTemplateMode) ? 'not-allowed' : 'pointer' }}>
                 <Download size={18} />
                 <span>Export Design</span>
              </button>
@@ -86,24 +89,30 @@ const Sidebar = ({
       </div>
 
       <div className="tools-grid">
-        {TOOLS.filter(t => t.category === activeCategory).map(tool => (
+        {TOOLS.filter(t => t.category === activeCategory).map(tool => {
+          const canUseTools = image || isBlankCanvas || isTemplateMode;
+          return (
           <button 
             key={tool.id} 
             className={`tool-item ${activeTool === tool.id || activeFilters[tool.id] ? 'active' : ''}`}
+            disabled={!canUseTools}
+            style={{ opacity: !canUseTools ? 0.5 : 1, cursor: !canUseTools ? 'not-allowed' : 'pointer' }}
             onClick={() => {
+              if (!canUseTools) return;
               setActiveTool(tool.id);
               if (tool.category === 'Presets') {
                 toggleFilter(tool.id);
               }
-              if (tool.category === 'Image' && tool.min === undefined && !['add-image-layer', 'remove-bg-layer', 'img-order'].includes(tool.id)) {
+              if (tool.category === 'Image' && tool.min === undefined && !['add-image-layer', 'remove-bg-layer', 'img-order', 'crop'].includes(tool.id)) {
                  toggleFilter(tool.id);
               }
               if (tool.id === 'auto-remove' || tool.id === 'person-cutout' || tool.id === 'remove-bg-layer') handleRemoveBG();
               if (tool.id === 'autoTone') handleAutoTone();
               if (tool.category === 'Cleanup') handleMagicClean(tool.id);
               if (tool.category === 'Templates') applyTemplate(tool.id);
-              if (tool.category === 'Transform') applyTransform(tool.id);
+              if (tool.category === 'Transform' || tool.id === 'crop') applyTransform(tool.id);
               if (tool.id === 'add-image-layer') fileInputRef.current?.click();
+              if (tool.id === 'upload-bg-image') bgInputRef.current?.click();
               if (tool.id === 'img-order' && selectedLayerId) bringToFront(selectedLayerId);
               if (tool.id === 'img-align') {
                 if (selectedLayerId) centerLayer('both', selectedLayerId);
@@ -123,7 +132,8 @@ const Sidebar = ({
             )}
             <span>{tool.label}</span>
           </button>
-        ))}
+          );
+        })}
       </div>
     </aside>
     </>
