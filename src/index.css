@@ -1,10 +1,10 @@
 :root {
-  --primary: #ec4899;
-  --primary-hover: #db2777;
-  --secondary: #8b5cf6;
-  --accent: #f43f5e;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #6366f1;
+  --accent: #0ea5e9;
   
-  --bg-main: #f4f7fb;
+  --bg-main: #f3f7ff;
   --bg-card: #ffffff;
   --text-main: #0f172a;
   --text-muted: #64748b;
@@ -111,9 +111,11 @@ body::-webkit-scrollbar {
 }
 
 .brand-text h1 {
+  font-family: 'Outfit', 'Inter', sans-serif;
   font-size: 1.5rem;
-  font-weight: 800;
-  background: linear-gradient(to right, var(--text-main), var(--primary));
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #f8fafc 0%, #60a5fa 52%, #818cf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -194,7 +196,7 @@ body::-webkit-scrollbar {
 
 .nav-tool-link:hover {
   color: var(--primary);
-  border-color: rgba(236, 72, 153, 0.35);
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .nav-tools-menu {
@@ -211,7 +213,7 @@ body::-webkit-scrollbar {
 
 .nav-tools-menu[open] .nav-tool-link {
   color: var(--primary);
-  border-color: rgba(236, 72, 153, 0.35);
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .nav-tools-menu[open] .nav-tool-link svg:last-child {
@@ -308,7 +310,7 @@ body::-webkit-scrollbar {
 
 .reducer-upload {
   min-height: 190px;
-  border: 1px dashed rgba(236, 72, 153, 0.45);
+  border: 1px dashed rgba(59, 130, 246, 0.45);
   border-radius: 8px;
   background: var(--tool-bg);
   color: var(--text-main);
@@ -468,7 +470,7 @@ body::-webkit-scrollbar {
 .dimension-title button:hover,
 .reducer-plain-btn:hover {
   color: var(--primary);
-  border-color: rgba(236, 72, 153, 0.35);
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .dimension-row {
@@ -882,6 +884,7 @@ body::-webkit-scrollbar {
   overflow-y: auto;
 }
 
+
 @media (max-width: 768px) {
   .tool-controls {
     padding: 0.8rem;
@@ -1018,6 +1021,12 @@ body::-webkit-scrollbar {
   margin-bottom: 3rem;
 }
 
+.footer-brand .brand-logo h3 {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
 .footer-brand .brand-logo {
   display: flex;
   align-items: center;
@@ -1092,6 +1101,7 @@ body::-webkit-scrollbar {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
 
 @media (max-width: 768px) {
   .footer-content {
@@ -1193,6 +1203,37 @@ input[type="range"] {
   to { transform: rotate(360deg); }
 }
 
+
+.studio-hero {
+  width: 100%;
+  margin-bottom: 4.5rem;
+  padding: 1.5rem 1rem 0;
+  text-align: center;
+}
+
+.studio-hero-title {
+  margin: 0 0 1rem;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: clamp(3.5rem, 7vw, 5.75rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  background: linear-gradient(100deg, #2563eb 0%, #4f6df5 48%, #6366f1 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.studio-hero-subtitle {
+  margin: 0;
+  color: #334155;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
 .project-dashboard {
   flex: 1;
   display: flex;
@@ -1237,6 +1278,17 @@ input[type="range"] {
   box-shadow: var(--shadow-premium);
 }
 
+[data-theme='light'] .project-card {
+  background: #ffffff;
+  border-color: #dbe5f3;
+  box-shadow: 0 14px 36px rgba(30, 64, 175, 0.1), 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme='light'] .project-card:hover {
+  background: #f8fbff;
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.16), 0 4px 10px rgba(15, 23, 42, 0.06);
+}
 .project-card::before {
   content: '';
   position: absolute;
@@ -1291,6 +1343,7 @@ input[type="range"] {
   line-height: 1.5;
 }
 
+
 @media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -1304,12 +1357,28 @@ input[type="range"] {
     width: 100%;
     border-radius: 24px;
   }
-  .project-dashboard {
+  
+.project-dashboard {
     padding: 0;
     width: 100%;
   }
 }
 
+@media (max-width: 768px) {
+  .studio-hero {
+    margin-bottom: 2.5rem;
+    padding-top: 0.5rem;
+  }
+
+  .studio-hero-title {
+    font-size: clamp(2.8rem, 14vw, 4rem);
+  }
+
+  .studio-hero-subtitle {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+}
 /* Layer System */
 .layer-item {
   position: absolute;

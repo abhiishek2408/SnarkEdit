@@ -345,7 +345,7 @@ function Dashboard({ theme, toggleTheme }) {
 
   // 1. Auto-Save & Recovery
   useEffect(() => {
-    const saved = localStorage.getItem('snarkedit-autosave');
+    const saved = localStorage.getItem('quickedit-autosave');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -366,7 +366,7 @@ function Dashboard({ theme, toggleTheme }) {
     const timer = setTimeout(() => {
       setIsAutoSaving(true);
       const data = { layers, image, canvasSize, canvasBg, values };
-      localStorage.setItem('snarkedit-autosave', JSON.stringify(data));
+      localStorage.setItem('quickedit-autosave', JSON.stringify(data));
       setTimeout(() => setIsAutoSaving(false), 2000);
     }, 1000);
     return () => clearTimeout(timer);
@@ -870,7 +870,7 @@ function Dashboard({ theme, toggleTheme }) {
       const outputCanvas = getReducedCanvas(canvas, exportPixelScale);
       const link = document.createElement('a');
       const ext = exportFormat || 'png';
-      link.download = `SimpleEdit_${Date.now()}.${ext}`;
+      link.download = `DocEdit_${Date.now()}.${ext}`;
       link.href = makeExportDataUrl(outputCanvas, ext, exportQuality, exportTargetKb);
       link.click();
       
@@ -2005,8 +2005,8 @@ function Dashboard({ theme, toggleTheme }) {
             <svg width="0" height="0" style={{ position: 'absolute' }}>
               <linearGradient id="brain-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="30%" stopColor="#ec4899" />
-                <stop offset="70%" stopColor="#8b5cf6" />
+                <stop offset="35%" stopColor="#3b82f6" />
+                <stop offset="70%" stopColor="#6366f1" />
                 <stop offset="100%" stopColor="#3b82f6" />
               </linearGradient>
             </svg>
@@ -3000,26 +3000,21 @@ function Dashboard({ theme, toggleTheme }) {
           <AnimatePresence mode="wait">
             {!image && !isTemplateMode && !isBlankCanvas && !isStudioMode ? (
               <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="project-dashboard" style={{ width: '100%', padding: '2rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                  <motion.h1 
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    style={{ 
-                      fontSize: '4rem', 
-                      fontWeight: 900, 
-                      marginBottom: '0.8rem', 
-                      background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', 
-                      WebkitBackgroundClip: 'text', 
-                      WebkitTextFillColor: 'transparent', 
-                      letterSpacing: '-2px',
-                      filter: 'none'
-                    }}>Creative Studio</motion.h1>
-                  <p style={{ color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 600, letterSpacing: '0.5px', opacity: 0.8 }}>Choose your workspace to begin professional design</p>
+                <div className="studio-hero">
+                  <motion.h1
+                    className="studio-hero-title"
+                    initial={{ y: 18, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                  >
+                    Creative Studio
+                  </motion.h1>
+                  <p className="studio-hero-subtitle">Choose your workspace to begin professional design</p>
                 </div>
                 
                 <div className="dashboard-grid">
                   <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => { setIsStudioMode(true); }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.4))' }}>
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.35))' }}>
                       <ImageIcon size={32} />
                     </div>
                     <h3>Edit Photo</h3>
@@ -3044,7 +3039,7 @@ function Dashboard({ theme, toggleTheme }) {
                     setActiveCategory('Collage Maker');
                     applyCollage('collage-templates');
                   }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.4))' }}>
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.35))' }}>
                       <GridIcon size={32} />
                     </div>
                     <h3>Collage Maker</h3>

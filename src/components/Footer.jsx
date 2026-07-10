@@ -11,15 +11,15 @@ const Footer = () => {
             <div className="brand-icon" style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}>
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <linearGradient id="footer-brain-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f59e0b" />
-                  <stop offset="30%" stopColor="#ec4899" />
-                  <stop offset="70%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#3b82f6" />
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="35%" stopColor="#3b82f6" />
+                  <stop offset="70%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
                 </linearGradient>
               </svg>
               <Brain size={28} color="url(#footer-brain-gradient)" strokeWidth={2.5} />
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>SimpleEdit</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>DocEdit</h3>
           </div>
           <p>
             Professional image editing studio powered by artificial intelligence. 
@@ -66,7 +66,7 @@ const Footer = () => {
 
       <div className="footer-bottom">
         <p className="copyright">
-          © 2026 SimpleEdit Pro. All rights reserved.
+          © 2026 DocEdit Pro. All rights reserved.
         </p>
         
         <div className="social-links">

@@ -40,16 +40,16 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
           <div className="brand-icon" style={{ background: 'transparent', boxShadow: 'none' }}>
             <svg width="0" height="0" style={{ position: 'absolute' }}>
               <linearGradient id="nav-brain-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="30%" stopColor="#ec4899" />
-                <stop offset="70%" stopColor="#8b5cf6" />
-                <stop offset="100%" stopColor="#3b82f6" />
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="35%" stopColor="#3b82f6" />
+                <stop offset="70%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
             </svg>
             <Brain size={28} color="url(#nav-brain-gradient)" strokeWidth={2.5} />
           </div>
           <div className="brand-text">
-            <h1>SimpleEdit</h1>
+            <h1>DocEdit</h1>
             <p>Professional Image Studio</p>
           </div>
         </Link>

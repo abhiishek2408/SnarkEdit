@@ -164,7 +164,7 @@ const addAttachmentPage = async (pdfDoc, file, regularFont, boldFont) => {
   const bytes = await file.arrayBuffer();
   await pdfDoc.attach(bytes, file.name, {
     mimeType: file.type || 'application/octet-stream',
-    description: `Original file attached by SimpleEdit: ${file.name}`,
+    description: `Original file attached by DocEdit: ${file.name}`,
     creationDate: new Date(file.lastModified || Date.now()),
     modificationDate: new Date(file.lastModified || Date.now()),
   });
