@@ -1,11 +1,41 @@
-import { Smile, Undo, Redo, Download, Image as ImageIcon, Home, Sun, Moon, Menu, X, Layers, Brain } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Undo, Redo, Download, Sun, Moon, Layers, Brain, Image as ImageIcon, ChevronDown, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { APP_TOOL_LINKS, SEARCH_ITEMS } from '../constants/searchContent';
 
-const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, isStudioMode, onDownload, onUploadTrigger, onHome, theme, toggleTheme, showSidebar, setShowSidebar, showLayerPanel, setShowLayerPanel, hideEditorControls }) => {
+const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, isStudioMode, onDownload, onHome, theme, toggleTheme, showLayerPanel, setShowLayerPanel, hideEditorControls }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  const searchResults = useMemo(() => {
+    if (!trimmedQuery) return [];
+
+    return SEARCH_ITEMS.filter((item) => {
+      const haystack = [
+        item.title,
+        item.description,
+        item.category,
+        ...(item.keywords || []),
+      ].join(' ').toLowerCase();
+
+      return haystack.includes(trimmedQuery);
+    }).slice(0, 8);
+  }, [trimmedQuery]);
+
+  const handleSearchResult = (item) => {
+    setSearchQuery('');
+    if (item.type === 'editor-tool') {
+      navigate('/', { state: { searchToolId: item.toolId, searchCategory: item.category } });
+      return;
+    }
+
+    navigate(item.path);
+  };
+
   return (
     <nav className="navbar glass">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-
         <Link to="/" className="brand" onClick={onHome} style={{ cursor: 'pointer', textDecoration: 'none' }}>
           <div className="brand-icon" style={{ background: 'transparent', boxShadow: 'none' }}>
             <svg width="0" height="0" style={{ position: 'absolute' }}>
@@ -19,7 +49,7 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
             <Brain size={28} color="url(#nav-brain-gradient)" strokeWidth={2.5} />
           </div>
           <div className="brand-text">
-            <h1>SnarkEdit</h1>
+            <h1>SimpleEdit</h1>
             <p>Professional Image Studio</p>
           </div>
         </Link>
@@ -27,6 +57,54 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
 
 
       <div className="nav-actions desktop-only" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="nav-search">
+          <Search size={16} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search tools and content"
+            aria-label="Search tools and content"
+          />
+          {trimmedQuery && (
+            <div className="nav-search-results">
+              {searchResults.length > 0 ? (
+                searchResults.map((item) => {
+                  const ResultIcon = item.icon || Search;
+                  return (
+                    <button key={item.id} type="button" onClick={() => handleSearchResult(item)}>
+                      <ResultIcon size={16} />
+                      <span>
+                        <strong>{item.title}</strong>
+                        <small>{item.category || item.description}</small>
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p>No matches found</p>
+              )}
+            </div>
+          )}
+        </div>
+        <details className="nav-tools-menu">
+          <summary className="nav-tool-link" title="Image tools">
+            <ImageIcon size={16} />
+            <span>Image Tools</span>
+            <ChevronDown size={14} />
+          </summary>
+          <div className="nav-tools-dropdown">
+            {APP_TOOL_LINKS.map((tool) => {
+              const ToolIcon = tool.icon || ImageIcon;
+              return (
+                <Link key={tool.path} to={tool.path}>
+                  <ToolIcon size={16} />
+                  <span>{tool.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </details>
         {!hideEditorControls && (
           <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} title={showLayerPanel ? 'Hide Layers' : 'Show Layers'} style={{ color: showLayerPanel ? 'var(--primary)' : 'inherit' }}>
             <Layers size={18} />
@@ -57,3 +135,6 @@ const Navbar = ({ isTemplateMode, setIsTemplateMode, isBlankCanvas, setIsBlankCa
 };
 
 export default Navbar;
+
+
+

@@ -19,7 +19,7 @@ const Footer = () => {
               </svg>
               <Brain size={28} color="url(#footer-brain-gradient)" strokeWidth={2.5} />
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>SnarkEdit</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>SimpleEdit</h3>
           </div>
           <p>
             Professional image editing studio powered by artificial intelligence. 
@@ -66,7 +66,7 @@ const Footer = () => {
 
       <div className="footer-bottom">
         <p className="copyright">
-          © 2026 SnarkEdit Pro. All rights reserved.
+          © 2026 SimpleEdit Pro. All rights reserved.
         </p>
         
         <div className="social-links">

@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
 import html2canvas from 'html2canvas';
+import { useLocation } from 'react-router-dom';
 
 // Internal Components
 import Navbar from '../components/Navbar';
@@ -34,7 +35,8 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 // Using the exported defs directly to ensure they stay in sync
 const TOOLS = TOOLS_DEFS;
 
-function Dashboard() {
+function Dashboard({ theme, toggleTheme }) {
+  const location = useLocation();
   const [image, setImage] = useState(null);
   const [activeTool, setActiveTool] = useState('add-text');
   const [activeCategory, setActiveCategory] = useState('Text');
@@ -52,7 +54,9 @@ function Dashboard() {
   });
   const [exportFormat, setExportFormat] = useState('png');
   const [exportQuality, setExportQuality] = useState(1.0);
-  const [theme, setTheme] = useState('dark');
+  const [exportPixelScale, setExportPixelScale] = useState(1);
+  const [exportTargetKb, setExportTargetKb] = useState(0);
+  const [exportEstimatedKb, setExportEstimatedKb] = useState(null);
   const [canvasBg, setCanvasBg] = useState('transparent');
   const [layers, setLayers] = useState([]); 
   const [selectedLayerId, setSelectedLayerId] = useState(null);
@@ -289,20 +293,23 @@ function Dashboard() {
   const valuesRef = useRef({});
   useEffect(() => { valuesRef.current = values; }, [values]);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
   // Reset tool when switching to Draw category
   useEffect(() => {
     if (activeCategory === 'Draw') {
       setActiveTool(null);
     }
   }, [activeCategory]);
+
+  useEffect(() => {
+    const requestedToolId = location.state?.searchToolId;
+    const requestedCategory = location.state?.searchCategory;
+    if (!requestedToolId || !requestedCategory) return;
+
+    setActiveCategory(requestedCategory);
+    setActiveTool(requestedToolId);
+    internalSetShowSidebar(true);
+  }, [location.state]);
+
 
   const adjustTimerRef = useRef(null);
   const editingTextRef = useRef(null);
@@ -742,6 +749,46 @@ function Dashboard() {
     setShowToolSettings(true);
   };
 
+  const getDataUrlSizeKb = (dataUrl) => {
+    const base64 = dataUrl.split(',')[1] || '';
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return Math.max(1, Math.round(((base64.length * 3) / 4 - padding) / 1024));
+  };
+
+  const getReducedCanvas = (sourceCanvas, scale) => {
+    const normalizedScale = Math.min(1, Math.max(0.1, Number(scale) || 1));
+    if (normalizedScale === 1) return sourceCanvas;
+
+    const reducedCanvas = document.createElement('canvas');
+    reducedCanvas.width = Math.max(1, Math.round(sourceCanvas.width * normalizedScale));
+    reducedCanvas.height = Math.max(1, Math.round(sourceCanvas.height * normalizedScale));
+
+    const ctx = reducedCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(sourceCanvas, 0, 0, reducedCanvas.width, reducedCanvas.height);
+
+    return reducedCanvas;
+  };
+
+  const makeExportDataUrl = (sourceCanvas, format, quality, targetKb) => {
+    const mime = `image/${format === 'jpg' ? 'jpeg' : format}`;
+    const canTuneQuality = mime === 'image/jpeg';
+    let currentQuality = quality || 1.0;
+    let dataUrl = sourceCanvas.toDataURL(mime, currentQuality);
+
+    if (canTuneQuality && targetKb > 0) {
+      while (getDataUrlSizeKb(dataUrl) > targetKb && currentQuality > 0.15) {
+        currentQuality = Math.max(0.15, Number((currentQuality - 0.05).toFixed(2)));
+        dataUrl = sourceCanvas.toDataURL(mime, currentQuality);
+      }
+      setExportQuality(currentQuality);
+    }
+
+    setExportEstimatedKb(getDataUrlSizeKb(dataUrl));
+    return dataUrl;
+  };
+
   const handleExport = async () => {
     if (!image && !isBlankCanvas && !isTemplateMode) return;
     
@@ -820,10 +867,11 @@ function Dashboard() {
 
 
 
+      const outputCanvas = getReducedCanvas(canvas, exportPixelScale);
       const link = document.createElement('a');
       const ext = exportFormat || 'png';
-      link.download = `SnarkEdit_${Date.now()}.${ext}`;
-      link.href = canvas.toDataURL(`image/${ext === 'jpg' ? 'jpeg' : ext}`, exportQuality || 1.0);
+      link.download = `SimpleEdit_${Date.now()}.${ext}`;
+      link.href = makeExportDataUrl(outputCanvas, ext, exportQuality, exportTargetKb);
       link.click();
       
       notify("Design saved successfully!");
@@ -1916,6 +1964,9 @@ function Dashboard() {
         toggleTheme={toggleTheme}
         showSidebar={showSidebar}
         setShowSidebar={setShowSidebar}
+        categories={CATEGORIES}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
       />
 
       <main className="main-content">
@@ -2726,6 +2777,83 @@ function Dashboard() {
                     <input type="range" min="0.1" max="1" step="0.1" value={exportQuality} onChange={(e) => setExportQuality(Number(e.target.value))} className="slider" />
                   </div>
                 )}
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                     <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 800 }}>PIXEL REDUCER</p>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900 }}>
+                       {Math.round(canvasSize.width * exportPixelScale)} x {Math.round(canvasSize.height * exportPixelScale)}
+                     </span>
+                  </div>
+                  <input type="range" min="0.1" max="1" step="0.05" value={exportPixelScale} onChange={(e) => setExportPixelScale(Number(e.target.value))} className="slider" />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                    {[25, 50, 75, 100].map(percent => (
+                      <button
+                        key={percent}
+                        type="button"
+                        onClick={() => setExportPixelScale(percent / 100)}
+                        style={{
+                          background: Math.round(exportPixelScale * 100) === percent ? 'var(--primary)' : 'var(--bg-card)',
+                          border: `1px solid ${Math.round(exportPixelScale * 100) === percent ? 'var(--primary)' : 'var(--border)'}`,
+                          color: Math.round(exportPixelScale * 100) === percent ? 'white' : 'var(--text-muted)',
+                          borderRadius: '8px',
+                          padding: '6px 8px',
+                          cursor: 'pointer',
+                          fontSize: '0.6rem',
+                          fontWeight: 800
+                        }}
+                      >
+                        {percent}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                     <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 800 }}>KB REDUCER</p>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900 }}>
+                       CD: {exportEstimatedKb ? `${exportEstimatedKb} KB` : 'Not rendered'}
+                     </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="10"
+                      value={exportTargetKb}
+                      onChange={(e) => setExportTargetKb(Math.max(0, Number(e.target.value) || 0))}
+                      placeholder="Target KB"
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        padding: '10px',
+                        color: 'var(--text-main)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setExportTargetKb(0)}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        fontSize: '0.65rem',
+                        fontWeight: 800
+                      }}
+                    >
+                      OFF
+                    </button>
+                  </div>
+                </div>
 
                 <button 
                   className="btn-primary" 
