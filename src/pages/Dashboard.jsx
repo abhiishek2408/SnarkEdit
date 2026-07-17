@@ -3015,7 +3015,7 @@ function Dashboard({ theme, toggleTheme }) {
                 <div className="dashboard-grid">
                   <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => { setIsStudioMode(true); }}>
                     <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.35))' }}>
-                      <ImageIcon size={32} />
+                      <ImageIcon size={32} color="#3b82f6" />
                     </div>
                     <h3>Edit Photo</h3>
                     <p>Standard professional editor with 50+ tools, AI filters, and retouching.</p>
@@ -3029,7 +3029,7 @@ function Dashboard({ theme, toggleTheme }) {
                     setIsStudioMode(false);
                   }}>
                     <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(219, 39, 119, 0.2), rgba(190, 24, 93, 0.4))' }}>
-                      <PenTool size={32} />
+                      <PenTool size={32} color="#db2777" />
                     </div>
                     <h3>Blank Canvas</h3>
                     <p>Create a design from scratch layer by layer with full vector controls.</p>
@@ -3039,8 +3039,8 @@ function Dashboard({ theme, toggleTheme }) {
                     setActiveCategory('Collage Maker');
                     applyCollage('collage-templates');
                   }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.35))' }}>
-                      <GridIcon size={32} />
+                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.35))' }}>
+                      <GridIcon size={32} color="#6366f1" />
                     </div>
                     <h3>Collage Maker</h3>
                     <p>Create stunning photo collages with pre-built templates and grids.</p>

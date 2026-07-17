@@ -939,8 +939,16 @@ body::-webkit-scrollbar {
 .workspace.dashboard-active {
   align-items: center;
   padding: 0;
-  background-image: none;
-  background-color: var(--bg-main);
+  background:
+    linear-gradient(135deg, rgba(219, 234, 254, 0.92) 0%, rgba(239, 246, 255, 0.82) 38%, rgba(238, 242, 255, 0.92) 100%),
+    linear-gradient(45deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.16));
+  background-color: #eef5ff;
+}
+
+[data-theme='dark'] .workspace.dashboard-active {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(17, 24, 39, 0.94) 42%, rgba(30, 41, 59, 0.96) 100%),
+    linear-gradient(45deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.16));
 }
 
 .canvas-container {
