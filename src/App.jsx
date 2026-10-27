@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import InfoPage from './pages/InfoPage';
 import ImageReducerPage from './pages/ImageReducerPage';
@@ -8,6 +8,7 @@ import ImageToPdfPage from './pages/ImageToPdfPage';
 import DocumentMergerPage from './pages/DocumentMergerPage';
 import PdfPageStackerPage from './pages/PdfPageStackerPage';
 import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
+import EditPdfPage from './pages/EditPdfPage';
 
 function App() {
   const [theme, setTheme] = useState('light');
@@ -32,7 +33,7 @@ function App() {
         <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/edit-pdf" element={<Navigate to="/" replace />} />
+        <Route path="/edit-pdf" element={<EditPdfPage theme={theme} toggleTheme={toggleTheme} />} />
       </Routes>
     </BrowserRouter>
   );

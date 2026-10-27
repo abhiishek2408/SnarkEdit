@@ -133,6 +133,13 @@ export const APP_TOOL_LINKS = [
     icon: FileText,
     keywords: ['crop pdf', 'remove whitespace', 'trim page margins', 'crop page rectangle'],
   },
+  {
+    title: 'Edit PDF',
+    description: 'Stack page pairs and remove whitespace bands in one PDF workflow.',
+    path: '/edit-pdf',
+    icon: Files,
+    keywords: ['edit pdf', 'stack and crop', 'combine and crop pdf pages', 'remove whitespace and stack'],
+  },
 ];
 
 const pageItems = Object.entries(PAGE_CONTENT).map(([id, page]) => ({
