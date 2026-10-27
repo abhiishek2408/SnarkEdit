@@ -3027,6 +3027,8 @@ function Dashboard({ theme, toggleTheme }) {
                     setIsTemplateMode(false);
                     setIsBlankCanvas(true);
                     setIsStudioMode(false);
+                    setCanvasSize({ width: 800, height: 800 });
+                    setCanvasBg('#ffffff');
                   }}>
                     <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(219, 39, 119, 0.2), rgba(190, 24, 93, 0.4))' }}>
                       <PenTool size={32} color="#db2777" />

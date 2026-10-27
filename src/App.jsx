@@ -6,6 +6,8 @@ import ImageReducerPage from './pages/ImageReducerPage';
 import ImageEnhancerPage from './pages/ImageEnhancerPage';
 import ImageToPdfPage from './pages/ImageToPdfPage';
 import DocumentMergerPage from './pages/DocumentMergerPage';
+import PdfPageStackerPage from './pages/PdfPageStackerPage';
+import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
 
 function App() {
   const [theme, setTheme] = useState('light');
@@ -27,6 +29,8 @@ function App() {
         <Route path="/image-to-pdf" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/create-pdf-from-image" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/merge-documents" element={<DocumentMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+        <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
+        <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
         <Route path="/edit-pdf" element={<Navigate to="/" replace />} />
       </Routes>

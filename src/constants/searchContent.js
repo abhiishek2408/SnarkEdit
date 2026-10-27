@@ -119,6 +119,20 @@ export const APP_TOOL_LINKS = [
     icon: Files,
     keywords: ['merge documents', 'combine pdf', 'join files', 'documents'],
   },
+  {
+    title: 'Stack PDF Pages',
+    description: 'Place two pages from a PDF together on one page, top to bottom.',
+    path: '/stack-pdf-pages',
+    icon: Files,
+    keywords: ['stack pdf pages', 'combine two pages', 'two pages on one', 'vertical pdf', 'top down'],
+  },
+  {
+    title: 'Crop PDF Pages',
+    description: 'Preview PDF pages and trim whitespace with a rectangle selection.',
+    path: '/crop-pdf-whitespace',
+    icon: FileText,
+    keywords: ['crop pdf', 'remove whitespace', 'trim page margins', 'crop page rectangle'],
+  },
 ];
 
 const pageItems = Object.entries(PAGE_CONTENT).map(([id, page]) => ({
