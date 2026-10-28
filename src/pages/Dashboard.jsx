@@ -15,18 +15,19 @@ import {
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
   Database, ShieldCheck, StickyNote, ChevronLeft, ChevronRight, Parentheses, ArrowUp, ArrowLeft, ArrowDown, CornerDownRight, CornerDownLeft, CornerUpLeft, CornerUpRight, Eraser,
-  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain
+  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain, Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
 import html2canvas from 'html2canvas';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 // Internal Components
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 import LayerPanel from '../components/LayerPanel';
+import { APP_TOOL_LINKS } from '../constants/searchContent';
 
 // Constants & Hooks
 import { CATEGORIES, FONTS, TOOLS_DEFS } from '../constants/tools';
@@ -37,6 +38,8 @@ const TOOLS = TOOLS_DEFS;
 
 function Dashboard({ theme, toggleTheme }) {
   const location = useLocation();
+  const [homeQuery, setHomeQuery] = useState('');
+  const [homeTab, setHomeTab] = useState('home');
   const [image, setImage] = useState(null);
   const [activeTool, setActiveTool] = useState('add-text');
   const [activeCategory, setActiveCategory] = useState('Text');
@@ -2999,55 +3002,48 @@ function Dashboard({ theme, toggleTheme }) {
         <section className={`workspace glass ${!image && !isTemplateMode && !isBlankCanvas && !isStudioMode ? 'dashboard-active' : ''}`}>
           <AnimatePresence mode="wait">
             {!image && !isTemplateMode && !isBlankCanvas && !isStudioMode ? (
-              <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="project-dashboard" style={{ width: '100%', padding: '2rem' }}>
-                <div className="studio-hero">
-                  <motion.h1
-                    className="studio-hero-title"
-                    initial={{ y: 18, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.55, ease: 'easeOut' }}
-                  >
-                    Creative Studio
+              <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="project-dashboard home-dashboard">
+                <div className="home-hero">
+                  <motion.h1 initial={{ y: 18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.55, ease: 'easeOut' }}>
+                    What will you design today?
                   </motion.h1>
-                  <p className="studio-hero-subtitle">Choose your workspace to begin professional design</p>
+                  <div className="home-tabs" role="tablist" aria-label="Dashboard views">
+                    <button type="button" role="tab" aria-selected={homeTab === 'home'} className={homeTab === 'home' ? 'active' : ''} onClick={() => setHomeTab('home')}><Home size={16} />Home</button>
+                    <button type="button" role="tab" aria-selected={homeTab === 'templates'} className={homeTab === 'templates' ? 'active' : ''} onClick={() => setHomeTab('templates')}><Layout size={16} />Templates</button>
+                  </div>
+                  <label className="home-search">
+                    <Search size={21} />
+                    <input type="search" value={homeQuery} onChange={(event) => setHomeQuery(event.target.value)} placeholder="Search anything" aria-label="Search image tools" />
+                  </label>
                 </div>
-                
-                <div className="dashboard-grid">
-                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => { setIsStudioMode(true); }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.35))' }}>
-                      <ImageIcon size={32} color="#3b82f6" />
-                    </div>
-                    <h3>Edit Photo</h3>
-                    <p>Standard professional editor with 50+ tools, AI filters, and retouching.</p>
-                  </motion.div>
 
-                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => {
-                    setImage(null);
-                    setLayers([]);
-                    setIsTemplateMode(false);
-                    setIsBlankCanvas(true);
-                    setIsStudioMode(false);
-                    setCanvasSize({ width: 800, height: 800 });
-                    setCanvasBg('#ffffff');
-                  }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(219, 39, 119, 0.2), rgba(190, 24, 93, 0.4))' }}>
-                      <PenTool size={32} color="#db2777" />
-                    </div>
-                    <h3>Blank Canvas</h3>
-                    <p>Create a design from scratch layer by layer with full vector controls.</p>
-                  </motion.div>
-
-                  <motion.div whileHover={{ y: -5 }} className="project-card" onClick={() => {
-                    setActiveCategory('Collage Maker');
-                    applyCollage('collage-templates');
-                  }}>
-                    <div className="card-icon" style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.35))' }}>
-                      <GridIcon size={32} color="#6366f1" />
-                    </div>
-                    <h3>Collage Maker</h3>
-                    <p>Create stunning photo collages with pre-built templates and grids.</p>
-                  </motion.div>
-                </div>
+                {homeTab === 'templates' && !homeQuery.trim() ? (
+                  <div className="home-template-prompt">
+                    <div className="home-template-preview"><ImageIcon size={36} /></div>
+                    <div><strong>Start with a social design</strong><span>Open the starter template and customize it in the editor.</span></div>
+                    <button type="button" onClick={() => { setIsTemplateMode(true); setIsStudioMode(false); }}>Open template</button>
+                  </div>
+                ) : (
+                  <div className="home-shortcuts" aria-label="Image and document tools">
+                    {homeQuery.trim() ? APP_TOOL_LINKS.filter((tool) => `${tool.title} ${tool.description}`.toLowerCase().includes(homeQuery.trim().toLowerCase())).map((tool) => {
+                      const ToolIcon = tool.icon || ImageIcon;
+                      return <Link className="home-shortcut" key={tool.path} to={tool.path} title={tool.description}>
+                        <span className="home-shortcut-icon" style={{ '--shortcut-color': '#7c3aed' }}><ToolIcon size={22} /></span><span>{tool.title}</span>
+                      </Link>;
+                    }) : <>
+                      <button className="home-shortcut" type="button" onClick={() => setIsStudioMode(true)}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#ff5b24' }}><ImageIcon size={22} /></span><span>Edit Photo</span></button>
+                      <button className="home-shortcut" type="button" onClick={() => { setImage(null); setLayers([]); setIsTemplateMode(false); setIsBlankCanvas(true); setIsStudioMode(false); setCanvasSize({ width: 800, height: 800 }); setCanvasBg('#ffffff'); }}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#8b35ff' }}><PenTool size={22} /></span><span>Blank Canvas</span></button>
+                      <button className="home-shortcut" type="button" onClick={() => { setActiveCategory('Collage Maker'); applyCollage('collage-templates'); }}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#f43f5e' }}><GridIcon size={22} /></span><span>Collage Maker</span></button>
+                      {APP_TOOL_LINKS.map((tool, index) => {
+                        const ToolIcon = tool.icon || ImageIcon;
+                        const colors = ['#13a7b5', '#13a75b', '#1684f8', '#6655ee', '#fa3c96', '#ff8a00', '#8845ee'];
+                        return <Link className="home-shortcut" key={tool.path} to={tool.path} title={tool.description}>
+                          <span className="home-shortcut-icon" style={{ '--shortcut-color': colors[index % colors.length] }}><ToolIcon size={22} /></span><span>{tool.title}</span>
+                        </Link>;
+                      })}
+                    </>}
+                  </div>
+                )}
               </motion.div>
             ) : isStudioMode && !image ? (
               <motion.div key="studio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="studio-welcome">

@@ -9,6 +9,7 @@ import DocumentMergerPage from './pages/DocumentMergerPage';
 import PdfPageStackerPage from './pages/PdfPageStackerPage';
 import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
 import EditPdfPage from './pages/EditPdfPage';
+import AppToolRail from './components/AppToolRail';
 
 function App() {
   const [theme, setTheme] = useState('light');
@@ -23,18 +24,21 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/reduce-image-size" element={<ImageReducerPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/enhance-image" element={<ImageEnhancerPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/image-to-pdf" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/create-pdf-from-image" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/merge-documents" element={<DocumentMergerPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/edit-pdf" element={<EditPdfPage theme={theme} toggleTheme={toggleTheme} />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/reduce-image-size" element={<ImageReducerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/enhance-image" element={<ImageEnhancerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/image-to-pdf" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/create-pdf-from-image" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/merge-documents" element={<DocumentMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/edit-pdf" element={<EditPdfPage theme={theme} toggleTheme={toggleTheme} />} />
+        </Routes>
+        <AppToolRail />
+      </>
     </BrowserRouter>
   );
 }
