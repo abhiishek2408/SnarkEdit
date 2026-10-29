@@ -62,7 +62,7 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 1rem 1rem 1rem 92px;
+  padding: 1rem 1rem 1rem 100px;
   gap: 1rem;
 }
 
@@ -91,10 +91,8 @@ body::-webkit-scrollbar-thumb {
   padding: 0.8rem 1rem 0.8rem 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin: -1rem -1rem 0 -1rem;
-  border-radius: 0 !important;
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
   background: var(--glass);
   color: var(--text-main);
   position: sticky;
@@ -104,8 +102,179 @@ body::-webkit-scrollbar-thumb {
   -webkit-backdrop-filter: blur(12px);
 }
 
+.navbar:not(.landing-navbar) {
+  --bg-card: #ffffff;
+  --text-main: #1f2937;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --glass: #ffffff;
+  --tool-bg: #f1f5f9;
+  --input-bg: #f8fafc;
+  color: #1f2937;
+  background: #ffffff;
+}
+
+.navbar:not(.landing-navbar) .brand-text h1 {
+  background: none;
+  color: #20263a;
+  -webkit-text-fill-color: currentColor;
+}
+
+.navbar .brand {
+  gap: 0.8rem;
+}
+
+.navbar .brand-icon {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar .brand-text h1,
+.navbar.landing-navbar .brand-text h1 {
+  margin: 0;
+  color: #20263a;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.navbar .brand-text p {
+  margin: 0.18rem 0 0;
+  color: #718096;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+}
+
 .app-container > .navbar {
   margin-left: 0;
+}
+
+.navbar.landing-navbar {
+  color: #182139;
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid #e7eaf2 !important;
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.04);
+}
+
+.landing-navbar .brand-text h1 {
+  background: none;
+  color: #20263a;
+  font-size: 0.96rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  -webkit-text-fill-color: currentColor;
+}
+
+.pdf-studio-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 5px;
+  color: #fff;
+  background: #f2644b;
+}
+
+.landing-top-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.8rem, 3vw, 2.8rem);
+  margin-left: auto;
+  margin-right: 1.75rem;
+}
+
+.landing-top-links a,
+.landing-top-links button,
+.landing-tools-menu summary {
+  position: relative;
+  padding: 0.35rem 0;
+  border: 0;
+  color: #354056;
+  background: transparent;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.landing-top-links > a:first-child::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.55rem;
+  left: 0;
+  height: 2px;
+  background: #f2644b;
+  content: '';
+}
+
+.landing-tools-menu {
+  position: relative;
+}
+
+.landing-tools-menu summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.landing-tools-menu[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.landing-tools-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-tools-dropdown {
+  position: absolute;
+  z-index: 1200;
+  top: calc(100% + 0.7rem);
+  left: 50%;
+  display: grid;
+  min-width: 150px;
+  padding: 0.35rem;
+  transform: translateX(-50%);
+  border: 1px solid #e5e8f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(30, 41, 59, 0.12);
+}
+
+.landing-tools-dropdown a,
+.landing-tools-dropdown button {
+  padding: 0.6rem 0.7rem;
+  border: 0;
+  border-radius: 7px;
+  color: #354056;
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.landing-tools-dropdown a:hover,
+.landing-tools-dropdown button:hover {
+  background: #f1f5ff;
+}
+
+.landing-top-links .landing-sign-in {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #e4e7ef;
+  border-radius: 8px;
+  background: #fff;
 }
 
 .brand {
@@ -124,9 +293,11 @@ body::-webkit-scrollbar-thumb {
 
 .brand-text h1 {
   font-family: 'Outfit', 'Inter', sans-serif;
+  margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.1;
   background: linear-gradient(90deg, #f8fafc 0%, #60a5fa 52%, #818cf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -134,6 +305,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .brand-text p {
+  margin: 0.12rem 0 0;
   font-size: 0.5rem;
   letter-spacing: 1px;
   color: var(--text-muted);
@@ -275,6 +447,10 @@ body::-webkit-scrollbar-thumb {
   justify-content: center;
 }
 
+.image-reducer-page .reducer-shell {
+  padding-top: 1.5rem;
+}
+
 .reducer-workspace {
   width: min(1040px, 100%);
 }
@@ -352,7 +528,7 @@ body::-webkit-scrollbar-thumb {
 
 .reducer-controls {
   display: grid;
-  grid-template-columns: 1fr 120px;
+  grid-template-columns: minmax(0, 1fr) 120px 130px;
   gap: 0.75rem;
   margin-top: 1rem;
 }
@@ -413,8 +589,8 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  margin-top: 1rem;
-  width: 130px;
+  margin-top: 0;
+  width: auto;
 }
 
 .dpi-control > span {
@@ -645,11 +821,14 @@ body::-webkit-scrollbar-thumb {
 }
 
 .enhancer-sliders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem;
   margin-top: 1rem;
 }
 
 .enhancer-control {
-  margin-top: 0.85rem;
+  margin-top: 0;
 }
 
 .enhancer-control input:disabled {
@@ -787,17 +966,17 @@ body::-webkit-scrollbar-thumb {
 
 .app-tool-rail {
   position: fixed;
-  top: 5rem;
-  bottom: 1rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
   left: 0.5rem;
   z-index: 1100;
   display: flex;
-  flex: 0 0 76px;
+  flex: 0 0 84px;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  width: 76px;
-  max-height: calc(100vh - 6rem);
+  width: 84px;
+  max-height: none;
   padding: 0.75rem 0.4rem;
   overflow-y: auto;
   border: 1px solid var(--border);
@@ -814,6 +993,15 @@ body::-webkit-scrollbar-thumb {
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+  text-align: center;
+}
+
+.app-tool-rail > p:last-of-type {
+  width: 100%;
+  padding: 0.3rem 0.1rem;
+  border-radius: 7px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .app-tool-rail a {
@@ -1274,7 +1462,12 @@ body::-webkit-scrollbar-thumb {
   background: var(--bg-card);
   border-top: 1px solid var(--border);
   margin: 4rem -1rem -1rem -1rem;
-  border-radius: 0 !important;
+  border-radius: 16px 0 0 0 !important;
+}
+
+/* Keep the full-width footer clear of the fixed tool rail. */
+.app-container > .footer {
+  margin-left: 0;
 }
 
 .footer-content {
@@ -1517,6 +1710,349 @@ input[type="range"] {
   align-items: stretch;
 }
 
+.home-landing-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(480px, 1.4fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  width: min(1360px, 100%);
+  margin: 0 auto 2rem;
+}
+
+.home-copy h1 {
+  max-width: 520px;
+  margin: 0 0 0.65rem;
+  color: #12182e;
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.99;
+}
+
+.home-copy p {
+  margin: 0 0 1rem;
+  color: #4d566b;
+  font-size: 0.88rem;
+}
+
+.home-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.home-start-button,
+.home-explore-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 35px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e6ef;
+  border-radius: 7px;
+  color: #26324a;
+  background: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.home-start-button {
+  border-color: #ef6651;
+  color: white;
+  background: #ef6651;
+}
+
+.home-discovery {
+  min-width: 0;
+}
+
+.home-dashboard .home-search {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 1.35rem;
+  padding: 0 0.9rem;
+  border-color: #e1e5ef;
+  border-radius: 12px;
+  box-shadow: 0 5px 16px rgba(28, 39, 75, 0.06);
+}
+
+.home-dashboard .home-search input {
+  font-size: 0.75rem;
+}
+
+.home-dashboard .home-search kbd {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.35rem;
+  border: 1px solid #e5e8ef;
+  border-radius: 4px;
+  color: #70798c;
+  background: #f7f8fb;
+  font-size: 0.56rem;
+}
+
+.home-dashboard .home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(55px, 1fr));
+  justify-content: stretch;
+  gap: 0.65rem 0.3rem;
+  width: 100%;
+  margin: 0;
+}
+
+.home-dashboard .home-shortcut {
+  flex: initial;
+  min-width: 0;
+  gap: 0.35rem;
+  padding: 0.1rem;
+  color: #344057;
+  font-size: 0.62rem;
+}
+
+.home-dashboard .home-shortcut-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  box-shadow: 0 3px 7px rgba(30, 41, 59, 0.08);
+}
+
+.home-no-results {
+  grid-column: 1 / -1;
+  padding: 0.8rem;
+  color: #667085;
+  font-size: 0.78rem;
+}
+
+.home-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  width: min(1360px, 100%);
+  margin: 0 auto;
+}
+
+.home-feature-card {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.86fr) minmax(220px, 1.14fr);
+  min-height: 220px;
+  overflow: hidden;
+  border: 1px solid #e6e8f0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(30, 41, 59, 0.06);
+}
+
+.home-feature-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.9rem 0.95rem;
+}
+
+.home-feature-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #263149;
+  font-size: 0.75rem;
+}
+
+.home-feature-badge {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 6px;
+  color: white;
+}
+
+.home-feature-badge.pdf { background: #f2644b; }
+.home-feature-badge.photo { background: #6a43c1; }
+
+.home-feature-copy > p {
+  margin: 0.45rem 0 0.35rem;
+  color: #667085;
+  font-size: 0.61rem;
+  line-height: 1.4;
+}
+
+.home-feature-copy ul {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.1rem 0 0.5rem;
+  padding: 0;
+  color: #4c566c;
+  font-size: 0.58rem;
+  list-style: none;
+}
+
+.home-feature-copy li::before {
+  margin-right: 0.3rem;
+  color: #f2644b;
+  content: '●';
+  font-size: 0.48rem;
+}
+
+.home-feature-card:nth-child(2) .home-feature-copy li::before { color: #7650c5; }
+
+.home-feature-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  color: #e95d49;
+  background: none;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.63rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.home-feature-card:nth-child(2) .home-feature-action { color: #6b4bc1; }
+
+.home-format-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+  margin-top: 0.45rem;
+}
+
+.home-format-chips span {
+  padding: 0.12rem 0.27rem;
+  border: 1px solid #e6e9ef;
+  border-radius: 4px;
+  color: #677185;
+  font-size: 0.48rem;
+}
+
+.pdf-editor-mockup,
+.photo-editor-mockup {
+  align-self: center;
+  height: 190px;
+  min-width: 0;
+  margin: 0.55rem 0.55rem 0.55rem 0;
+  overflow: hidden;
+  border: 1px solid #dce1eb;
+  border-radius: 9px;
+  background: #222a35;
+  box-shadow: 0 5px 14px rgba(20, 28, 44, 0.16);
+}
+
+.mockup-topbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  color: #cfd5df;
+  background: #242a34;
+  font-size: 0.45rem;
+}
+
+.mockup-topbar i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f46b62;
+}
+.mockup-topbar i:nth-child(2) { background: #f1bd4e; }
+.mockup-topbar i:nth-child(3) { background: #62c554; }
+.mockup-topbar span { margin-left: auto; }
+
+.mockup-pdf-body,
+.mockup-photo-body {
+  display: flex;
+  height: calc(100% - 18px);
+  padding: 8px;
+  gap: 7px;
+  background: #f1f3f6;
+}
+
+.mockup-tools-column,
+.mockup-thumbnails {
+  display: flex;
+  flex: 0 0 20px;
+  flex-direction: column;
+  gap: 7px;
+}
+.mockup-tools-column b { width: 13px; height: 13px; border-radius: 3px; background: #d2d8e2; }
+.mockup-thumbnails i { height: 32px; border: 1px solid #d7dce5; background: #fff; }
+
+.mockup-document {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-width: 150px;
+  margin: 0 auto;
+  padding: 10px 12px;
+  background: white;
+  box-shadow: 0 2px 7px rgba(30, 41, 59, 0.12);
+}
+.mockup-document strong { color: #202838; font-family: Georgia, serif; font-size: 0.85rem; line-height: 0.95; }
+.mockup-document small { margin-top: 5px; color: #7d8797; font-size: 0.38rem; }
+.mockup-chart { display: flex; align-items: flex-end; gap: 4px; height: 48px; margin: 9px 0; padding: 5px; border-bottom: 1px solid #dce1e8; background: #f7f8fa; }
+.mockup-chart i { flex: 1; height: 45%; background: #6b91c5; }
+.mockup-chart i:nth-child(2n) { height: 72%; background: #df725c; }
+.mockup-chart i:nth-child(3n) { height: 58%; }
+.mockup-doc-lines { display: grid; gap: 4px; }
+.mockup-doc-lines i { height: 3px; background: #e2e6ec; }
+
+.mockup-photo-body { background: #222a35; }
+.photo-scene { position: relative; flex: 1; overflow: hidden; border-radius: 4px; background: linear-gradient(180deg, #78b3c8 0%, #e2c6a4 56%, #627256 57%, #364936 100%); }
+.photo-sun { position: absolute; top: 15%; right: 18%; width: 28px; height: 28px; border-radius: 50%; background: #f8d393; box-shadow: 0 0 20px rgba(255, 222, 150, 0.65); }
+.photo-hill { position: absolute; right: -10%; bottom: 20%; left: -10%; height: 38%; border-radius: 50% 50% 0 0; background: #687d58; transform: rotate(-4deg); }
+.photo-hill.hill-front { bottom: -8%; height: 42%; background: #3e5847; transform: rotate(5deg); }
+.photo-car { position: absolute; right: 21%; bottom: 26%; width: 76px; height: 23px; border-radius: 18px 24px 8px 8px; background: #ed7448; box-shadow: 0 8px 10px rgba(17, 32, 35, 0.3); }
+.photo-car::before { position: absolute; top: -11px; left: 18px; width: 39px; height: 15px; border-radius: 16px 18px 0 0; background: #dc6944; content: ''; }
+.photo-car i { position: absolute; bottom: -5px; left: 12px; width: 12px; height: 12px; border: 3px solid #242b32; border-radius: 50%; background: #bac3c9; }
+.photo-car i + i { right: 12px; left: auto; }
+.mockup-adjustments { display: flex; flex: 0 0 72px; flex-direction: column; gap: 5px; color: #dce2ea; font-size: 0.38rem; }
+.mockup-adjustments strong { margin-bottom: 3px; font-size: 0.48rem; }
+.mockup-adjustments i { height: 3px; border-radius: 5px; background: linear-gradient(90deg, #8f9daf 55%, #46505e 55%); }
+
+@media (max-width: 1100px) {
+  .home-landing-layout {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 1.25rem;
+  }
+
+  .home-dashboard .home-shortcuts {
+    grid-template-columns: repeat(4, minmax(55px, 1fr));
+  }
+
+  .home-feature-card {
+    grid-template-columns: minmax(145px, 0.9fr) minmax(160px, 1.1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .home-landing-layout,
+  .home-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-landing-layout { gap: 1.4rem; }
+  .home-copy h1 { max-width: 620px; }
+  .home-feature-card { min-height: 205px; }
+}
+
+@media (max-width: 600px) {
+  .landing-top-links { gap: 0.55rem; }
+  .landing-top-links a,
+  .landing-top-links button { font-size: 0.62rem; }
+  .landing-top-links .landing-sign-in { padding: 0.35rem 0.5rem; }
+  .home-feature-card { grid-template-columns: 1fr; }
+  .pdf-editor-mockup,
+  .photo-editor-mockup { margin: 0 0.6rem 0.6rem; }
+  .home-feature-copy { min-height: 190px; }
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1711,10 +2247,10 @@ input[type="range"] {
 /* Mobile Sidebar Responsiveness */
 @media (max-width: 1024px) {
   .app-tool-rail {
-    top: 4.5rem;
+    top: 0.5rem;
     bottom: 0.5rem;
     width: 64px;
-    max-height: calc(100vh - 5rem);
+    max-height: none;
     padding: 0.5rem 0.25rem;
   }
 
@@ -1846,6 +2382,7 @@ input[type="range"] {
   }
 
   .enhancer-toolbar,
+  .enhancer-sliders,
   .enhancer-preview-grid,
   .enhancer-stats,
   .pdf-controls,
@@ -1893,6 +2430,28 @@ input[type="range"] {
   grid-template-columns: minmax(270px, 0.7fr) minmax(0, 1.3fr);
   align-items: start;
   gap: 1rem;
+}
+
+.pdf-crop-layout.no-pdf {
+  grid-template-columns: minmax(0, 860px);
+  justify-content: center;
+}
+
+.pdf-crop-layout.no-pdf .pdf-crop-controls {
+  width: 100%;
+}
+
+.pdf-crop-layout.no-pdf .reducer-upload {
+  min-height: 260px;
+}
+
+.pdf-tool-page .pdf-stacker-grid.no-file > .reducer-panel:first-child {
+  width: min(860px, 100%);
+  justify-self: center;
+}
+
+.pdf-tool-page .pdf-stacker-grid.no-file .reducer-upload {
+  min-height: 260px;
 }
 
 .pdf-crop-controls {
@@ -2022,6 +2581,258 @@ input[type="range"] {
   font-size: 0.75rem;
 }
 
+.pdf-editor-tool-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.pdf-editor-tool-list button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: var(--tool-bg);
+  font-size: 0.72rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pdf-editor-tool-list button.active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--tool-bg));
+}
+
+.pdf-editor-field,
+.pdf-editor-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.pdf-editor-field { margin-top: 0.85rem; }
+
+.pdf-editor-field input,
+.pdf-editor-settings select {
+  min-width: 0;
+  height: 38px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-main);
+  background: var(--input-bg);
+  text-transform: none;
+}
+
+.pdf-editor-settings {
+  display: grid;
+  grid-template-columns: 1fr 76px;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.pdf-editor-settings input[type="color"] {
+  width: 100%;
+  height: 38px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--input-bg);
+}
+
+.pdf-draw-options {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+}
+
+.pdf-draw-options > strong {
+  color: var(--text-main);
+  font-size: 0.75rem;
+}
+
+.pdf-draw-options label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.pdf-draw-options input[type="range"] { flex: 1; min-width: 80px; }
+.pdf-draw-options input[type="color"] { width: 36px; height: 28px; padding: 2px; }
+
+.pdf-preview-brush-menu {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  justify-content: flex-end;
+  min-height: 34px;
+  margin-bottom: 0.65rem;
+}
+
+.pdf-preview-brush-menu.open { margin-bottom: 142px; }
+
+.pdf-preview-brush-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 34px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: var(--bg-card);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pdf-preview-brush-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.pdf-draw-options-top {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: min(280px, 100%);
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  margin: 0;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+}
+
+.pdf-draw-options-top label { min-width: 0; }
+
+.pdf-draw-dropdown {
+  grid-column: 1 / -1;
+  margin: 0.1rem 0 0.25rem;
+  padding: 0.55rem 0.65rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+}
+
+.pdf-draw-dropdown label span { white-space: nowrap; }
+
+.pdf-annotation-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.pdf-annotation-layer.tool-drag { cursor: default; }
+.pdf-annotation-layer.tool-drag [data-item-id] { cursor: move; }
+.pdf-annotation-layer.tool-eraser,
+.pdf-annotation-layer.tool-eraser [data-item-id] { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='m7 21-4.3-4.3a2.4 2.4 0 0 1 0-3.4l9.9-9.9a2.4 2.4 0 0 1 3.4 0l4.3 4.3a2.4 2.4 0 0 1 0 3.4L10.4 21z' fill='%23f8fafc' stroke='%232563eb' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='m7 7 10 10M2 22h12' stroke='%232563eb' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 3 24, crosshair; }
+.pdf-annotation-layer.tool-draw {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='m4 20 4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z' fill='%23fff' stroke='%232563eb' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='m14.5 6.5 3 3' stroke='%232563eb' stroke-width='2'/%3E%3C/svg%3E") 3 21, crosshair;
+}
+
+.pdf-annotation-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  border: 1px dashed color-mix(in srgb, currentColor 50%, transparent);
+  font-size: clamp(10px, 1.2vw, 18px);
+  line-height: 1.1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pdf-annotation-item.text { border: 0; border-radius: 0; background: transparent; }
+.pdf-annotation-item.pageNumber { justify-content: center; text-align: center; border: 0; }
+.pdf-annotation-item.text.selected { border: 2px solid #111827; border-radius: 4px; background: rgba(255, 255, 255, 0.25); }
+.pdf-annotation-item.shape { border: 2px solid currentColor; }
+.pdf-annotation-item.shape:not(.line) { background: currentColor; }
+.pdf-annotation-item.shape.selected { border-color: color-mix(in srgb, currentColor 55%, #111827); outline: 1px solid #111827; outline-offset: 2px; }
+.pdf-annotation-item.shape.circle { border-radius: 50%; }
+.pdf-annotation-item.shape.line { height: 2px !important; border: 0; background: currentColor; transform: rotate(-14deg); transform-origin: left center; }
+.pdf-shape-resize-handle { position: absolute; z-index: 2; width: 9px; height: 9px; border: 1px solid #2563eb; border-radius: 2px; background: #fff; touch-action: none; }
+.pdf-shape-resize-handle.handle-nw { top: -5px; left: -5px; cursor: nwse-resize; }
+.pdf-shape-resize-handle.handle-n { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.pdf-shape-resize-handle.handle-ne { top: -5px; right: -5px; cursor: nesw-resize; }
+.pdf-shape-resize-handle.handle-e { top: 50%; right: -5px; transform: translateY(-50%); cursor: ew-resize; }
+.pdf-shape-resize-handle.handle-se { right: -5px; bottom: -5px; cursor: nwse-resize; }
+.pdf-shape-resize-handle.handle-s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.pdf-shape-resize-handle.handle-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+.pdf-shape-resize-handle.handle-w { top: 50%; left: -5px; transform: translateY(-50%); cursor: ew-resize; }
+.pdf-annotation-item.watermark { justify-content: center; text-align: center; border: 0; opacity: 0.3; font-size: clamp(18px, 2.5vw, 34px); font-weight: 800; }
+
+.pdf-annotation-text-editor {
+  width: 100%;
+  height: 100%;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: auto;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
+.pdf-annotation-delete {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #ef4444;
+  cursor: pointer;
+}
+
+.pdf-annotation-drawing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pdf-annotation-drawing polyline {
+  pointer-events: stroke;
+  cursor: move;
+}
+
+.pdf-annotation-layer.tool-eraser .pdf-annotation-drawing { pointer-events: auto; }
+
+.pdf-editor-page-preview > .pdf-clear-crop { width: auto; margin: 0.6rem 0 0; }
+
 .pdf-band-help {
   flex-basis: 100%;
   color: var(--text-muted);
@@ -2064,21 +2875,26 @@ input[type="range"] {
 
 .pdf-crop-canvas-wrap {
   position: relative;
+  isolation: isolate;
   max-width: 100%;
   height: fit-content;
   margin: auto;
   line-height: 0;
   touch-action: none;
   user-select: none;
+  background: #fff;
   box-shadow: var(--shadow-premium);
 }
 
 .pdf-crop-canvas-wrap canvas {
+  position: relative;
+  z-index: 1;
   display: block;
   max-width: 100%;
   height: auto;
-  background: #fff;
+  background: transparent;
 }
+.pdf-watermark-underlay { position: absolute; z-index: 0; inset: 0; pointer-events: none; overflow: hidden; }
 
 .pdf-crop-applied-preview {
   display: flex;
@@ -2199,8 +3015,60 @@ input[type="range"] {
   gap: 0.85rem;
 }
 
+.reducer-grid.no-preview {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
+}
+
+.pdf-stacker-grid.no-file {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
+}
+
 .pdf-stacker-page .reducer-workspace {
   width: min(1480px, 100%);
+}
+
+.pdf-stacker-page .reducer-heading {
+  justify-content: center;
+  text-align: center;
+}
+
+.pdf-stacker-page .reducer-heading svg {
+  display: none;
+}
+
+.pdf-stacker-page .pdf-stacker-intro {
+  text-align: center;
+}
+
+.pdf-tool-page .reducer-heading {
+  justify-content: center;
+  text-align: center;
+}
+
+.pdf-tool-page .reducer-heading svg {
+  display: none;
+}
+
+.pdf-tool-page .pdf-stacker-intro {
+  text-align: center;
+}
+
+.reducer-page .reducer-heading {
+  justify-content: center;
+  text-align: center;
+}
+
+.reducer-page .reducer-heading svg {
+  display: none;
+}
+
+.tool-page-subheading {
+  margin: -0.9rem 0 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: center;
 }
 
 .pdf-stacker-page .reducer-shell {
@@ -3113,4 +3981,128 @@ input[type="range"] {
   .nav-search {
     width: 210px;
   }
+}
+
+/* Keep page titles light and tool surfaces flat across routes. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500 !important;
+}
+
+.glass,
+.reducer-panel,
+.reducer-workspace {
+  box-shadow: none !important;
+}
+
+.pdf-draw-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.42);
+}
+.pdf-draw-modal-backdrop.right-sidebar { align-items: stretch; justify-items: end; padding: 16px 4px 16px 0; background: transparent; pointer-events: none; }
+.pdf-draw-modal-backdrop.right-sidebar .pdf-draw-modal { width: min(260px, calc(100vw - 24px)); height: calc(100vh - 120px); max-height: calc(100vh - 120px); align-self: end; align-content: start; margin: 0; overflow-y: auto; border-radius: 14px; pointer-events: auto; }
+.pdf-draw-modal {
+  width: min(390px, 100%);
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.22);
+}
+.pdf-draw-modal header,
+.pdf-draw-modal label > span { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.pdf-draw-modal header span { color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.pdf-draw-modal h2 { margin: 0.2rem 0 0; font-size: 1.15rem; }
+.pdf-draw-modal header button { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main); cursor: pointer; }
+.pdf-draw-modal label { display: grid; gap: 0.55rem; color: var(--text-muted); font-size: 0.84rem; }
+.pdf-draw-modal label strong { color: var(--primary); }
+.pdf-draw-modal input[type="range"] { width: 100%; accent-color: var(--primary); }
+.pdf-shape-modal-select { width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font: inherit; }
+.pdf-draw-color-picker { display: grid; gap: 0.65rem; color: var(--text-muted); font-size: 0.84rem; }
+.pdf-draw-color-tools { display: flex; align-items: center; gap: 14px; }
+.pdf-draw-color-wheel,
+.pdf-draw-eyedropper,
+.pdf-draw-selected-color { position: relative; display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+.pdf-draw-color-wheel { padding: 3px; background: conic-gradient(#ff3434, #ffb629, #fbf52c, #3bd66d, #21c5e8, #3978ff, #8b39ff, #ed32c8, #ff3434); }
+.pdf-draw-color-wheel > span { display: grid; place-items: center; width: 72%; height: 72%; border: 2px solid #fff; border-radius: 50%; background: var(--bg-card); color: var(--text-main); }
+.pdf-draw-color-wheel input[type="color"],
+.pdf-draw-selected-color input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 50%; opacity: 0; cursor: pointer; }
+.pdf-draw-eyedropper { border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); }
+.pdf-draw-selected-color { border: 3px solid #843cff; background: var(--brush-color); box-shadow: inset 0 0 0 3px var(--bg-card); }
+.pdf-draw-modal > .btn-primary { justify-content: center; }
+.pdf-draw-font-preview { min-height: 48px; display: grid; align-items: center; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.reducer-workspace.has-side-properties { --text-properties-shift: clamp(0px, calc((100vw - 1088px) / 2), 130px); width: min(1300px, 100%); transform: translateX(var(--text-properties-shift)); }
+.reducer-workspace.has-side-properties .reducer-heading,
+.reducer-workspace.has-side-properties .pdf-stacker-intro { transform: translateX(calc(var(--text-properties-shift) * -1)); }
+.pdf-stacker-grid.has-side-properties { grid-template-columns: minmax(220px, 280px) minmax(580px, 1fr) 260px; }
+.pdf-text-properties-panel { display: grid; align-content: start; gap: 1rem; min-width: 0; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); color: var(--text-main); }
+.pdf-text-properties-panel header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.pdf-text-properties-panel header span { color: var(--text-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.pdf-text-properties-panel header h2 { margin: 0.15rem 0 0; font-size: 1rem; }
+.pdf-text-properties-panel header button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main); cursor: pointer; }
+.pdf-text-properties-panel > label { display: grid; gap: 0.5rem; color: var(--text-muted); font-size: 0.78rem; }
+.pdf-text-properties-panel > label > span { display: flex; justify-content: space-between; gap: 0.5rem; }
+.pdf-text-properties-panel > label strong { color: var(--primary); }
+.pdf-text-properties-panel input[type="range"] { width: 100%; accent-color: var(--primary); }
+.pdf-text-properties-panel .pdf-page-number-bg-toggle { display: flex; align-items: center; justify-content: space-between; }
+.pdf-text-properties-panel .pdf-page-number-bg-toggle input { width: 16px; height: 16px; accent-color: var(--primary); }
+.pdf-text-properties-panel .pdf-page-number-bg-color input { width: 100%; height: 34px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); }
+.pdf-watermark-format-tools { display: flex; align-items: center; gap: 0.4rem; }
+.pdf-watermark-format-tools button { min-width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 7px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; cursor: pointer; }
+.pdf-watermark-format-tools button.active { border-color: var(--primary); color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--bg-card)); }
+.pdf-watermark-placement { display: grid; grid-template-columns: 88px 1fr; align-items: center; gap: 0.8rem; }
+.pdf-watermark-placement > span { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.78rem; }
+.pdf-watermark-position-grid { display: grid; grid-template-columns: repeat(3, 1fr); width: 88px; height: 88px; border: 2px dotted #64748b; }
+.pdf-watermark-position-grid button { display: grid; place-items: center; padding: 0; border: 1px dotted #94a3b8; background: transparent; cursor: pointer; }
+.pdf-watermark-position-grid button span { width: 0; height: 0; border-radius: 50%; background: transparent; }
+.pdf-watermark-position-grid button.active span { width: 18px; height: 18px; background: #ef4444; box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.16); }
+.pdf-watermark-mosaic { display: flex !important; align-items: center; gap: 0.5rem !important; color: var(--text-main) !important; font-size: 0.9rem !important; }
+.pdf-watermark-mosaic input { width: 16px; height: 16px; accent-color: var(--primary); }
+.pdf-watermark-option-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.65rem; }
+.pdf-watermark-option-row label { display: grid; gap: 0.4rem; color: var(--text-muted); font-size: 0.78rem; }
+.pdf-watermark-pages { display: grid; grid-template-columns: 1fr 0.7fr; gap: 0.5rem; }
+.pdf-watermark-pages > span { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.78rem; }
+.pdf-watermark-pages label { display: flex; align-items: center; justify-content: space-between; gap: 0.35rem; padding: 0.45rem; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 0.74rem; }
+.pdf-watermark-pages input { width: 48px; min-width: 0; border: 0; background: transparent; color: var(--text-main); text-align: right; }
+.pdf-watermark-opacity { display: grid; gap: 0.4rem; color: var(--text-muted); font-size: 0.78rem; }
+.pdf-watermark-opacity > span { display: flex; justify-content: space-between; align-items: center; }
+.pdf-watermark-opacity strong { color: var(--accent); font-size: 0.78rem; }
+.pdf-edit-page > .reducer-shell { justify-content: flex-start; padding: 0.5rem 0 4rem; }
+.pdf-edit-page .reducer-workspace { width: 100%; }
+.pdf-edit-page .reducer-workspace.has-side-properties { --text-properties-shift: 0px; width: 100%; transform: none; }
+.pdf-edit-page .pdf-stacker-grid.has-file { grid-template-columns: minmax(220px, 280px) minmax(580px, 1fr) 260px; }
+.pdf-edit-page .pdf-text-properties-reserved { visibility: hidden; pointer-events: none; }
+@media (max-width: 1100px) {
+  .pdf-edit-page .pdf-stacker-grid.has-file { grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) 220px; }
+  .pdf-edit-page .pdf-text-properties-panel { grid-column: 3; }
+}
+@media (max-width: 760px) {
+  .pdf-edit-page .pdf-stacker-grid.has-file { grid-template-columns: minmax(0, 1fr); }
+  .pdf-edit-page .pdf-text-properties-reserved { display: none; }
+  .pdf-edit-page .pdf-text-properties-panel { grid-column: 1; }
+}
+.pdf-shape-settings-preview { display: grid; min-height: 110px; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); }
+.pdf-shape-settings-preview-shape { width: 72px; height: 48px; border: 2px solid var(--shape-color); background: color-mix(in srgb, var(--shape-color) 24%, transparent); }
+.pdf-shape-settings-preview-shape.circle { border-radius: 50%; }
+.pdf-shape-settings-preview-shape.line { width: 86px; height: 0; border: 0; border-top: 3px solid var(--shape-color); background: transparent; transform: rotate(-14deg); }
+.pdf-text-properties-panel .pdf-draw-font-preview { font-size: 16px !important; }
+@media (max-width: 1100px) {
+  .pdf-stacker-grid.has-side-properties { grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+  .pdf-text-properties-panel { grid-column: 2; }
+}
+@media (max-width: 760px) {
+  .pdf-stacker-grid.has-side-properties { grid-template-columns: minmax(0, 1fr); }
+  .pdf-text-properties-panel { grid-column: 1; }
 }

@@ -236,8 +236,9 @@ const ImageEnhancerPage = ({ theme, toggleTheme }) => {
             </div>
             <Sparkles size={34} />
           </div>
+          <p className="tool-page-subheading">Adjust image light, color, and detail, then preview and download the result.</p>
 
-          <div className="reducer-grid enhancer-grid">
+          <div className={`reducer-grid enhancer-grid ${previewUrl && result?.blob ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
               <label className="reducer-upload">
                 <Upload size={24} />
@@ -317,7 +318,7 @@ const ImageEnhancerPage = ({ theme, toggleTheme }) => {
               {error && <p className="reducer-error">{error}</p>}
             </div>
 
-            <div className="reducer-panel reducer-result enhancer-result">
+            {previewUrl && result?.blob && <div className="reducer-panel reducer-result enhancer-result">
               {previewUrl && result?.blob ? (
                 <>
                   <div className="enhancer-preview-grid">
@@ -355,13 +356,8 @@ const ImageEnhancerPage = ({ theme, toggleTheme }) => {
                     <span>Download</span>
                   </button>
                 </>
-              ) : (
-                <div className="reducer-empty">
-                  <ImageIcon size={44} />
-                  <p>Your enhanced image preview will appear here.</p>
-                </div>
-              )}
-            </div>
+              ) : null}
+            </div>}
           </div>
         </section>
       </main>

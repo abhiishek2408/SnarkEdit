@@ -312,7 +312,7 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
   };
 
   return (
-    <div className="app-container reducer-page">
+    <div className="app-container reducer-page pdf-tool-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
 
       <main className="reducer-shell">
@@ -324,8 +324,9 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
             </div>
             <Files size={34} />
           </div>
+          <p className="pdf-stacker-intro">Combine PDFs, images, and documents into one file. Arrange the order, then download your merged PDF.</p>
 
-          <div className="reducer-grid merger-grid">
+          <div className={`reducer-grid merger-grid ${files.length ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
               <label className="reducer-upload">
                 <Upload size={24} />
@@ -366,7 +367,7 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
               {error && <p className="reducer-error">{error}</p>}
             </div>
 
-            <div className="reducer-panel reducer-result merger-result">
+            {files.length > 0 && <div className="reducer-panel reducer-result merger-result">
               {files.length ? (
                 <>
                   <div className="merger-list">
@@ -402,13 +403,8 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
                     <span>{result ? `Download ${formatBytes(result.size)}` : 'Download Merged PDF'}</span>
                   </button>
                 </>
-              ) : (
-                <div className="reducer-empty">
-                  <Files size={44} />
-                  <p>Your merge order will appear here.</p>
-                </div>
-              )}
-            </div>
+              ) : null}
+            </div>}
           </div>
         </section>
       </main>

@@ -1,12 +1,24 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Undo, Redo, Download, Sun, Moon, Layers, Brain, Image as ImageIcon, ChevronDown, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { APP_TOOL_LINKS, SEARCH_ITEMS } from '../constants/searchContent';
 
-const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, isStudioMode, onDownload, onHome, theme, toggleTheme, showLayerPanel, setShowLayerPanel, hideEditorControls }) => {
+const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, onUndo, onRedo, image, isStudioMode, onDownload, onHome, onOpenPhotoEditor, landingMode = true, theme, toggleTheme, showLayerPanel, setShowLayerPanel, hideEditorControls }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const pdfToolsMenuRef = useRef(null);
+  const imageToolsMenuRef = useRef(null);
   const navigate = useNavigate();
   const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  useEffect(() => {
+    const closeMenusOutside = (event) => {
+      [pdfToolsMenuRef, imageToolsMenuRef].forEach((menuRef) => {
+        if (menuRef.current && !menuRef.current.contains(event.target)) menuRef.current.open = false;
+      });
+    };
+    document.addEventListener('pointerdown', closeMenusOutside);
+    return () => document.removeEventListener('pointerdown', closeMenusOutside);
+  }, []);
 
   const searchResults = useMemo(() => {
     if (!trimmedQuery) return [];
@@ -34,10 +46,10 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
   };
 
   return (
-    <nav className="navbar glass">
+    <nav className={`navbar glass ${landingMode ? 'landing-navbar' : ''}`}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <Link to="/" className="brand" onClick={onHome} style={{ cursor: 'pointer', textDecoration: 'none' }}>
-          <div className="brand-icon" style={{ background: 'transparent', boxShadow: 'none' }}>
+          <div className="brand-icon" style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}>
             <svg width="0" height="0" style={{ position: 'absolute' }}>
               <linearGradient id="nav-brain-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#38bdf8" />
@@ -46,7 +58,7 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
                 <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
             </svg>
-            <Brain size={28} color="url(#nav-brain-gradient)" strokeWidth={2.5} />
+            <Brain size={30} color="url(#nav-brain-gradient)" strokeWidth={2.5} />
           </div>
           <div className="brand-text">
             <h1>DocEdit</h1>
@@ -55,9 +67,31 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
         </Link>
       </div>
 
-
-      <div className="nav-actions desktop-only" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
-        <div className="nav-search">
+      {landingMode ? <div className="landing-top-links">
+        <details className="landing-tools-menu" ref={pdfToolsMenuRef}>
+          <summary>PDF Tools <ChevronDown size={14} /></summary>
+          <div className="landing-tools-dropdown">
+            {APP_TOOL_LINKS.filter((tool) => ['/edit-pdf', '/merge-documents', '/stack-pdf-pages', '/crop-pdf-whitespace', '/create-pdf-from-image'].includes(tool.path)).map((tool) => (
+              <Link key={tool.path} to={tool.path}>{tool.title}</Link>
+            ))}
+          </div>
+        </details>
+        <details className="landing-tools-menu" ref={imageToolsMenuRef}>
+          <summary>Image Tools <ChevronDown size={14} /></summary>
+          <div className="landing-tools-dropdown">
+            <button type="button" onClick={() => {
+              if (onOpenPhotoEditor) onOpenPhotoEditor();
+              else navigate('/photo-editor');
+            }}>Photo Editor</button>
+            <Link to="/blank-canvas">White Canvas</Link>
+            {APP_TOOL_LINKS.filter((tool) => ['/reduce-image-size', '/enhance-image'].includes(tool.path)).map((tool) => (
+              <Link key={tool.path} to={tool.path}>{tool.title}</Link>
+            ))}
+          </div>
+        </details>
+        <button className="landing-sign-in" type="button">Sign in</button>
+      </div> : <div className="nav-actions desktop-only" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
+        {!isStudioMode && <div className="nav-search">
           <Search size={16} />
           <input
             type="search"
@@ -86,8 +120,8 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
               )}
             </div>
           )}
-        </div>
-        <details className="nav-tools-menu">
+        </div>}
+        {!isStudioMode && <details className="nav-tools-menu">
           <summary className="nav-tool-link" title="Image tools">
             <ImageIcon size={16} />
             <span>Image Tools</span>
@@ -104,7 +138,7 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
               );
             })}
           </div>
-        </details>
+        </details>}
         {!hideEditorControls && (
           <button className="icon-btn" onClick={() => setShowLayerPanel(!showLayerPanel)} title={showLayerPanel ? 'Hide Layers' : 'Show Layers'} style={{ color: showLayerPanel ? 'var(--primary)' : 'inherit' }}>
             <Layers size={18} />
@@ -129,7 +163,7 @@ const Navbar = ({ isTemplateMode, isBlankCanvas, historyIndex, historyLength, on
             )}
           </>
         )}
-      </div>
+      </div>}
     </nav>
   );
 };

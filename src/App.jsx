@@ -27,6 +27,8 @@ function App() {
       <>
         <Routes>
           <Route path="/" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/photo-editor" element={<Dashboard theme={theme} toggleTheme={toggleTheme} initialStudioMode />} />
+          <Route path="/blank-canvas" element={<Dashboard theme={theme} toggleTheme={toggleTheme} initialBlankCanvas />} />
           <Route path="/reduce-image-size" element={<ImageReducerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/enhance-image" element={<ImageEnhancerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/image-to-pdf" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />

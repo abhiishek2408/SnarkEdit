@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument } from 'pdf-lib';
 import { Crop, Download, FileText, RotateCcw, Upload } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const mergeBands = (bands = []) => bands
   .map(band => ({ y: Math.max(0, band.y), height: Math.max(0, band.height) }))
@@ -313,13 +314,13 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
   const editedCount = Object.keys(pageEdits).length;
 
   return (
-    <div className="app-container reducer-page">
+    <div className="app-container reducer-page pdf-tool-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className="reducer-workspace">
           <div className="reducer-heading"><div><p>PDF Page Tool</p><h1>Remove selected areas</h1></div><Crop size={34} /></div>
           <p className="pdf-stacker-intro">Scroll through every page. Select a blank horizontal band across the page; removing it pulls the content below upward. Repeat on other pages.</p>
-          <div className="pdf-crop-layout">
+          <div className={`pdf-crop-layout ${pdfDocument ? 'has-pdf' : 'no-pdf'}`}>
             <section className="reducer-panel pdf-crop-controls">
               <label className="reducer-upload">
                 <Upload size={24} />
@@ -335,14 +336,14 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
               </>}
               {error && <p className="reducer-error">{error}</p>}
             </section>
-            <section className="reducer-panel pdf-crop-preview-panel">
+            {pdfDocument && <section className="reducer-panel pdf-crop-preview-panel">
               {pdfDocument ? <div className="pdf-all-pages-list">
                 {Array.from({ length: pageCount }, (_, index) => {
                   const pageNumber = index + 1;
                   return <PdfPreviewPage key={pageNumber} pdfDocument={pdfDocument} pageNumber={pageNumber} edit={pageEdits[pageNumber]} onApply={savePageEdit} onReset={resetPage} />;
                 })}
-              </div> : <div className="reducer-empty"><FileText size={44} /><p>Upload a PDF to preview all its pages here.</p></div>}
-            </section>
+              </div> : null}
+            </section>}
           </div>
         </section>
       </main>

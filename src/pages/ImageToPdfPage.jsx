@@ -226,7 +226,7 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
   };
 
   return (
-    <div className="app-container reducer-page">
+    <div className="app-container reducer-page pdf-tool-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
 
       <main className="reducer-shell">
@@ -238,8 +238,9 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
             </div>
             <FileText size={34} />
           </div>
+          <p className="pdf-stacker-intro">Choose one or more images, arrange the pages, and create a PDF to download.</p>
 
-          <div className="reducer-grid pdf-grid">
+          <div className={`reducer-grid pdf-grid ${files.length ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
               <label className="reducer-upload">
                 <Upload size={24} />
@@ -318,7 +319,7 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
               {error && <p className="reducer-error">{error}</p>}
             </div>
 
-            <div className="reducer-panel reducer-result pdf-result">
+            {files.length > 0 && <div className="reducer-panel reducer-result pdf-result">
               {files.length ? (
                 <>
                   <div className="pdf-preview-grid">
@@ -350,13 +351,8 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
                     <span>Download PDF</span>
                   </button>
                 </>
-              ) : (
-                <div className="reducer-empty">
-                  <Layers size={44} />
-                  <p>Your PDF pages will appear here.</p>
-                </div>
-              )}
-            </div>
+              ) : null}
+            </div>}
           </div>
         </section>
       </main>

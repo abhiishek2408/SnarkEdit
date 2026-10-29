@@ -223,7 +223,7 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
   };
 
   return (
-    <div className="app-container reducer-page">
+    <div className="app-container reducer-page image-reducer-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
 
       <main className="reducer-shell">
@@ -235,8 +235,9 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
             </div>
             <ImageIcon size={34} />
           </div>
+          <p className="tool-page-subheading">Resize images and fine-tune file size, dimensions, and DPI for your needs.</p>
 
-          <div className="reducer-grid">
+          <div className={`reducer-grid ${previewUrl && result?.blob ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
               <label className="reducer-upload">
                 <Upload size={24} />
@@ -272,20 +273,19 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
                     ))}
                   </select>
                 </label>
+                <label className="dpi-control">
+                  <span>
+                    DPI
+                    <Info size={14} title="DPI is written into JPG metadata for print workflows." />
+                  </span>
+                  <select value={dpi} onChange={(event) => setDpi(event.target.value)}>
+                    <option value="300">300 dpi</option>
+                    <option value="200">200 dpi</option>
+                    <option value="96">96 dpi</option>
+                    <option value="72">72 dpi</option>
+                  </select>
+                </label>
               </div>
-
-              <label className="dpi-control">
-                <span>
-                  DPI
-                  <Info size={14} title="DPI is written into JPG metadata for print workflows." />
-                </span>
-                <select value={dpi} onChange={(event) => setDpi(event.target.value)}>
-                  <option value="300">300 dpi</option>
-                  <option value="200">200 dpi</option>
-                  <option value="96">96 dpi</option>
-                  <option value="72">72 dpi</option>
-                </select>
-              </label>
 
               <div className="dimension-controls">
                 <div className="dimension-title">
@@ -360,7 +360,7 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
               {error && <p className="reducer-error">{error}</p>}
             </div>
 
-            <div className="reducer-panel reducer-result">
+            {previewUrl && result?.blob && <div className="reducer-panel reducer-result">
               {previewUrl && result?.blob ? (
                 <>
                   <img src={previewUrl} alt="Reduced preview" />
@@ -391,13 +391,8 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
                     <span>Download</span>
                   </button>
                 </>
-              ) : (
-                <div className="reducer-empty">
-                  <ImageIcon size={44} />
-                  <p>Your reduced image preview will appear here.</p>
-                </div>
-              )}
-            </div>
+              ) : null}
+            </div>}
           </div>
         </section>
       </main>

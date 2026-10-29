@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { ArrowDown, Download, FileText, Layers2, Plus, Trash2, Upload, ZoomIn, ZoomOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const CombinedPdfPreview = ({ file }) => {
   const [pages, setPages] = useState([]);

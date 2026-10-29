@@ -15,19 +15,18 @@ import {
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
   Database, ShieldCheck, StickyNote, ChevronLeft, ChevronRight, Parentheses, ArrowUp, ArrowLeft, ArrowDown, CornerDownRight, CornerDownLeft, CornerUpLeft, CornerUpRight, Eraser,
-  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain, Home
+  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
 import html2canvas from 'html2canvas';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // Internal Components
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 import LayerPanel from '../components/LayerPanel';
-import { APP_TOOL_LINKS } from '../constants/searchContent';
 
 // Constants & Hooks
 import { CATEGORIES, FONTS, TOOLS_DEFS } from '../constants/tools';
@@ -36,10 +35,11 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 // Using the exported defs directly to ensure they stay in sync
 const TOOLS = TOOLS_DEFS;
 
-function Dashboard({ theme, toggleTheme }) {
+function Dashboard({ theme, toggleTheme, initialStudioMode = false, initialBlankCanvas = false }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [homeQuery, setHomeQuery] = useState('');
-  const [homeTab, setHomeTab] = useState('home');
+  const homeSearchRef = useRef(null);
   const [image, setImage] = useState(null);
   const [activeTool, setActiveTool] = useState('add-text');
   const [activeCategory, setActiveCategory] = useState('Text');
@@ -63,8 +63,48 @@ function Dashboard({ theme, toggleTheme }) {
   const [canvasBg, setCanvasBg] = useState('transparent');
   const [layers, setLayers] = useState([]); 
   const [selectedLayerId, setSelectedLayerId] = useState(null);
-  const [isBlankCanvas, setIsBlankCanvas] = useState(false);
-  const [isStudioMode, setIsStudioMode] = useState(false);
+  const [isBlankCanvas, setIsBlankCanvas] = useState(initialBlankCanvas);
+  const [isStudioMode, setIsStudioMode] = useState(initialStudioMode);
+  useEffect(() => {
+    setIsStudioMode(initialStudioMode);
+    if (initialStudioMode) {
+      setIsTemplateMode(false);
+      setIsBlankCanvas(false);
+      setImage(null);
+    }
+  }, [initialStudioMode]);
+  useEffect(() => {
+    setIsBlankCanvas(initialBlankCanvas);
+    if (initialBlankCanvas) {
+      setIsStudioMode(false);
+      setIsTemplateMode(false);
+      setImage(null);
+      setLayers([]);
+      setSelectedLayerId(null);
+      setCanvasSize({ width: 800, height: 800 });
+    }
+    setCanvasBg(initialBlankCanvas ? '#ffffff' : 'transparent');
+  }, [initialBlankCanvas]);
+  useEffect(() => {
+    const returnHome = () => {
+      setIsBlankCanvas(false);
+      setIsStudioMode(false);
+      setIsTemplateMode(false);
+      setImage(null);
+    };
+    window.addEventListener('snarkedit:home', returnHome);
+    return () => window.removeEventListener('snarkedit:home', returnHome);
+  }, []);
+  useEffect(() => {
+    const focusHomeSearch = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        homeSearchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', focusHomeSearch);
+    return () => window.removeEventListener('keydown', focusHomeSearch);
+  }, []);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [drawPaths, setDrawPaths] = useState([]);
   const [currentPath, setCurrentPath] = useState(null);
@@ -313,6 +353,14 @@ function Dashboard({ theme, toggleTheme }) {
     internalSetShowSidebar(true);
   }, [location.state]);
 
+  useEffect(() => {
+    if (!location.state?.openPhotoEditor) return;
+    setIsStudioMode(true);
+    setIsTemplateMode(false);
+    setIsBlankCanvas(false);
+    setImage(null);
+  }, [location.state]);
+
 
   const adjustTimerRef = useRef(null);
   const editingTextRef = useRef(null);
@@ -348,6 +396,8 @@ function Dashboard({ theme, toggleTheme }) {
 
   // 1. Auto-Save & Recovery
   useEffect(() => {
+    // A blank canvas always starts clean; don't restore the previous editor session.
+    if (initialBlankCanvas) return;
     const saved = localStorage.getItem('quickedit-autosave');
     if (saved) {
       try {
@@ -1850,6 +1900,20 @@ function Dashboard({ theme, toggleTheme }) {
     );
   };
 
+  const homeTools = [
+    { title: 'Edit PDF', description: 'Stack pages and make page edits.', path: '/edit-pdf', icon: Files, color: '#f2644b' },
+    { title: 'Merge PDF', description: 'Combine PDFs and other documents.', path: '/merge-documents', icon: Files, color: '#7650b8' },
+    { title: 'Stack PDF', description: 'Place two PDF pages on one page.', path: '/stack-pdf-pages', icon: Layers, color: '#df456a' },
+    { title: 'Crop PDF', description: 'Trim whitespace from PDF pages.', path: '/crop-pdf-whitespace', icon: Crop, color: '#16a6ad' },
+    { title: 'Create PDF', description: 'Turn images into a PDF.', path: '/create-pdf-from-image', icon: Files, color: '#25a55b' },
+    { title: 'Edit Photo', description: 'Open the photo editor.', action: () => navigate('/photo-editor'), icon: ImageIcon, color: '#f19036' },
+    { title: 'Enhance Photo', description: 'Improve color, light, and sharpness.', path: '/enhance-image', icon: Sparkles, color: '#7852cf' },
+    { title: 'Compress Image', description: 'Resize and reduce image file size.', path: '/reduce-image-size', icon: ImageIcon, color: '#3189c5' },
+  ];
+  const visibleHomeTools = homeQuery.trim()
+    ? homeTools.filter((tool) => `${tool.title} ${tool.description}`.toLowerCase().includes(homeQuery.trim().toLowerCase()))
+    : homeTools;
+
   return (
     <div className="app-container">
       <style>{`
@@ -1930,6 +1994,8 @@ function Dashboard({ theme, toggleTheme }) {
       </AnimatePresence>
 
       <Navbar 
+        landingMode={!image && !isTemplateMode && !isBlankCanvas && !isStudioMode}
+        onOpenPhotoEditor={() => navigate('/photo-editor')}
         isTemplateMode={isTemplateMode}
         setIsTemplateMode={(val) => {
           setIsTemplateMode(val);
@@ -3003,47 +3069,64 @@ function Dashboard({ theme, toggleTheme }) {
           <AnimatePresence mode="wait">
             {!image && !isTemplateMode && !isBlankCanvas && !isStudioMode ? (
               <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="project-dashboard home-dashboard">
-                <div className="home-hero">
-                  <motion.h1 initial={{ y: 18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.55, ease: 'easeOut' }}>
-                    What will you design today?
-                  </motion.h1>
-                  <div className="home-tabs" role="tablist" aria-label="Dashboard views">
-                    <button type="button" role="tab" aria-selected={homeTab === 'home'} className={homeTab === 'home' ? 'active' : ''} onClick={() => setHomeTab('home')}><Home size={16} />Home</button>
-                    <button type="button" role="tab" aria-selected={homeTab === 'templates'} className={homeTab === 'templates' ? 'active' : ''} onClick={() => setHomeTab('templates')}><Layout size={16} />Templates</button>
+                <div className="home-landing-layout">
+                  <div className="home-copy">
+                    <h1>Edit PDFs and photos in one powerful workspace</h1>
+                    <p>Create, edit, convert, and enhance with ease</p>
+                    <div className="home-cta-row">
+                      <button type="button" className="home-start-button" onClick={() => setIsStudioMode(true)}>Start editing <ArrowRight size={16} /></button>
+                      <a href="#landing-tools" className="home-explore-button">Explore tools <ArrowRight size={16} /></a>
+                    </div>
                   </div>
-                  <label className="home-search">
-                    <Search size={21} />
-                    <input type="search" value={homeQuery} onChange={(event) => setHomeQuery(event.target.value)} placeholder="Search anything" aria-label="Search image tools" />
-                  </label>
+
+                  <div className="home-discovery">
+                    <label className="home-search">
+                      <Search size={20} />
+                      <input ref={homeSearchRef} type="search" value={homeQuery} onChange={(event) => setHomeQuery(event.target.value)} placeholder="Search tools, files, or actions (e.g. edit PDF, enhance photo...)" aria-label="Search tools" />
+                      <kbd>⌘ K</kbd>
+                    </label>
+                    <div className="home-shortcuts" id="landing-tools" aria-label="Popular tools">
+                      {visibleHomeTools.map((tool) => {
+                        const ToolIcon = tool.icon;
+                        const item = <><span className="home-shortcut-icon" style={{ '--shortcut-color': tool.color }}><ToolIcon size={20} /></span><span>{tool.title}</span></>;
+                        return tool.path
+                          ? <Link className="home-shortcut" key={tool.title} to={tool.path} title={tool.description}>{item}</Link>
+                          : <button className="home-shortcut" key={tool.title} type="button" onClick={tool.action} title={tool.description}>{item}</button>;
+                      })}
+                      {visibleHomeTools.length === 0 && <p className="home-no-results">No matching tools. Try “PDF” or “photo”.</p>}
+                    </div>
+                  </div>
                 </div>
 
-                {homeTab === 'templates' && !homeQuery.trim() ? (
-                  <div className="home-template-prompt">
-                    <div className="home-template-preview"><ImageIcon size={36} /></div>
-                    <div><strong>Start with a social design</strong><span>Open the starter template and customize it in the editor.</span></div>
-                    <button type="button" onClick={() => { setIsTemplateMode(true); setIsStudioMode(false); }}>Open template</button>
-                  </div>
-                ) : (
-                  <div className="home-shortcuts" aria-label="Image and document tools">
-                    {homeQuery.trim() ? APP_TOOL_LINKS.filter((tool) => `${tool.title} ${tool.description}`.toLowerCase().includes(homeQuery.trim().toLowerCase())).map((tool) => {
-                      const ToolIcon = tool.icon || ImageIcon;
-                      return <Link className="home-shortcut" key={tool.path} to={tool.path} title={tool.description}>
-                        <span className="home-shortcut-icon" style={{ '--shortcut-color': '#7c3aed' }}><ToolIcon size={22} /></span><span>{tool.title}</span>
-                      </Link>;
-                    }) : <>
-                      <button className="home-shortcut" type="button" onClick={() => setIsStudioMode(true)}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#ff5b24' }}><ImageIcon size={22} /></span><span>Edit Photo</span></button>
-                      <button className="home-shortcut" type="button" onClick={() => { setImage(null); setLayers([]); setIsTemplateMode(false); setIsBlankCanvas(true); setIsStudioMode(false); setCanvasSize({ width: 800, height: 800 }); setCanvasBg('#ffffff'); }}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#8b35ff' }}><PenTool size={22} /></span><span>Blank Canvas</span></button>
-                      <button className="home-shortcut" type="button" onClick={() => { setActiveCategory('Collage Maker'); applyCollage('collage-templates'); }}><span className="home-shortcut-icon" style={{ '--shortcut-color': '#f43f5e' }}><GridIcon size={22} /></span><span>Collage Maker</span></button>
-                      {APP_TOOL_LINKS.map((tool, index) => {
-                        const ToolIcon = tool.icon || ImageIcon;
-                        const colors = ['#13a7b5', '#13a75b', '#1684f8', '#6655ee', '#fa3c96', '#ff8a00', '#8845ee'];
-                        return <Link className="home-shortcut" key={tool.path} to={tool.path} title={tool.description}>
-                          <span className="home-shortcut-icon" style={{ '--shortcut-color': colors[index % colors.length] }}><ToolIcon size={22} /></span><span>{tool.title}</span>
-                        </Link>;
-                      })}
-                    </>}
-                  </div>
-                )}
+                <div className="home-feature-grid" id="landing-features">
+                  <article className="home-feature-card">
+                    <div className="home-feature-copy">
+                      <div className="home-feature-title"><span className="home-feature-badge pdf"><Files size={15} /></span><strong>PDF Editor</strong></div>
+                      <p>Edit text, images, links, and pages. Convert, merge, compress, and organize your PDFs.</p>
+                      <ul><li>Edit text and images</li><li>Merge and split PDFs</li><li>Convert to Word, Excel, PPT</li><li>Compress without losing quality</li><li>Organize pages easily</li></ul>
+                      <Link className="home-feature-action" to="/edit-pdf">Open PDF Editor <ArrowRight size={14} /></Link>
+                      <div className="home-format-chips"><span>PDF</span><span>Word</span><span>Excel</span><span>PPT</span><span>JPG</span></div>
+                    </div>
+                    <div className="pdf-editor-mockup" aria-hidden="true">
+                      <div className="mockup-topbar"><i></i><i></i><i></i><span>DocEdit</span></div>
+                      <div className="mockup-pdf-body"><div className="mockup-tools-column"><b></b><b></b><b></b><b></b></div><div className="mockup-document"><strong>Quarterly<br />Report</strong><small>Business overview · 2025</small><div className="mockup-chart"><i></i><i></i><i></i><i></i><i></i><i></i></div><div className="mockup-doc-lines"><i></i><i></i><i></i></div></div><div className="mockup-thumbnails"><i></i><i></i><i></i></div></div>
+                    </div>
+                  </article>
+
+                  <article className="home-feature-card">
+                    <div className="home-feature-copy">
+                      <div className="home-feature-title"><span className="home-feature-badge photo"><ImageIcon size={15} /></span><strong>Photo Editor</strong></div>
+                      <p>Enhance, retouch, and transform your photos with powerful AI tools.</p>
+                      <ul><li>Crop and rotate</li><li>Adjust light and color</li><li>Apply filters and effects</li><li>Remove background</li><li>Smart retouching</li></ul>
+                      <button className="home-feature-action" type="button" onClick={() => navigate('/photo-editor')}>Open Photo Editor <ArrowRight size={14} /></button>
+                      <div className="home-format-chips"><span>JPG</span><span>PNG</span><span>WebP</span><span>HEIC</span></div>
+                    </div>
+                    <div className="photo-editor-mockup" aria-hidden="true">
+                      <div className="mockup-topbar"><i></i><i></i><i></i><span>Photo Editor</span></div>
+                      <div className="mockup-photo-body"><div className="photo-scene"><div className="photo-sun"></div><div className="photo-hill hill-back"></div><div className="photo-hill hill-front"></div><div className="photo-car"><i></i><i></i></div></div><div className="mockup-adjustments"><strong>Adjust</strong><small>Light</small><i></i><small>Contrast</small><i></i><small>Highlights</small><i></i><small>Color</small><i></i></div></div>
+                    </div>
+                  </article>
+                </div>
               </motion.div>
             ) : isStudioMode && !image ? (
               <motion.div key="studio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="studio-welcome">
