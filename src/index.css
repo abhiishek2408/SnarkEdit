@@ -4908,3 +4908,551 @@ h6 {
   margin-top: -0.2rem;
   line-height: 1.35;
 }
+
+
+/* ==========================================================================
+   Mobile Responsive Navigation & Phone Layout Styles
+   ========================================================================== */
+
+/* Dark Mode Theme Compatibility for Landing Navbar */
+[data-theme='dark'] .navbar.landing-navbar {
+  color: var(--text-main);
+  background: rgba(18, 18, 18, 0.94);
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .landing-navbar .brand-text h1 {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .landing-top-links a,
+[data-theme='dark'] .landing-top-links button,
+[data-theme='dark'] .landing-tools-menu summary {
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .landing-tools-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] .landing-tools-dropdown a,
+[data-theme='dark'] .landing-tools-dropdown button {
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .landing-tools-dropdown a:hover,
+[data-theme='dark'] .landing-tools-dropdown button:hover {
+  background: var(--tool-bg);
+}
+
+[data-theme='dark'] .landing-top-links .landing-sign-in {
+  background: var(--tool-bg);
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+/* Theme Toggle Button in Desktop Navbar */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--tool-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Mobile Navbar Action Controls */
+.nav-mobile-actions {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.mobile-theme-btn,
+.mobile-editor-btn,
+.mobile-export-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--tool-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.mobile-export-btn {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+  padding: 0 !important;
+}
+
+/* Hamburger Toggle Button */
+.nav-hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--tool-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-hamburger-btn:hover,
+.nav-hamburger-btn.active {
+  background: color-mix(in srgb, var(--primary) 12%, var(--tool-bg));
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Mobile Navigation Backdrop */
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.mobile-nav-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile Navigation Drawer */
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(340px, 86vw);
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.28);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.mobile-nav-drawer.open {
+  transform: translateX(0);
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-card));
+  flex-shrink: 0;
+}
+
+.mobile-drawer-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--tool-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobile-drawer-close-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+
+.mobile-drawer-search {
+  position: relative;
+  padding: 0.85rem 1.1rem 0.45rem;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-search input {
+  width: 100%;
+  padding: 0.6rem 0.8rem 0.6rem 2.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text-main);
+  font-size: 0.84rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.mobile-drawer-search input:focus {
+  border-color: var(--primary);
+}
+
+.mobile-drawer-search > svg {
+  position: absolute;
+  left: 1.75rem;
+  top: 50%;
+  transform: translateY(-30%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.mobile-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 1.1rem;
+  right: 1.1rem;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.mobile-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mobile-drawer-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0.15rem 0.25rem;
+}
+
+.mobile-drawer-section-title svg {
+  color: var(--primary);
+}
+
+.mobile-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mobile-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: var(--tool-bg);
+  border: 1px solid transparent;
+  color: var(--text-main);
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  text-align: left;
+  width: 100%;
+}
+
+.mobile-drawer-link:hover,
+.mobile-drawer-link.active {
+  background: color-mix(in srgb, var(--primary) 10%, var(--tool-bg));
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  color: var(--primary);
+}
+
+.link-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.link-text-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.link-text-wrap strong {
+  font-size: 0.84rem;
+  line-height: 1.25;
+  color: var(--text-main);
+}
+
+.link-text-wrap small {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.mobile-badge-new {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-footer {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mobile-drawer-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--tool-bg);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.mobile-drawer-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.landing-sign-in.mobile-full {
+  width: 100%;
+  padding: 0.65rem !important;
+  text-align: center;
+  font-weight: 700;
+  background: var(--primary);
+  color: #fff !important;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Complete Mobile Viewport Optimizations (max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Hide fixed left rail on phones to release 100% screen width */
+  .app-tool-rail {
+    display: none !important;
+  }
+
+  /* Compact container padding on phones */
+  .app-container {
+    padding: 0.5rem 0.65rem 2.5rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .app-container > .navbar {
+    margin: 0 !important;
+    padding: 0.55rem 0.8rem !important;
+    border-radius: 12px !important;
+  }
+
+  .navbar .brand {
+    gap: 0.5rem;
+  }
+
+  .navbar .brand-text h1,
+  .landing-navbar .brand-text h1 {
+    font-size: 1.15rem !important;
+  }
+
+  .navbar .brand-text p,
+  .landing-navbar .brand-text p {
+    display: none !important;
+  }
+
+  /* Swap desktop links for mobile controls and hamburger */
+  .landing-top-links,
+  .nav-actions.desktop-only {
+    display: none !important;
+  }
+
+  .nav-mobile-actions {
+    display: flex !important;
+  }
+
+  .nav-hamburger-btn {
+    display: flex !important;
+  }
+
+  /* Shell & Workspace on phones */
+  .reducer-shell {
+    padding: 0.5rem 0.15rem 2rem !important;
+  }
+
+  .reducer-workspace {
+    width: 100% !important;
+  }
+
+  .reducer-upload {
+    min-height: 180px !important;
+    padding: 1.5rem 0.85rem !important;
+  }
+
+  .reducer-upload strong {
+    font-size: 1.05rem !important;
+  }
+
+  .reducer-upload span {
+    font-size: 0.82rem !important;
+  }
+
+  /* Split PDF page tool on phones */
+  .pdf-split-layout {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .pdf-split-controls {
+    position: static !important;
+  }
+
+  .pdf-split-stage {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .pdf-split-results-panel {
+    position: static !important;
+  }
+
+  .pdf-split-page-pills {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 0.4rem !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .pdf-split-pill {
+    flex-shrink: 0 !important;
+    min-width: 36px !important;
+    height: 36px !important;
+  }
+
+  .pdf-split-presets {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+  }
+
+  .pdf-split-preset-btn {
+    flex: 1 1 calc(50% - 0.35rem) !important;
+    min-width: 80px !important;
+    padding: 0.45rem 0.4rem !important;
+    font-size: 0.74rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .pdf-split-results-cards.vertical {
+    flex-direction: column !important;
+  }
+
+  .pdf-split-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Stacker tool on phones */
+  .pdf-stacker-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Whitespace crop tool on phones */
+  .pdf-crop-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pdf-crop-controls {
+    position: static !important;
+  }
+
+  /* Document merger on phones */
+  .merger-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Landing hero on phones */
+  .studio-hero-title {
+    font-size: clamp(2rem, 10vw, 2.75rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .studio-hero-subtitle {
+    font-size: 0.92rem !important;
+    padding: 0 0.5rem !important;
+  }
+}
