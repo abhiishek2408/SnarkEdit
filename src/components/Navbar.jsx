@@ -303,26 +303,16 @@ const Navbar = ({
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          {/* Quick Editor Controls on Mobile */}
-          {!hideEditorControls && (
-            <>
-              <button className="icon-btn mobile-editor-btn" title="Undo" disabled={historyIndex <= 0} onClick={onUndo}>
-                <Undo size={17} />
-              </button>
-              <button className="icon-btn mobile-editor-btn" title="Redo" disabled={historyIndex >= historyLength - 1} onClick={onRedo}>
-                <Redo size={17} />
-              </button>
-              {(image || isTemplateMode || isBlankCanvas || isStudioMode) && (
-                <button
-                  className="btn-primary mobile-export-btn"
-                  disabled={!(image || isBlankCanvas || isTemplateMode)}
-                  onClick={onDownload}
-                  title="Export"
-                >
-                  <Download size={16} />
-                </button>
-              )}
-            </>
+          {/* Quick Export on Mobile if in Editor mode */}
+          {!hideEditorControls && (image || isTemplateMode || isBlankCanvas || isStudioMode) && (
+            <button
+              className="btn-primary mobile-export-btn"
+              disabled={!(image || isBlankCanvas || isTemplateMode)}
+              onClick={onDownload}
+              title="Export"
+            >
+              <Download size={16} />
+            </button>
           )}
 
           {/* Hamburger Menu Toggle Button */}
