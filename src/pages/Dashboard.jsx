@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { 
-  Smile, Crop, RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
+import {
+  Columns2, Smile, Crop, RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
   Sun, Contrast, Droplet, Move, MousePointer2, Trash2, Download,
   Image as ImageIcon, Type, Square, Circle, ArrowRight, Sparkles,
   Layers, Search, ZoomIn, ZoomOut, Undo, Redo, Scissors, Wand2,
@@ -24,7 +24,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // Internal Components
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 import LayerPanel from '../components/LayerPanel';
 
@@ -1905,6 +1904,7 @@ function Dashboard({ theme, toggleTheme, initialStudioMode = false, initialBlank
     { title: 'Merge PDF', description: 'Combine PDFs and other documents.', path: '/merge-documents', icon: Files, color: '#7650b8' },
     { title: 'Stack PDF', description: 'Place two PDF pages on one page.', path: '/stack-pdf-pages', icon: Layers, color: '#df456a' },
     { title: 'Crop PDF', description: 'Trim whitespace from PDF pages.', path: '/crop-pdf-whitespace', icon: Crop, color: '#16a6ad' },
+    { title: 'Split PDF', description: 'Divide large pages into two pages.', path: '/split-pdf-page', icon: Columns2, color: '#e11d48' },
     { title: 'Create PDF', description: 'Turn images into a PDF.', path: '/create-pdf-from-image', icon: Files, color: '#25a55b' },
     { title: 'Edit Photo', description: 'Open the photo editor.', action: () => navigate('/photo-editor'), icon: ImageIcon, color: '#f19036' },
     { title: 'Enhance Photo', description: 'Improve color, light, and sharpness.', path: '/enhance-image', icon: Sparkles, color: '#7852cf' },
@@ -4579,7 +4579,6 @@ function Dashboard({ theme, toggleTheme, initialStudioMode = false, initialBlank
           </motion.div>
         )}
       </AnimatePresence>
-      <Footer />
 
       {showShadeModal && (
         <div 

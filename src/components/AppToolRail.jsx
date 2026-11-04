@@ -17,7 +17,7 @@ const AppToolRail = ({ onHome }) => (
       <span>Recent</span>
     </Link>
     <p>TOOLS</p>
-    {APP_TOOL_LINKS.filter((tool) => ['/edit-pdf', '/merge-documents', '/stack-pdf-pages', '/crop-pdf-whitespace', '/create-pdf-from-image'].includes(tool.path)).map((tool) => {
+    {APP_TOOL_LINKS.filter((tool) => ['/edit-pdf', '/split-pdf-page', '/merge-documents', '/stack-pdf-pages', '/crop-pdf-whitespace', '/create-pdf-from-image'].includes(tool.path)).map((tool) => {
       const ToolIcon = tool.icon;
       return (
         <NavLink key={tool.path} to={tool.path} title={tool.description}>

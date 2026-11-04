@@ -4,7 +4,6 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { Download, Layers2, Type, Shapes, Pencil, Move, FileText, Stamp, Upload, Trash2, Eraser, X, Plus, Pipette } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -525,8 +524,12 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className={`reducer-workspace ${(editingExistingText || showPageNumberSettings || showWatermarkSettings || showShapeSettings || showDrawingSettings) && brushOptionsOpen ? 'has-side-properties' : ''}`}>
-          <div className="reducer-heading"><div><p>PDF Editor</p><h1>Edit your PDF pages</h1></div><Layers2 size={34} /></div>
+          {!file && (
+            <>
+              <div className="reducer-heading"><div><p>PDF Editor</p><h1>Edit your PDF pages</h1></div><Layers2 size={34} /></div>
           <p className="pdf-stacker-intro">Add page numbers, shapes, drawings, text, and watermarks, then drag items into place.</p>
+            </>
+          )}
           <div className={`reducer-grid merger-grid pdf-stacker-grid ${file ? 'has-file' : 'no-file'} ${showSideProperties ? 'has-side-properties' : ''}`}>
             <section className="reducer-panel">
               <label className="reducer-upload"><Upload size={24} /><strong>{file ? file.name : 'Choose a PDF'}</strong><span>{file ? `${pageCount} pages loaded` : 'Select a PDF to edit'}</span><input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} /></label>
@@ -672,7 +675,6 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
           {editingExistingText && <div className="pdf-draw-font-preview" style={{ color: currentTextColor, fontFamily: currentFontFamily === 'TimesRoman' ? 'Georgia, serif' : currentFontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif', fontSize: `${currentTextSize}px` }}>Sample text</div>}
         </section>
       </div>}
-      <Footer />
     </div>
   );
 };

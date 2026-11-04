@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { PAGE_CONTENT } from '../constants/searchContent';
 
 const InfoPage = ({ theme, toggleTheme }) => {
@@ -40,8 +39,6 @@ const InfoPage = ({ theme, toggleTheme }) => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import {
   Briefcase,
+  Columns2,
   Cookie,
   FileText,
   Files,
@@ -132,6 +133,13 @@ export const APP_TOOL_LINKS = [
     path: '/crop-pdf-whitespace',
     icon: FileText,
     keywords: ['crop pdf', 'remove whitespace', 'trim page margins', 'crop page rectangle'],
+  },
+  {
+    title: 'Split PDF Page',
+    description: 'Divide a large or wide PDF page into two separate individual pages.',
+    path: '/split-pdf-page',
+    icon: Columns2,
+    keywords: ['split pdf page', 'divide pdf page', 'two pages from one', 'split wide page', 'double page spread', 'divide large page'],
   },
   {
     title: 'Edit PDF',

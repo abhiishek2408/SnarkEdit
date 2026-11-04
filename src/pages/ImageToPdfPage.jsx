@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, FileText, Image as ImageIcon, Layers, Upload } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 const PAGE_SIZES = {
   a4: { label: 'A4', width: 595.28, height: 841.89 },
@@ -231,7 +230,9 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
 
       <main className="reducer-shell">
         <section className="reducer-workspace">
-          <div className="reducer-heading">
+          {!files?.length && (
+            <>
+              <div className="reducer-heading">
             <div>
               <p>Create PDF from Images</p>
               <h1>Create a PDF from one or more images</h1>
@@ -239,6 +240,8 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
             <FileText size={34} />
           </div>
           <p className="pdf-stacker-intro">Choose one or more images, arrange the pages, and create a PDF to download.</p>
+            </>
+          )}
 
           <div className={`reducer-grid pdf-grid ${files.length ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
@@ -356,8 +359,6 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 };

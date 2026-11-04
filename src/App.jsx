@@ -8,6 +8,7 @@ import ImageToPdfPage from './pages/ImageToPdfPage';
 import DocumentMergerPage from './pages/DocumentMergerPage';
 import PdfPageStackerPage from './pages/PdfPageStackerPage';
 import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
+import PdfPageSplitterPage from './pages/PdfPageSplitterPage';
 import EditPdfPage from './pages/EditPdfPage';
 import AppToolRail from './components/AppToolRail';
 
@@ -36,6 +37,8 @@ function App() {
           <Route path="/merge-documents" element={<DocumentMergerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/split-pdf-page" element={<PdfPageSplitterPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/divide-pdf-page" element={<PdfPageSplitterPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/edit-pdf" element={<EditPdfPage theme={theme} toggleTheme={toggleTheme} />} />
         </Routes>
@@ -46,7 +49,3 @@ function App() {
 }
 
 export default App;
-
-
-
-

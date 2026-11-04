@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { ArrowDown, ArrowUp, Download, FileArchive, FileText, Files, Trash2, Upload } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 const A4 = { width: 595.28, height: 841.89 };
 const PAGE_MARGIN = 48;
@@ -317,7 +316,9 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
 
       <main className="reducer-shell">
         <section className="reducer-workspace">
-          <div className="reducer-heading">
+          {!files?.length && (
+            <>
+              <div className="reducer-heading">
             <div>
               <p>Document Merger</p>
               <h1>Merge PDFs, images, and documents</h1>
@@ -325,6 +326,8 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
             <Files size={34} />
           </div>
           <p className="pdf-stacker-intro">Combine PDFs, images, and documents into one file. Arrange the order, then download your merged PDF.</p>
+            </>
+          )}
 
           <div className={`reducer-grid merger-grid ${files.length ? '' : 'no-preview'}`}>
             <div className="reducer-panel">
@@ -408,8 +411,6 @@ const DocumentMergerPage = ({ theme, toggleTheme }) => {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 };

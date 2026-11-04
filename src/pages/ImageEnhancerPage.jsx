@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, Image as ImageIcon, Sparkles, SlidersHorizontal, Upload, Wand2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 const OUTPUT_FORMATS = [
   { value: 'png', label: 'PNG', mime: 'image/png', extension: 'png' },
@@ -361,8 +360,6 @@ const ImageEnhancerPage = ({ theme, toggleTheme }) => {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, Image as ImageIcon, Info, Lock, SlidersHorizontal, Unlock, Upload } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 const formatBytes = (bytes) => {
   if (!bytes) return '0 KB';
@@ -396,8 +395,6 @@ const ImageReducerPage = ({ theme, toggleTheme }) => {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 };

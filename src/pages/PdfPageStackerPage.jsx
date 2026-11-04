@@ -4,7 +4,6 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { ArrowDown, Download, FileText, Layers2, Plus, Trash2, Upload, ZoomIn, ZoomOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -231,11 +230,15 @@ const PdfPageStackerPage = ({ theme, toggleTheme }) => {
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className="reducer-workspace">
-          <div className="reducer-heading">
-            <div><p>PDF Page Tool</p><h1>Stack two pages on one</h1></div>
-            <Layers2 size={34} />
-          </div>
-          <p className="pdf-stacker-intro">Preview the original PDF and stack selected page pairs top to bottom. Download the complete PDF with every other page retained.</p>
+          {!file && (
+            <>
+              <div className="reducer-heading">
+                <div><p>PDF Page Tool</p><h1>Stack two pages on one</h1></div>
+                <Layers2 size={34} />
+              </div>
+              <p className="pdf-stacker-intro">Preview the original PDF and stack selected page pairs top to bottom. Download the complete PDF with every other page retained.</p>
+            </>
+          )}
           <div className={`reducer-grid merger-grid pdf-stacker-grid ${file ? 'has-file' : 'no-file'}`}>
             <div className="reducer-panel pdf-stack-toolbar">
               <label className="reducer-upload">
@@ -279,7 +282,6 @@ const PdfPageStackerPage = ({ theme, toggleTheme }) => {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };
