@@ -149,7 +149,7 @@ const Navbar = ({
 
         {/* Desktop Navigation Links (when landingMode) */}
         {landingMode ? (
-          <div className="landing-top-links desktop-only">
+          <div className="landing-top-links">
             <details className="landing-tools-menu" ref={pdfToolsMenuRef}>
               <summary>PDF Tools <ChevronDown size={14} /></summary>
               <div className="landing-tools-dropdown">
@@ -193,7 +193,7 @@ const Navbar = ({
           </div>
         ) : (
           /* Desktop Navigation Actions (when in Studio / Editor mode) */
-          <div className="nav-actions desktop-only" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="nav-actions" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.75rem' }}>
             {!isStudioMode && (
               <div className="nav-search">
                 <Search size={16} />

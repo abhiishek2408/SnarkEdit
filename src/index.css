@@ -184,11 +184,12 @@ body::-webkit-scrollbar-thumb {
 }
 
 .landing-top-links {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.8rem, 3vw, 2.8rem);
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: clamp(0.75rem, 2vw, 2.2rem) !important;
   margin-left: auto;
-  margin-right: 1.75rem;
+  margin-right: 1.25rem;
 }
 
 .landing-top-links a,
@@ -954,11 +955,14 @@ body::-webkit-scrollbar-thumb {
 
 .sidebar::-webkit-scrollbar,
 .tool-controls::-webkit-scrollbar,
-.layer-panel::-webkit-scrollbar {
+.layer-panel::-webkit-scrollbar,
+.app-tool-rail::-webkit-scrollbar {
   display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-.sidebar, .tool-controls, .layer-panel {
+.sidebar, .tool-controls, .layer-panel, .app-tool-rail {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
@@ -988,7 +992,8 @@ body::-webkit-scrollbar-thumb {
   border-radius: 16px;
   background: var(--bg-card);
   box-shadow: var(--shadow-premium);
-  scrollbar-width: thin;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 .app-tool-rail > p {
@@ -1950,7 +1955,12 @@ input[type="range"] {
 }
 
 .desktop-only {
-  display: block;
+  display: initial;
+}
+.desktop-only.landing-top-links,
+.desktop-only.nav-actions {
+  display: flex !important;
+  flex-direction: row !important;
 }
 
 .project-card {
