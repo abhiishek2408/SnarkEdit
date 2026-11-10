@@ -6,9 +6,11 @@ import ImageReducerPage from './pages/ImageReducerPage';
 import ImageEnhancerPage from './pages/ImageEnhancerPage';
 import ImageToPdfPage from './pages/ImageToPdfPage';
 import DocumentMergerPage from './pages/DocumentMergerPage';
+import PdfMergerPage from './pages/PdfMergerPage';
 import PdfPageStackerPage from './pages/PdfPageStackerPage';
 import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
 import PdfPageSplitterPage from './pages/PdfPageSplitterPage';
+import PdfRemovePagesPage from './pages/PdfRemovePagesPage';
 import EditPdfPage from './pages/EditPdfPage';
 import AppToolRail from './components/AppToolRail';
 
@@ -34,9 +36,16 @@ function App() {
           <Route path="/enhance-image" element={<ImageEnhancerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/image-to-pdf" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/create-pdf-from-image" element={<ImageToPdfPage theme={theme} toggleTheme={toggleTheme} />} />
-          <Route path="/merge-documents" element={<DocumentMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/merge-pdf" element={<PdfMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/merge-pdf-files" element={<PdfMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/combine-pdf" element={<PdfMergerPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/merge-documents" element={<PdfMergerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/stack-pdf-pages" element={<PdfPageStackerPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/crop-pdf-whitespace" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/crop-pdf" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/crop-pdf-pages" element={<PdfWhitespaceCropPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/remove-pdf-pages" element={<PdfRemovePagesPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/delete-pdf-pages" element={<PdfRemovePagesPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/split-pdf-page" element={<PdfPageSplitterPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/divide-pdf-page" element={<PdfPageSplitterPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />

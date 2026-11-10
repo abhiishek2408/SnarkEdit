@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, rgb } from 'pdf-lib';
-import { ArrowDown, Download, FileText, Layers2, Plus, Trash2, Upload, ZoomIn, ZoomOut } from 'lucide-react';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
+import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import { ArrowDown, Download, FileText, Layers2, Plus, Upload, ZoomIn, ZoomOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -23,11 +28,14 @@ const CombinedPdfPreview = ({ file }) => {
           if (cancelled) return;
           const page = await original.getPage(pageNumber);
           const base = page.getViewport({ scale: 1 });
-          const viewport = page.getViewport({ scale: Math.min(1.6, 1000 / base.width) });
+          const viewport = page.getViewport({ scale: Math.min(1.5, Math.max(1, 800 / base.width)) });
           const canvas = document.createElement('canvas');
           canvas.width = Math.ceil(viewport.width);
           canvas.height = Math.ceil(viewport.height);
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport }).promise;
           const src = canvas.toDataURL('image/jpeg', 0.94);
           setPages(current => current.map((preview, pageIndex) => pageIndex === index ? { ...preview, src } : preview));
         }
@@ -46,7 +54,18 @@ const CombinedPdfPreview = ({ file }) => {
       </div>
     </div>
     {error && <p className="reducer-error">{error}</p>}
-    {pages.map((page, index) => <figure key={index}>{page.src ? <img src={page.src} alt={page.label} style={{ width: `${zoom}%` }} /> : <div className="pdf-preview-loading">Loading page preview…</div>}<figcaption>Page {index + 1}</figcaption></figure>)}
+    <div className="pdf-combined-preview-stage">
+      {pages.map((page, index) => (
+        <figure key={index}>
+          {page.src ? (
+            <img src={page.src} alt={page.label} style={{ width: `${zoom}%` }} />
+          ) : (
+            <div className="pdf-preview-loading">Loading page preview…</div>
+          )}
+          <figcaption>Page {index + 1}</figcaption>
+        </figure>
+      ))}
+    </div>
   </div>;
 };
 
@@ -171,6 +190,15 @@ const PdfPageStackerPage = ({ theme, toggleTheme }) => {
           const totalHeight = topHeight + gap + bottomHeight;
           const page = output.addPage([targetWidth, totalHeight]);
 
+          // Fill page with clean white background so the divider gap is white
+          page.drawRectangle({
+            x: 0,
+            y: 0,
+            width: targetWidth,
+            height: totalHeight,
+            color: rgb(1, 1, 1),
+          });
+
           // Draw top page in the upper portion (no scaling needed for same-width pages)
           page.drawImage(topEmbed, {
             x: 0,
@@ -185,13 +213,6 @@ const PdfPageStackerPage = ({ theme, toggleTheme }) => {
             y: 0,
             width: targetWidth,
             height: bottomHeight,
-          });
-          page.drawRectangle({
-            x: 0,
-            y: bottomHeight,
-            width: targetWidth,
-            height: gap,
-            color: rgb(0.12, 0.12, 0.12),
           });
         } else if (bottomPages.has(pageIndex)) {
           // This page is the bottom of a pair → already included in its stacked page, skip
@@ -226,60 +247,175 @@ const PdfPageStackerPage = ({ theme, toggleTheme }) => {
   const pageOptions = Array.from({ length: pageCount }, (_, index) => index + 1);
 
   return (
-    <div className="app-container reducer-page pdf-stacker-page">
+    <div className="app-container reducer-page pdf-tool-page pdf-stacker-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className="reducer-workspace">
+          {/* Header (shown only when no file is loaded) */}
           {!file && (
-            <>
-              <div className="reducer-heading">
-                <div><p>PDF Page Tool</p><h1>Stack two pages on one</h1></div>
-                <Layers2 size={34} />
+            <div className="reducer-heading">
+              <div>
+                <p>PDF Tools</p>
+                <h1>Stack PDF Pages</h1>
               </div>
-              <p className="pdf-stacker-intro">Preview the original PDF and stack selected page pairs top to bottom. Download the complete PDF with every other page retained.</p>
-            </>
-          )}
-          <div className={`reducer-grid merger-grid pdf-stacker-grid ${file ? 'has-file' : 'no-file'}`}>
-            <div className="reducer-panel pdf-stack-toolbar">
-              <label className="reducer-upload">
-                <Upload size={24} />
-                <strong>{file ? file.name : 'Choose a PDF'}</strong>
-                <span>{file ? `${pageCount} pages loaded` : 'Select a PDF with at least two pages'}</span>
-                <input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} />
-              </label>
-              {file && <>
-                <div className="pdf-pair-heading"><strong>Page pairs</strong><span>{pairs.length} output page{pairs.length === 1 ? '' : 's'}</span></div>
-                <button className="pdf-add-pair" type="button" onClick={addPair}><Plus size={17} /> Add another pair</button>
-                <div className="pdf-pair-list">
-                  {pairs.map((pair, index) => (
-                    <div className="pdf-pair-card" key={pair.id}>
-                      <div className="pdf-pair-title"><strong>Pair {index + 1}</strong>
-                        {pairs.length > 1 && <button className="icon-btn" type="button" title="Remove pair" onClick={() => { setPairs(items => items.filter(item => item.id !== pair.id)); setResult(null); }}><Trash2 size={16} /></button>}
-                      </div>
-                      <label>Top page<select value={pair.top} onChange={(event) => updatePair(pair.id, 'top', event.target.value)}>{pageOptions.map(number => <option key={number} value={number}>{number}</option>)}</select></label>
-                      <div className="pdf-pair-arrow"><ArrowDown size={16} /></div>
-                      <label>Bottom page<select value={pair.bottom} onChange={(event) => updatePair(pair.id, 'bottom', event.target.value)}>{pageOptions.map(number => <option key={number} value={number}>{number}</option>)}</select></label>
-                    </div>
-                  ))}
-                </div>
-                <button className="btn-primary reducer-action" onClick={stackPages} disabled={!file || isProcessing}>
-                  <Layers2 size={16} /><span>{isProcessing ? 'Stacking...' : `Stack PDF (${pairs.length})`}</span>
-                </button>
-              </>}
-              {error && <p className="reducer-error">{error}</p>}
+              <Layers2 size={34} className="desktop-only" />
             </div>
-            {file && <div className="reducer-panel pdf-stacker-viewer-panel">
-              <>
-                <CombinedPdfPreview file={file} />
-                <div className="pdf-pair-live-preview">
-                  <div><FileText size={16} /><span>Top: page {pairs[0]?.top}</span></div>
-                  <ArrowDown size={16} />
-                  <div><FileText size={16} /><span>Bottom: page {pairs[0]?.bottom}</span></div>
+          )}
+
+          {!file ? (
+            <div className="pdf-merge-upload-hero">
+              <p className="pdf-stacker-intro" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
+                Stack selected page pairs top-to-bottom on a single page. Perfect for merging split scans or creating compact layouts.
+              </p>
+              <label className="pdf-merge-dropzone">
+                <div className="pdf-merge-upload-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                  <Upload size={32} />
                 </div>
-                {result && <button className="btn-primary reducer-action pdf-stack-download" onClick={download} disabled={isProcessing}><Download size={18} /><span>Download full stacked PDF</span></button>}
-              </>
-            </div>}
-          </div>
+                <strong style={{ fontSize: '1.25rem' }}>Select PDF to Stack</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  Drag & drop or click to browse
+                </span>
+                <input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} style={{ display: 'none' }} />
+              </label>
+
+              <div className="pdf-merge-features-badges">
+                <div className="pdf-merge-badge-item">
+                  <CheckCircle2 size={15} style={{ color: '#10b981' }} />
+                  <span>2-on-1 Layouts</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Sparkles size={15} style={{ color: '#3b82f6' }} />
+                  <span>Live Preview</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Layers2 size={15} style={{ color: '#3b82f6' }} />
+                  <span>Custom Pairs</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="pdf-remove-workspace-layout">
+              {/* Left Sidebar Controls */}
+              <aside className="pdf-remove-sidebar">
+                {/* File Info */}
+                <div className="reducer-panel pdf-remove-card">
+                  <div className="pdf-remove-file-header">
+                    <div className="pdf-remove-file-icon" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                      <FileText size={20} />
+                    </div>
+                    <div className="pdf-remove-file-meta">
+                      <strong title={file.name}>{file.name}</strong>
+                      <span>{pageCount} pages loaded</span>
+                    </div>
+                  </div>
+                  <button className="pdf-remove-change-btn" onClick={() => document.querySelector('.change-pdf-input').click()}>
+                    <RefreshCw size={14} />
+                    <span>Change PDF</span>
+                    <input
+                      type="file"
+                      className="change-pdf-input"
+                      accept="application/pdf,.pdf"
+                      onChange={(e) => handleFile(e.target.files)}
+                      style={{ display: 'none' }}
+                    />
+                  </button>
+                </div>
+
+                {/* Stacking Controls */}
+                <div className="reducer-panel pdf-remove-card">
+                  <h3 className="pdf-remove-section-title">Page Pairs</h3>
+                  <p className="pdf-remove-sub-desc">Choose which pages to stack together.</p>
+
+                  <div className="pdf-pair-list" style={{ maxHeight: 'none' }}>
+                    {pairs.map((pair, index) => (
+                      <div className="pdf-pair-card" key={pair.id} style={{ padding: '0.85rem' }}>
+                        <div className="pdf-pair-title" style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.8rem' }}>Set #{index + 1}</strong>
+                          {pairs.length > 1 && (
+                            <button className="pdf-remove-quick-btn" style={{ padding: '4px', height: 'auto' }} type="button" onClick={() => { setPairs(items => items.filter(item => item.id !== pair.id)); setResult(null); }}>
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.7rem' }}>
+                            Top
+                            <select className="pdf-merge-name-input" style={{ marginTop: '0.2rem', padding: '4px' }} value={pair.top} onChange={(event) => updatePair(pair.id, 'top', event.target.value)}>
+                              {pageOptions.map(number => <option key={number} value={number}>{number}</option>)}
+                            </select>
+                          </label>
+                          <ArrowDown size={14} style={{ marginTop: '1rem', color: 'var(--text-muted)' }} />
+                          <label style={{ fontSize: '0.7rem' }}>
+                            Bottom
+                            <select className="pdf-merge-name-input" style={{ marginTop: '0.2rem', padding: '4px' }} value={pair.bottom} onChange={(event) => updatePair(pair.id, 'bottom', event.target.value)}>
+                              {pageOptions.map(number => <option key={number} value={number}>{number}</option>)}
+                            </select>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="pdf-remove-quick-btn pdf-stacker-add-btn" type="button" onClick={addPair} style={{ borderStyle: 'dashed' }}>
+                    <Plus size={15} />
+                    <span>Add Another Pair</span>
+                  </button>
+
+                  <button
+                    className="btn-primary pdf-stacker-action-btn"
+                    onClick={stackPages}
+                    disabled={!file || isProcessing}
+                    style={{ marginTop: '0.5rem' }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw size={17} className="spin" />
+                        <span>Stacking...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Layers2 size={17} />
+                        <span>Stack {pairs.length} Pairs</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Success Card */}
+                {result && (
+                  <div className="pdf-merge-success-card">
+                    <div className="pdf-merge-success-header">
+                      <CheckCircle2 size={20} color="#10b981" />
+                      <div>
+                        <strong>Stacking Ready!</strong>
+                        <span>New PDF is generated</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-primary pdf-stacker-download-btn"
+                      onClick={download}
+                    >
+                      <Download size={18} />
+                      <span>Download Stacked PDF</span>
+                    </button>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="reducer-error pdf-remove-alert-box">
+                    <AlertCircle size={15} />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </aside>
+
+              {/* Right Preview Workspace */}
+              <section className="pdf-remove-gallery-panel">
+                <CombinedPdfPreview file={file} />
+              </section>
+            </div>
+          )}
         </section>
       </main>
     </div>

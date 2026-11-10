@@ -2,6 +2,7 @@ import {
   Briefcase,
   Columns2,
   Cookie,
+  FileMinus,
   FileText,
   Files,
   Image as ImageIcon,
@@ -114,11 +115,11 @@ export const APP_TOOL_LINKS = [
     keywords: ['image to pdf', 'pdf from image', 'jpg to pdf', 'png to pdf'],
   },
   {
-    title: 'Merge Docs',
-    description: 'Combine PDFs, images, text files, and attachments into one downloadable document.',
-    path: '/merge-documents',
+    title: 'Merge PDF',
+    description: 'Combine multiple PDF files into one single document in any order with custom page ranges.',
+    path: '/merge-pdf',
     icon: Files,
-    keywords: ['merge documents', 'combine pdf', 'join files', 'documents'],
+    keywords: ['merge pdf', 'combine pdf', 'join pdf', 'merge pdf files', 'merge documents', 'pdf joiner'],
   },
   {
     title: 'Stack PDF Pages',
@@ -126,6 +127,13 @@ export const APP_TOOL_LINKS = [
     path: '/stack-pdf-pages',
     icon: Files,
     keywords: ['stack pdf pages', 'combine two pages', 'two pages on one', 'vertical pdf', 'top down'],
+  },
+  {
+    title: 'Remove PDF Pages',
+    description: 'Delete unwanted pages from your PDF file and save the clean document.',
+    path: '/remove-pdf-pages',
+    icon: FileMinus,
+    keywords: ['remove pdf pages', 'delete pdf pages', 'delete page from pdf', 'remove page', 'pdf page remover', 'extract pages'],
   },
   {
     title: 'Crop PDF Pages',
@@ -143,10 +151,10 @@ export const APP_TOOL_LINKS = [
   },
   {
     title: 'Edit PDF',
-    description: 'Stack page pairs and remove whitespace bands in one PDF workflow.',
+    description: 'Add images, text, page numbers, shapes, and watermarks to PDF pages.',
     path: '/edit-pdf',
     icon: Files,
-    keywords: ['edit pdf', 'stack and crop', 'combine and crop pdf pages', 'remove whitespace and stack'],
+    keywords: ['edit pdf', 'add image to pdf', 'insert image', 'add picture to pdf', 'add signature', 'add text to pdf'],
   },
 ];
 

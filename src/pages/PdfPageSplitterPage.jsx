@@ -2,13 +2,15 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument } from 'pdf-lib';
-import { 
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight, 
-  Columns2, Download, FileText, Files, HelpCircle, Layers, MoveHorizontal, 
-  MoveVertical, RefreshCw, RotateCcw, Rows2, Scissors, Sparkles, Split, 
-  Trash2, Upload, X, Zap 
+import {
+  ArrowDown, ArrowLeft, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
+  Columns2, Download, FileText, Files, HelpCircle, Layers, MoveHorizontal,
+  MoveVertical, RefreshCw, RotateCcw, Rows2, Scissors, Sparkles, Split,
+  Trash2, Upload, X, Zap
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -472,437 +474,377 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className="reducer-workspace">
+          {/* Header (shown only when no PDF is loaded) */}
           {!pdfDocument && (
-            <>
-              <div className="reducer-heading">
-                <div>
-                  <p>PDF Tool</p>
-                  <h1>Split PDF Page into 2 Parts</h1>
-                </div>
-                <Columns2 size={34} />
+            <div className="reducer-heading">
+              <div>
+                <p>PDF Tools</p>
+                <h1>Split PDF Pages</h1>
               </div>
-              <p className="pdf-stacker-intro">
-                Divide oversized, wide, or tall PDF pages into two separate individual pages. Ideal for books scanned 2-pages-per-sheet, double-page spreads, and long documents.
-              </p>
-            </>
+              <Split size={34} className="desktop-only" />
+            </div>
           )}
 
-          <div className={`pdf-split-layout ${pdfDocument ? 'has-pdf' : 'no-pdf'}`}>
-            {/* Left Controls Panel */}
-            <section className="reducer-panel pdf-split-controls">
-              <label className="reducer-upload">
-                <Upload size={24} />
-                <strong>{file ? file.name : 'Choose a PDF'}</strong>
-                <span>{file ? `${pageCount} page${pageCount > 1 ? 's' : ''} loaded` : 'Select the PDF to split pages'}</span>
-                <input type="file" accept="application/pdf,.pdf" onChange={(e) => handleFile(e.target.files)} />
+          {!pdfDocument ? (
+            <div className="pdf-merge-upload-hero">
+              <p className="pdf-stacker-intro" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
+                Divide oversized, wide, or tall PDF pages into two separate individual pages. Ideal for books scanned 2-pages-per-sheet, double-page spreads, and long documents.
+              </p>
+              <label className="pdf-merge-dropzone">
+                <div className="pdf-merge-upload-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                  <Upload size={32} />
+                </div>
+                <strong>Select PDF to split</strong>
+                <span>Drag & drop PDF here, or click to browse</span>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => handleFile(e.target.files)}
+                  style={{ display: 'none' }}
+                />
               </label>
 
-              {file && (
-                <>
-                  {/* Summary & Stats */}
-                  <div className="pdf-split-stats-box">
-                    <div className="pdf-split-stat-row">
-                      <span>Original Pages:</span>
-                      <strong>{pageCount}</strong>
+              <div className="pdf-merge-features-badges">
+                <div className="pdf-merge-badge-item">
+                  <Columns2 size={16} />
+                  <span>Vertical & Horizontal Splits</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Zap size={16} />
+                  <span>Auto-Detect Wide Spreads</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Sparkles size={16} />
+                  <span>Adjustable Margins</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="pdf-split-layout has-pdf">
+              {/* Left Controls Panel */}
+              <section className="reducer-panel pdf-split-controls">
+                <div className="reducer-panel pdf-remove-card" style={{ padding: '0.85rem' }}>
+                  <div className="pdf-remove-file-header">
+                    <div className="pdf-remove-file-icon" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                      <FileText size={20} />
                     </div>
-                    <div className="pdf-split-stat-row">
-                      <span>Pages to Split:</span>
-                      <strong>{splitCount}</strong>
+                    <div className="pdf-remove-file-meta">
+                      <strong title={file?.name}>{file?.name}</strong>
+                      <span>{pageCount} pages loaded</span>
                     </div>
-                    <div className="pdf-split-stat-row highlight">
-                      <span>Resulting PDF:</span>
-                      <strong>{resultingPageCount} pages</strong>
+                  </div>
+                  <button className="pdf-remove-change-btn" onClick={() => document.querySelector('.change-pdf-input').click()} style={{ marginTop: '0.5rem' }}>
+                    <RefreshCw size={14} />
+                    <span>Change PDF</span>
+                    <input
+                      type="file"
+                      className="change-pdf-input"
+                      accept="application/pdf,.pdf"
+                      onChange={(e) => handleFile(e.target.files)}
+                      style={{ display: 'none' }}
+                    />
+                  </button>
+                </div>
+
+                {/* Auto-split wide pages suggestion */}
+                {widePagesCount > 0 && splitCount < widePagesCount && (
+                  <div className="pdf-split-auto-tip">
+                    <div className="pdf-split-auto-text">
+                      <Zap size={16} />
+                      <span>Detected <strong>{widePagesCount}</strong> wide / 2-page spread{widePagesCount > 1 ? 's' : ''}!</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-primary pdf-split-quick-btn"
+                      onClick={autoSplitAllWidePages}
+                      title="Split all wide pages 50/50 vertically into single pages"
+                    >
+                      <Columns2 size={14} />
+                      <span>Split All Wide Pages (50/50)</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Current Active Page Box */}
+                <div className="pdf-split-active-card">
+                  <div className="pdf-split-active-header">
+                    <strong>Page {activePage} Settings</strong>
+                    {isCurrentPageSplit && <span className="pdf-split-badge active">✓ Split Active</span>}
+                  </div>
+
+                  {/* Split Direction */}
+                  <div className="pdf-split-field">
+                    <label>Direction</label>
+                    <div className="pdf-split-toggle-group">
+                      <button
+                        type="button"
+                        className={direction === 'vertical' ? 'active' : ''}
+                        onClick={() => setDirection('vertical')}
+                      >
+                        <Columns2 size={15} />
+                        <span>Vertical</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={direction === 'horizontal' ? 'active' : ''}
+                        onClick={() => setDirection('horizontal')}
+                      >
+                        <Rows2 size={15} />
+                        <span>Horizontal</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Auto-split wide pages suggestion */}
-                  {widePagesCount > 0 && splitCount < widePagesCount && (
-                    <div className="pdf-split-auto-tip">
-                      <div className="pdf-split-auto-text">
-                        <Zap size={16} />
-                        <span>Detected <strong>{widePagesCount}</strong> wide / 2-page spread{widePagesCount > 1 ? 's' : ''}!</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-primary pdf-split-quick-btn"
-                        onClick={autoSplitAllWidePages}
-                        title="Split all wide pages 50/50 vertically into single pages"
-                      >
-                        <Columns2 size={14} />
-                        <span>Split All Wide Pages (50/50)</span>
-                      </button>
+                  {/* Split Ratio Slider */}
+                  <div className="pdf-split-field">
+                    <div className="pdf-split-slider-header">
+                      <label>Cut Position</label>
+                      <strong>
+                        {Math.round(ratio * 100)}% / {Math.round((1 - ratio) * 100)}%
+                      </strong>
                     </div>
-                  )}
-
-                  {/* Current Active Page Box */}
-                  <div className="pdf-split-active-card">
-                    <div className="pdf-split-active-header">
-                      <strong>Page {activePage} Settings</strong>
-                      {activeMeta?.isWide && <span className="pdf-split-badge wide">⚡ Wide Page</span>}
-                      {activeMeta?.isTall && <span className="pdf-split-badge tall">⚡ Tall Page</span>}
-                      {isCurrentPageSplit && <span className="pdf-split-badge active">✓ Split Active</span>}
-                    </div>
-
-                    {activeMeta && (
-                      <p className="pdf-split-meta-text">
-                        Size: {activeMeta.width} × {activeMeta.height} pt ({activeMeta.isWide ? 'Landscape' : 'Portrait'})
-                      </p>
-                    )}
-
-                    {/* Split Direction */}
-                    <div className="pdf-split-field">
-                      <label>Split Direction:</label>
-                      <div className="pdf-split-toggle-group">
-                        <button
-                          type="button"
-                          className={direction === 'vertical' ? 'active' : ''}
-                          onClick={() => setDirection('vertical')}
-                          title="Split into Left and Right pages (ideal for 2-page scans)"
-                        >
-                          <Columns2 size={16} />
-                          <span>Vertical (Left / Right)</span>
-                        </button>
-                        <button
-                          type="button"
-                          className={direction === 'horizontal' ? 'active' : ''}
-                          onClick={() => setDirection('horizontal')}
-                          title="Split into Top and Bottom pages (ideal for tall pages & receipts)"
-                        >
-                          <Rows2 size={16} />
-                          <span>Horizontal (Top / Bottom)</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Split Ratio Slider & Presets */}
-                    <div className="pdf-split-field">
-                      <div className="pdf-split-slider-header">
-                        <label>Cut Position:</label>
-                        <strong>
-                          {Math.round(ratio * 100)}% / {Math.round((1 - ratio) * 100)}%
-                        </strong>
-                      </div>
-                      <input
-                        type="range"
-                        min="10"
-                        max="90"
-                        step="1"
-                        value={Math.round(ratio * 100)}
-                        onChange={(e) => setRatio(Number(e.target.value) / 100)}
-                        className="pdf-split-range"
-                      />
-                      <div className="pdf-split-presets">
-                        {PRESET_RATIOS.map(p => (
-                          <button
-                            key={p.label}
-                            type="button"
-                            className={`pdf-split-preset-btn ${Math.abs(ratio - p.ratio) < 0.02 ? 'active' : ''}`}
-                            onClick={() => setRatio(p.ratio)}
-                            title={p.desc}
-                          >
-                            {p.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Cut Edge Margin / Padding Control */}
-                    <div className="pdf-split-field">
-                      <div className="pdf-split-slider-header">
-                        <label>Cut Margin (Padding):</label>
-                        <strong>{margin} pt</strong>
-                      </div>
-                      <p className="pdf-split-margin-hint">
-                        {direction === 'horizontal'
-                          ? '✓ Top page gets bottom margin, bottom page gets top margin'
-                          : '✓ Left page gets right margin, right page gets left margin'}
-                      </p>
-                      <div className="pdf-split-presets">
-                        {MARGIN_PRESETS.map(p => (
-                          <button
-                            key={p.label}
-                            type="button"
-                            className={`pdf-split-preset-btn ${margin === p.val ? 'active' : ''}`}
-                            onClick={() => setMargin(p.val)}
-                          >
-                            {p.label}
-                          </button>
-                        ))}
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="60"
-                        step="5"
-                        value={margin}
-                        onChange={(e) => setMargin(Number(e.target.value))}
-                        className="pdf-split-range"
-                      />
-                    </div>
-
-                    {/* Page Order Toggle */}
-                    <div className="pdf-split-field">
-                      <label>Page Sequence:</label>
-                      <button
-                        type="button"
-                        className="pdf-split-order-toggle"
-                        onClick={() => setOrder(order === 'normal' ? 'reverse' : 'normal')}
-                        title="Change which part comes first in the PDF"
-                      >
-                        <ArrowRight size={14} />
-                        <span>
-                          {direction === 'vertical'
-                            ? (order === 'normal' ? 'Left Page First → Right Page' : 'Right Page First → Left Page (RTL)')
-                            : (order === 'normal' ? 'Top Page First → Bottom Page' : 'Bottom Page First → Top Page')}
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* Apply / Remove Split Button */}
-                    <div className="pdf-split-action-buttons">
-                      <button
-                        type="button"
-                        className="btn-primary"
-                        onClick={applySplitToActive}
-                      >
-                        <Scissors size={15} />
-                        <span>{isCurrentPageSplit ? 'Update Split for Page ' + activePage : 'Apply Split to Page ' + activePage}</span>
-                      </button>
-
-                      {isCurrentPageSplit && (
-                        <button
-                          type="button"
-                          className="pdf-clear-crop"
-                          onClick={removeSplitFromActive}
-                        >
-                          <X size={15} />
-                          <span>Remove Split</span>
-                        </button>
-                      )}
-                    </div>
+                    <input
+                      type="range"
+                      min="10"
+                      max="90"
+                      step="1"
+                      value={Math.round(ratio * 100)}
+                      onChange={(e) => setRatio(Number(e.target.value) / 100)}
+                      className="pdf-split-range"
+                    />
                   </div>
 
-                  {/* Bulk Actions */}
-                  {splitCount > 0 && (
-                    <div className="pdf-split-bulk">
+                  {/* Cut Edge Margin */}
+                  <div className="pdf-split-field">
+                    <div className="pdf-split-slider-header">
+                      <label>Margin (Padding)</label>
+                      <strong>{margin} pt</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="60"
+                      step="5"
+                      value={margin}
+                      onChange={(e) => setMargin(Number(e.target.value))}
+                      className="pdf-split-range"
+                    />
+                  </div>
+
+                  {/* Page Order Toggle */}
+                  <div className="pdf-split-field">
+                    <label>Sequence</label>
+                    <button
+                      type="button"
+                      className="pdf-split-order-toggle"
+                      onClick={() => setOrder(order === 'normal' ? 'reverse' : 'normal')}
+                    >
+                      <ArrowRight size={14} />
+                      <span>{order === 'normal' ? 'Normal (1 → 2)' : 'Reverse (2 → 1)'}</span>
+                    </button>
+                  </div>
+
+                  {/* Apply / Remove Split Button */}
+                  <div className="pdf-split-action-buttons">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={applySplitToActive}
+                    >
+                      <Scissors size={15} />
+                      <span>{isCurrentPageSplit ? 'Update Split' : 'Apply Split'}</span>
+                    </button>
+
+                    {isCurrentPageSplit && (
                       <button
                         type="button"
                         className="pdf-clear-crop"
-                        onClick={resetAllSplits}
+                        onClick={removeSplitFromActive}
                       >
-                        <RotateCcw size={15} />
-                        <span>Reset All Splits ({splitCount})</span>
+                        <X size={15} />
+                        <span>Remove Split</span>
                       </button>
-                    </div>
-                  )}
-
-                  {/* Download Button */}
-                  <button
-                    className="btn-primary reducer-action"
-                    type="button"
-                    onClick={download}
-                    disabled={!splitCount || isExporting}
-                  >
-                    <Download size={18} />
-                    <span>{isExporting ? 'Generating PDF...' : `Download PDF (${resultingPageCount} Pages)`}</span>
-                  </button>
-
-                  <p className="pdf-crop-tip">
-                    💡 <strong>Tip:</strong> Drag the red cut line on the page canvas to place the cut at the exact boundary. Previews on the right show how the two new pages will look with margins!
-                  </p>
-                </>
-              )}
-
-              {error && <p className="reducer-error">{error}</p>}
-            </section>
-
-            {/* Right Panel: Page Selector & Split Workspace */}
-            {pdfDocument && (
-              <section className="reducer-panel pdf-split-workspace-panel">
-                {/* Page Navigation & Selector Carousel */}
-                <div className="pdf-split-page-nav-bar">
-                  <div className="pdf-split-nav-controls">
-                    <button
-                      type="button"
-                      className="pdf-split-nav-arrow"
-                      disabled={activePage <= 1}
-                      onClick={() => setActivePage(p => Math.max(1, p - 1))}
-                      title="Previous Page"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <span className="pdf-split-page-counter">
-                      Page <strong>{activePage}</strong> of <strong>{pageCount}</strong>
-                    </span>
-                    <button
-                      type="button"
-                      className="pdf-split-nav-arrow"
-                      disabled={activePage >= pageCount}
-                      onClick={() => setActivePage(p => Math.min(pageCount, p + 1))}
-                      title="Next Page"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-
-                  {/* Quick Page Picker Pills */}
-                  <div className="pdf-split-page-pills">
-                    {Array.from({ length: pageCount }, (_, i) => {
-                      const pNum = i + 1;
-                      const hasSplit = Boolean(pageSplits[pNum]);
-                      const meta = pagesMeta[i];
-                      return (
-                        <button
-                          key={pNum}
-                          type="button"
-                          className={`pdf-split-pill ${activePage === pNum ? 'active' : ''} ${hasSplit ? 'has-split' : ''} ${meta?.isWide ? 'is-wide' : ''}`}
-                          onClick={() => setActivePage(pNum)}
-                          title={`Page ${pNum}${hasSplit ? ' (Split into 2)' : ''}${meta?.isWide ? ' - Wide' : ''}`}
-                        >
-                          <span>{pNum}</span>
-                          {hasSplit && <span className="pill-dot" />}
-                        </button>
-                      );
-                    })}
+                    )}
                   </div>
                 </div>
 
+                {/* Bulk Actions */}
+                {splitCount > 0 && (
+                  <div className="pdf-split-bulk">
+                    <button
+                      type="button"
+                      className="pdf-clear-crop"
+                      onClick={resetAllSplits}
+                    >
+                      <RotateCcw size={15} />
+                      <span>Reset All Splits ({splitCount})</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Download Button */}
+                <button
+                  className="btn-primary reducer-action"
+                  type="button"
+                  onClick={download}
+                  disabled={!splitCount || isExporting}
+                >
+                  <Download size={18} />
+                  <span>{isExporting ? 'Generating PDF...' : `Download PDF (${resultingPageCount} Pages)`}</span>
+                </button>
+
+                {error && <p className="reducer-error">{error}</p>}
+              </section>
+
+              {/* Right Panel: Split Workspace */}
+              <section className="reducer-panel pdf-split-workspace-panel">
                 {/* Main Split Stage: Canvas on Left, Resulting 2 Pages Preview on Right */}
                 <div className="pdf-split-stage">
                   {/* Left Column: Interactive Split Canvas */}
                   <div className="pdf-split-editor-col">
-                    <div className="pdf-split-editor-header">
-                      <strong>Drag the cut line to divide Page {activePage} into 2 pages:</strong>
-                      <span className="pdf-split-hint-text">
-                        {direction === 'vertical' ? '↔ Drag line left or right' : '↕ Drag line up or down'}
+                    <div className="pdf-split-editor-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.55rem 0.85rem', background: 'var(--tool-bg)', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <button
+                          type="button"
+                          className="pdf-split-nav-arrow"
+                          disabled={activePage <= 1}
+                          onClick={() => setActivePage(p => Math.max(1, p - 1))}
+                          title="Previous Page"
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '5px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: activePage <= 1 ? 'not-allowed' : 'pointer', opacity: activePage <= 1 ? 0.4 : 1 }}
+                        >
+                          <ChevronLeft size={15} />
+                        </button>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                          Page {activePage} of {pageCount}
+                        </strong>
+                        <button
+                          type="button"
+                          className="pdf-split-nav-arrow"
+                          disabled={activePage >= pageCount}
+                          onClick={() => setActivePage(p => Math.min(pageCount, p + 1))}
+                          title="Next Page"
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '5px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: activePage >= pageCount ? 'not-allowed' : 'pointer', opacity: activePage >= pageCount ? 0.4 : 1 }}
+                        >
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+
+                      <span className="pdf-split-hint-text" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {direction === 'vertical' ? '↔ Drag cut line left or right' : '↕ Drag cut line up or down'}
                       </span>
                     </div>
 
-                    <div
-                      className="pdf-split-canvas-wrapper"
-                      ref={canvasWrapRef}
-                      onPointerDown={handlePointerDown}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      onPointerCancel={handlePointerUp}
-                    >
-                      {activeCanvas ? (
-                        <canvas
-                          ref={(node) => {
-                            if (node && activeCanvas) {
-                              node.width = activeCanvas.width;
-                              node.height = activeCanvas.height;
-                              const ctx = node.getContext('2d');
-                              ctx.drawImage(activeCanvas, 0, 0);
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="pdf-split-loading">Loading page {activePage}...</div>
-                      )}
+                    <div className="pdf-split-canvas-stage">
+                      <div
+                        className="pdf-split-canvas-wrapper"
+                        ref={canvasWrapRef}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerUp}
+                      >
+                        {activeCanvas ? (
+                          <canvas
+                            ref={(node) => {
+                              if (node && activeCanvas) {
+                                node.width = activeCanvas.width;
+                                node.height = activeCanvas.height;
+                                const ctx = node.getContext('2d');
+                                ctx.drawImage(activeCanvas, 0, 0);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="pdf-split-loading">Loading page {activePage}...</div>
+                        )}
 
-                      {/* Interactive Draggable Cut Divider */}
-                      {activeCanvas && (
-                        <div
-                          className={`pdf-split-divider ${direction} ${isDragging ? 'dragging' : ''}`}
-                          style={{
-                            left: direction === 'vertical' ? `${ratio * 100}%` : '0',
-                            top: direction === 'horizontal' ? `${ratio * 100}%` : '0',
-                            width: direction === 'vertical' ? '4px' : '100%',
-                            height: direction === 'horizontal' ? '4px' : '100%',
-                          }}
-                        >
-                          <div className="pdf-split-divider-handle">
-                            <Scissors size={14} />
-                            <span>
-                              Cut {Math.round(ratio * 100)}%
-                            </span>
+                        {/* Interactive Draggable Cut Divider */}
+                        {activeCanvas && (
+                          <div
+                            className={`pdf-split-divider ${direction} ${isDragging ? 'dragging' : ''}`}
+                            style={{
+                              left: direction === 'vertical' ? `${ratio * 100}%` : '0',
+                              top: direction === 'horizontal' ? `${ratio * 100}%` : '0',
+                              width: direction === 'vertical' ? '4px' : '100%',
+                              height: direction === 'horizontal' ? '4px' : '100%',
+                            }}
+                          >
+                            <div className="pdf-split-divider-handle">
+                              <Scissors size={14} />
+                              <span>
+                                Cut {Math.round(ratio * 100)}%
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Side Labels on Page */}
-                      {activeCanvas && (
-                        <>
-                          <div
-                            className={`pdf-split-section-label part-1 ${direction}`}
-                            style={
-                              direction === 'vertical'
-                                ? { left: '10px', top: '10px' }
-                                : { left: '10px', top: '10px' }
-                            }
-                          >
-                            📄 New Page {activePage}A ({direction === 'horizontal' ? 'Top' : 'Left'})
-                          </div>
-                          <div
-                            className={`pdf-split-section-label part-2 ${direction}`}
-                            style={
-                              direction === 'vertical'
-                                ? { right: '10px', top: '10px' }
-                                : { left: '10px', bottom: '10px' }
-                            }
-                          >
-                            📄 New Page {activePage}B ({direction === 'horizontal' ? 'Bottom' : 'Right'})
-                          </div>
-                        </>
-                      )}
+                        {/* Side Labels on Page */}
+                        {activeCanvas && (
+                          <>
+                            <div
+                              className={`pdf-split-section-label part-1 ${direction}`}
+                              style={
+                                direction === 'vertical'
+                                  ? { left: '10px', top: '10px' }
+                                  : { left: '10px', top: '10px' }
+                              }
+                            >
+                              Page {activePage}A
+                            </div>
+                            <div
+                              className={`pdf-split-section-label part-2 ${direction}`}
+                              style={
+                                direction === 'vertical'
+                                  ? { right: '10px', top: '10px' }
+                                  : { left: '10px', bottom: '10px' }
+                              }
+                            >
+                              Page {activePage}B
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Right Column: Resulting 2 Pages Live Preview Cards (Stacked Vertically) */}
                   <div className="pdf-split-results-panel">
                     <div className="pdf-split-results-title">
-                      <Sparkles size={16} />
-                      <strong>Resulting 2 Pages Preview:</strong>
+                      <strong>Result Preview</strong>
                     </div>
 
                     <div className="pdf-split-results-cards vertical">
                       {/* Card 1: New Page A */}
                       <div className="pdf-split-card">
                         <div className="pdf-split-card-header">
-                          <strong>New Page {activePage}A</strong>
-                          <span>{order === 'normal' ? 'Part 1' : 'Part 2 (RTL)'}</span>
+                          <strong>Page {activePage}A</strong>
+                          <span>{order === 'normal' ? 'Part 1' : 'Part 2'}</span>
                         </div>
                         <div className="pdf-split-card-preview">
                           {part1Preview ? (
-                            <img src={part1Preview} alt={`New page ${activePage}A`} />
+                            <img src={part1Preview} alt={`Page ${activePage}A`} />
                           ) : (
-                            <div className="preview-placeholder">Generating preview...</div>
+                            <div className="preview-placeholder">Loading...</div>
                           )}
-                        </div>
-                        <div className="pdf-split-card-footer">
-                          <span>
-                            {direction === 'horizontal'
-                              ? `Top Half · Bottom Margin: +${margin}pt`
-                              : `Left Half · Right Margin: +${margin}pt`}
-                          </span>
                         </div>
                       </div>
 
                       <div className="pdf-split-arrow-divider vertical">
-                        <ArrowDown size={18} />
-                        <span>AND</span>
+                        <ArrowDown size={16} />
                       </div>
 
                       {/* Card 2: New Page B */}
                       <div className="pdf-split-card">
                         <div className="pdf-split-card-header">
-                          <strong>New Page {activePage}B</strong>
-                          <span>{order === 'normal' ? 'Part 2' : 'Part 1 (RTL)'}</span>
+                          <strong>Page {activePage}B</strong>
+                          <span>{order === 'normal' ? 'Part 2' : 'Part 1'}</span>
                         </div>
                         <div className="pdf-split-card-preview">
                           {part2Preview ? (
-                            <img src={part2Preview} alt={`New page ${activePage}B`} />
+                            <img src={part2Preview} alt={`Page ${activePage}B`} />
                           ) : (
-                            <div className="preview-placeholder">Generating preview...</div>
+                            <div className="preview-placeholder">Loading...</div>
                           )}
-                        </div>
-                        <div className="pdf-split-card-footer">
-                          <span>
-                            {direction === 'horizontal'
-                              ? `Bottom Half · Top Margin: +${margin}pt`
-                              : `Right Half · Left Margin: +${margin}pt`}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -910,47 +852,49 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
                 </div>
 
                 {/* Flow Overview of Document */}
-                <div className="pdf-split-doc-flow">
-                  <div className="pdf-split-flow-title">
-                    <Files size={16} />
-                    <strong>Document Page Flow Overview:</strong>
-                  </div>
-                  <div className="pdf-split-flow-list">
-                    {Array.from({ length: pageCount }, (_, i) => {
-                      const pNum = i + 1;
-                      const split = pageSplits[pNum];
-                      if (split) {
+                {pdfDocument && (
+                  <div className="pdf-split-doc-flow">
+                    <div className="pdf-split-flow-title">
+                      <Files size={16} />
+                      <strong>Document Page Flow Overview:</strong>
+                    </div>
+                    <div className="pdf-split-flow-list">
+                      {Array.from({ length: pageCount }, (_, i) => {
+                        const pNum = i + 1;
+                        const split = pageSplits[pNum];
+                        if (split) {
+                          return (
+                            <React.Fragment key={pNum}>
+                              <span className="pdf-flow-pill split">
+                                Page {pNum}A ({split.direction === 'vertical' ? 'Left' : 'Top'})
+                              </span>
+                              <span className="pdf-flow-arrow">→</span>
+                              <span className="pdf-flow-pill split">
+                                Page {pNum}B ({split.direction === 'vertical' ? 'Right' : 'Bottom'})
+                              </span>
+                              {pNum < pageCount && <span className="pdf-flow-arrow">→</span>}
+                            </React.Fragment>
+                          );
+                        }
                         return (
                           <React.Fragment key={pNum}>
-                            <span className="pdf-flow-pill split">
-                              Page {pNum}A ({split.direction === 'vertical' ? 'Left' : 'Top'})
-                            </span>
-                            <span className="pdf-flow-arrow">→</span>
-                            <span className="pdf-flow-pill split">
-                              Page {pNum}B ({split.direction === 'vertical' ? 'Right' : 'Bottom'})
+                            <span
+                              className={`pdf-flow-pill ${activePage === pNum ? 'current' : ''}`}
+                              onClick={() => setActivePage(pNum)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              Page {pNum}
                             </span>
                             {pNum < pageCount && <span className="pdf-flow-arrow">→</span>}
                           </React.Fragment>
                         );
-                      }
-                      return (
-                        <React.Fragment key={pNum}>
-                          <span
-                            className={`pdf-flow-pill ${activePage === pNum ? 'current' : ''}`}
-                            onClick={() => setActivePage(pNum)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            Page {pNum}
-                          </span>
-                          {pNum < pageCount && <span className="pdf-flow-arrow">→</span>}
-                        </React.Fragment>
-                      );
-                    })}
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </section>
-            )}
-          </div>
+            </div>
+          )}
         </section>
       </main>
     </div>

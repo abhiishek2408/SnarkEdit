@@ -1,4 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
+import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import X from 'lucide-react/dist/esm/icons/x';
 import { Download, FileText, Image as ImageIcon, Layers, Upload } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
@@ -225,138 +231,269 @@ const ImageToPdfPage = ({ theme, toggleTheme }) => {
   };
 
   return (
-    <div className="app-container reducer-page pdf-tool-page">
+    <div className="app-container reducer-page pdf-tool-page pdf-merge-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
 
       <main className="reducer-shell">
         <section className="reducer-workspace">
-          {!files?.length && (
-            <>
-              <div className="reducer-heading">
+          {/* Header */}
+          <div className="reducer-heading">
             <div>
-              <p>Create PDF from Images</p>
-              <h1>Create a PDF from one or more images</h1>
+              <p>Image Tools</p>
+              <h1>Create PDF from Images</h1>
             </div>
-            <FileText size={34} />
+            <FileText size={34} className="desktop-only" />
           </div>
-          <p className="pdf-stacker-intro">Choose one or more images, arrange the pages, and create a PDF to download.</p>
-            </>
-          )}
 
-          <div className={`reducer-grid pdf-grid ${files.length ? '' : 'no-preview'}`}>
-            <div className="reducer-panel">
-              <label className="reducer-upload">
-                <Upload size={24} />
-                <strong>{files.length ? `${files.length} image${files.length > 1 ? 's' : ''} selected` : 'Choose images'}</strong>
-                <span>{files.length ? formatBytes(totalInputSize) : 'JPG, PNG, WebP and other browser-supported images'}</span>
+          {!files.length ? (
+            <div className="pdf-merge-upload-hero">
+              <p className="pdf-stacker-intro" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
+                Convert your images to a professional PDF document. Fast, secure, and stays 100% private in your browser.
+              </p>
+              <label className="pdf-merge-dropzone">
+                <div className="pdf-merge-upload-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                  <Upload size={32} />
+                </div>
+                <strong>Select images to convert</strong>
+                <span>Drag & drop images here, or click to browse</span>
                 <input
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(event) => handleFileChange(event.target.files)}
+                  style={{ display: 'none' }}
                 />
               </label>
 
-              <div className="reducer-controls pdf-controls">
-                <label>
-                  <span>Page size</span>
-                  <select value={pageSize} onChange={(event) => setPageSize(event.target.value)}>
-                    {Object.entries(PAGE_SIZES).map(([value, page]) => (
-                      <option key={value} value={value}>{page.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span>Orientation</span>
-                  <select
-                    value={orientation}
-                    onChange={(event) => setOrientation(event.target.value)}
-                    disabled={pageSize === 'image'}
-                  >
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </select>
-                </label>
+              <div className="pdf-merge-features-badges">
+                <div className="pdf-merge-badge-item">
+                  <ImageIcon size={16} />
+                  <span>JPG, PNG, WebP Support</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Layers size={16} />
+                  <span>Multi-Page Layouts</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Sparkles size={16} />
+                  <span>High Quality Output</span>
+                </div>
               </div>
-
-              <label className="quality-control">
-                <div>
-                  <span>Page margin</span>
-                  <strong>{margin} pt</strong>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="72"
-                  value={margin}
-                  onChange={(event) => {
-                    setMargin(event.target.value);
-                    setResult(null);
-                  }}
-                />
-              </label>
-
-              <label className="quality-control">
-                <div>
-                  <span>Image quality</span>
-                  <strong>{quality}%</strong>
-                </div>
-                <input
-                  type="range"
-                  min="40"
-                  max="100"
-                  value={quality}
-                  onChange={(event) => {
-                    setQuality(event.target.value);
-                    setResult(null);
-                  }}
-                />
-              </label>
-
-              <button className="btn-primary reducer-action" onClick={handleConvert} disabled={isProcessing}>
-                <FileText size={18} />
-                <span>{isProcessing ? 'Converting...' : 'Create PDF'}</span>
-              </button>
-
-              {error && <p className="reducer-error">{error}</p>}
             </div>
-
-            {files.length > 0 && <div className="reducer-panel reducer-result pdf-result">
-              {files.length ? (
-                <>
-                  <div className="pdf-preview-grid">
-                    {previewUrls.map((url, index) => (
-                      <div key={`${files[index]?.name}-${index}`} className="pdf-preview-item">
-                        <img src={url} alt={`PDF page ${index + 1}`} />
-                        <span>Page {index + 1}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="reducer-stats pdf-stats">
-                    <div>
-                      <span>Images</span>
+          ) : (
+            <div className="pdf-merge-layout">
+              {/* Left Column: Controls Sidebar */}
+              <aside className="pdf-merge-sidebar">
+                {/* Image Summary Card */}
+                <div className="reducer-panel pdf-remove-card">
+                  <h3 className="pdf-remove-section-title">PDF Summary</h3>
+                  <div className="pdf-split-stats-box" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                    <div className="pdf-split-stat-row">
+                      <span>Images:</span>
                       <strong>{files.length}</strong>
                     </div>
-                    <div>
-                      <span>Input</span>
+                    <div className="pdf-split-stat-row">
+                      <span>Total Input:</span>
                       <strong>{formatBytes(totalInputSize)}</strong>
                     </div>
-                    <div>
-                      <span>PDF</span>
-                      <strong>{result ? formatBytes(result.size) : 'Ready'}</strong>
+                    <div className="pdf-split-stat-row highlight">
+                      <span>PDF Size:</span>
+                      <strong>{result ? formatBytes(result.size) : 'Pending'}</strong>
                     </div>
                   </div>
 
-                  <button className="btn-primary reducer-action" onClick={handleDownload} disabled={!result}>
-                    <Download size={18} />
-                    <span>Download PDF</span>
+                  <button
+                    type="button"
+                    className="pdf-remove-change-btn"
+                    onClick={() => document.querySelector('.add-more-images-input').click()}
+                  >
+                    <Upload size={14} />
+                    <span>Add More Images</span>
                   </button>
-                </>
-              ) : null}
-            </div>}
-          </div>
+                  <input
+                    type="file"
+                    className="add-more-images-input"
+                    accept="image/*"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const newFiles = Array.from(e.target.files || []);
+                      setFiles(prev => [...prev, ...newFiles]);
+                      setResult(null);
+                    }}
+                  />
+                </div>
+
+                {/* Page Settings Card */}
+                <div className="reducer-panel pdf-remove-card">
+                  <h3 className="pdf-remove-section-title">Page Settings</h3>
+
+                  <div className="pdf-split-field">
+                    <label>Page Size:</label>
+                    <select className="pdf-merge-name-input" value={pageSize} onChange={(event) => setPageSize(event.target.value)}>
+                      {Object.entries(PAGE_SIZES).map(([value, page]) => (
+                        <option key={value} value={value}>{page.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pdf-split-field">
+                    <label>Orientation:</label>
+                    <div className="pdf-split-toggle-group">
+                      <button
+                        type="button"
+                        className={orientation === 'portrait' ? 'active' : ''}
+                        onClick={() => setOrientation('portrait')}
+                        disabled={pageSize === 'image'}
+                      >
+                        <span>Portrait</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={orientation === 'landscape' ? 'active' : ''}
+                        onClick={() => setOrientation('landscape')}
+                        disabled={pageSize === 'image'}
+                      >
+                        <span>Landscape</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pdf-split-field">
+                    <div className="pdf-split-slider-header">
+                      <label>Page Margin:</label>
+                      <strong>{margin} pt</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="72"
+                      value={margin}
+                      onChange={(event) => {
+                        setMargin(event.target.value);
+                        setResult(null);
+                      }}
+                      className="pdf-split-range"
+                    />
+                  </div>
+
+                  <div className="pdf-split-field">
+                    <div className="pdf-split-slider-header">
+                      <label>Image Quality:</label>
+                      <strong>{quality}%</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="40"
+                      max="100"
+                      value={quality}
+                      onChange={(event) => {
+                        setQuality(event.target.value);
+                        setResult(null);
+                      }}
+                      className="pdf-split-range"
+                    />
+                  </div>
+                </div>
+
+                {/* Primary Action Zone */}
+                <div className="pdf-merge-action-zone">
+                  {error && (
+                    <div className="reducer-error" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+                      <AlertCircle size={16} />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="btn-primary pdf-remove-download-btn"
+                    onClick={handleConvert}
+                    disabled={isProcessing || files.length === 0}
+                    style={{ background: 'var(--primary)', borderColor: 'var(--primary-hover)', color: 'white', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)' }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw size={18} className="spin" />
+                        <span>Converting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={18} />
+                        <span>Create PDF</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Success Card */}
+                {result && (
+                  <div className="pdf-merge-success-card">
+                    <div className="pdf-merge-success-header">
+                      <CheckCircle2 size={20} color="#10b981" />
+                      <div>
+                        <strong>PDF Created!</strong>
+                        <span>{files.length} pages · {formatBytes(result.size)}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="pdf-merge-download-btn"
+                      onClick={handleDownload}
+                    >
+                      <Download size={18} />
+                      <span>Download PDF</span>
+                    </button>
+                  </div>
+                )}
+              </aside>
+
+              {/* Right Column: Preview Grid */}
+              <section className="pdf-remove-gallery-panel">
+                <div className="pdf-merge-cards-header">
+                  <strong>Image Pages ({files.length})</strong>
+                  <span className="pdf-split-hint-text desktop-only">
+                    ✓ Your PDF will follow this page sequence
+                  </span>
+                </div>
+
+                <div className="pdf-merge-grid" style={{ marginTop: '1rem' }}>
+                  {previewUrls.map((url, index) => (
+                    <div key={`${files[index]?.name}-${index}`} className="pdf-merge-card" style={{ cursor: 'default' }}>
+                      <div className="pdf-merge-card-badge">
+                        #{index + 1}
+                      </div>
+                      <div className="pdf-merge-thumb-wrap">
+                        <img src={url} alt={`Page ${index + 1}`} />
+                      </div>
+                      <div className="pdf-merge-card-details">
+                        <strong className="pdf-merge-card-title" title={files[index]?.name}>
+                          {files[index]?.name}
+                        </strong>
+                        <div className="pdf-merge-card-meta">
+                          <span className="pdf-merge-meta-size">
+                            {formatBytes(files[index]?.size)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pdf-merge-card-actions">
+                        <button
+                          type="button"
+                          className="pdf-merge-delete-btn"
+                          onClick={() => {
+                            setFiles(prev => prev.filter((_, i) => i !== index));
+                            setResult(null);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
         </section>
       </main>
     </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
-import { Download, Layers2, Type, Shapes, Pencil, Move, FileText, Stamp, Upload, Trash2, Eraser, X, Plus, Pipette } from 'lucide-react';
+import { Download, Layers2, Type, Shapes, Pencil, Move, FileText, Stamp, Upload, Trash2, Eraser, X, Plus, Pipette, Image as ImageIcon, Copy, Check } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -16,7 +16,7 @@ const PdfTextEditor = ({ value, onChange }) => {
   return <div ref={editorRef} role="textbox" aria-label="Edit added PDF text" aria-multiline="true" contentEditable suppressContentEditableWarning className="pdf-annotation-text-editor" onInput={event => onChange(event.currentTarget.innerText.replace(/\n$/, ''))} onBlur={event => setDraft(event.currentTarget.innerText.replace(/\n$/, ''))}>{draft}</div>;
 };
 
-const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily }) => {
+const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, onPageFocus, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onAddImageClick, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily }) => {
   const [visible, setVisible] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -110,11 +110,20 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, on
         if (annotation.type === 'text' && !resize) onSelectText(pageNumber, annotation);
         else if (annotation.type === 'shape') onSelectText(pageNumber, annotation);
         else if (annotation.type === 'draw') onSelectText(pageNumber, annotation);
-        else if (annotation.type !== 'text') onSelectText(null, null);
+        else if (annotation.type === 'image') onSelectText(pageNumber, annotation);
+        else onSelectText(null, null);
       }
     } else if (activeTool === 'drag') {
       setSelectedItemId(null);
       onSelectText(null, null);
+    } else if (activeTool === 'image' && target) {
+      const annotation = items.find(item => item.id === target.dataset.itemId && item.type === 'image');
+      if (annotation) {
+        setSelectedItemId(annotation.id);
+        onSelectText(pageNumber, annotation);
+        const resize = event.target.closest('[data-resize]')?.dataset.resize || null;
+        if (resize) dragRef.current = { item: annotation, start: point, resize };
+      }
     } else if (activeTool === 'text' && target) {
       const annotation = items.find(item => item.id === target.dataset.itemId && item.type === 'text');
       if (annotation) {
@@ -155,7 +164,7 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, on
       let y = item.y || 0;
       let width = item.width || 0.2;
       let height = item.height || (item.type === 'text' ? 0.035 : 0.08);
-      if (resize && (item.type === 'shape' || item.type === 'text')) {
+      if (resize && (item.type === 'shape' || item.type === 'text' || item.type === 'image')) {
         if (resize.includes('e')) width = Math.max(0.025, Math.min(1 - x, width + dx));
         if (resize.includes('s')) height = Math.max(0.025, Math.min(1 - y, height + dy));
         if (resize.includes('w')) { const right = x + width; x = Math.max(0, Math.min(right - 0.025, x + dx)); width = right - x; }
@@ -176,6 +185,11 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, on
   const addAtPoint = (event) => {
     if (activeTool === 'drag' || activeTool === 'draw' || activeTool === 'eraser' || activeTool === 'pageNumber' || activeTool === 'watermark' || !rendered) return;
     if (activeTool === 'text' && event.target.closest('[data-item-id]')?.classList.contains('text')) return;
+    if (activeTool === 'image') {
+      const point = pointFromEvent(event);
+      if (point) onAddImageClick(pageNumber, point);
+      return;
+    }
     const point = pointFromEvent(event);
     if (point) {
       onAddItem(pageNumber, { id: `${Date.now()}-${Math.random()}`, type: activeTool, x: point.x, y: point.y, width: activeTool === 'shape' ? 0.22 : activeTool === 'text' ? 0.28 : undefined, height: activeTool === 'shape' ? 0.1 : activeTool === 'text' ? 0.028 : undefined, color, fontSize: activeTool === 'pageNumber' ? pageNumberSize : activeTool === 'watermark' ? watermarkSize : textSize, fontFamily });
@@ -185,6 +199,71 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, on
 
   const renderItem = (annotation, hiddenUnderlayCopy = false) => {
     if (annotation.type === 'draw') return <svg key={annotation.id} className={`pdf-annotation-drawing ${selectedItemId === annotation.id ? 'selected' : ''}`} viewBox="0 0 1000 1000" preserveAspectRatio="none" data-item-id={annotation.id}><polyline points={(annotation.points || []).map(point => `${point.x * 1000},${point.y * 1000}`).join(' ')} fill="none" stroke={annotation.color || '#2563eb'} strokeWidth={(annotation.brushSize || brushSize) * 2.5} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></svg>;
+    if (annotation.type === 'image') {
+      const isSelected = selectedItemId === annotation.id;
+      return (
+        <div
+          key={annotation.id + (hiddenUnderlayCopy ? '-underlay' : '-overlay')}
+          data-item-id={annotation.id}
+          className={`pdf-annotation-item image ${isSelected ? 'selected' : ''}`}
+          style={{
+            left: `${(annotation.x || 0) * 100}%`,
+            top: `${(annotation.y || 0) * 100}%`,
+            width: `${(annotation.width || 0.28) * 100}%`,
+            height: `${(annotation.height || 0.2) * 100}%`,
+            opacity: annotation.opacity ?? 1,
+            border: 'none',
+            outline: isSelected ? '1.5px solid #2563eb' : 'none',
+            outlineOffset: '1px',
+          }}
+        >
+          <img
+            src={annotation.dataUrl}
+            alt="PDF added image"
+            style={{ width: '100%', height: '100%', objectFit: 'fill', display: 'block', pointerEvents: 'none' }}
+          />
+          {isSelected && annotation.applyAll && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '0',
+                background: '#2563eb',
+                color: '#ffffff',
+                fontSize: '10px',
+                fontWeight: 600,
+                padding: '1px 6px',
+                borderRadius: '4px',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+              }}
+            >
+              All Pages
+            </span>
+          )}
+          {isSelected && (
+            <button
+              type="button"
+              className="pdf-annotation-delete"
+              title="Delete image"
+              aria-label="Delete image"
+              onPointerDown={event => event.stopPropagation()}
+              onClick={event => {
+                event.stopPropagation();
+                onRemoveItem(pageNumber, annotation.id);
+                setSelectedItemId(null);
+              }}
+            >
+              <X size={12} />
+            </button>
+          )}
+          {isSelected && ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(handle => (
+            <span key={handle} data-resize={handle} className={`pdf-shape-resize-handle handle-${handle}`} />
+          ))}
+        </div>
+      );
+    }
     const label = annotation.type === 'pageNumber' ? String(pageNumber) : annotation.type === 'watermark' ? (annotation.text || 'WATERMARK') : annotation.type === 'text' ? (annotation.text ?? 'Text') : '';
     return <div key={annotation.id + (hiddenUnderlayCopy ? '-underlay' : '-overlay')} data-item-id={annotation.id} className={`pdf-annotation-item ${annotation.type} ${annotation.shape || ''} ${selectedItemId === annotation.id ? 'selected' : ''}`} style={{ left: `${(annotation.x || 0) * 100}%`, top: `${(annotation.y || 0) * 100}%`, width: `${(annotation.width || 0.2) * 100}%`, height: `${(annotation.height || (annotation.type === 'text' ? 0.035 : 0.08)) * 100}%`, color: annotation.color || '#2563eb', backgroundColor: annotation.type === 'pageNumber' ? annotation.backgroundColor || 'transparent' : undefined, fontSize: annotation.type === 'text' || annotation.type === 'pageNumber' || annotation.type === 'watermark' ? `${annotation.fontSize || 16}px` : undefined, fontFamily: annotation.type === 'text' || annotation.type === 'watermark' ? (annotation.fontFamily === 'TimesRoman' ? 'Georgia, serif' : annotation.fontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif') : undefined, fontWeight: annotation.type === 'watermark' ? (annotation.bold ? 800 : 400) : undefined, fontStyle: annotation.type === 'watermark' && annotation.italic ? 'italic' : undefined, textDecoration: annotation.type === 'watermark' && annotation.underline ? 'underline' : undefined, opacity: annotation.type === 'watermark' ? annotation.opacity ?? 1 : undefined, transform: annotation.type === 'watermark' && annotation.rotation ? 'rotate(' + annotation.rotation + 'deg)' : undefined }}>
       {annotation.type === 'text' ? <PdfTextEditor value={label} onChange={text => onEditText(pageNumber, annotation.id, text)} /> : label}
@@ -195,8 +274,37 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, onAddItem, on
   };
 
   return (
-    <article className="pdf-all-pages-item" ref={itemRef}>
-      <div className="pdf-all-pages-heading"><strong>Page {pageNumber}</strong><span>{items.length} item{items.length === 1 ? '' : 's'} added</span></div>
+    <article
+      className={`pdf-all-pages-item ${activePage === pageNumber ? 'active is-active-page' : ''}`}
+      ref={itemRef}
+      data-page-number={pageNumber}
+      onPointerDown={() => onPageFocus?.(pageNumber)}
+      onClick={() => onPageFocus?.(pageNumber)}
+    >
+      <div className="pdf-all-pages-heading">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <strong>Page {pageNumber}</strong>
+          {activePage === pageNumber && (
+            <span className="pdf-crop-active-badge">Current Page</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className="pdf-page-action-pill"
+            title={`Add image directly to Page ${pageNumber}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPageFocus?.(pageNumber);
+              onAddImageClick(pageNumber, { x: 0.36, y: 0.35 });
+            }}
+          >
+            <ImageIcon size={12} />
+            <span>Add image</span>
+          </button>
+          <span>{items.length} item{items.length === 1 ? '' : 's'} added</span>
+        </div>
+      </div>
       <div className="pdf-crop-canvas-wrap" ref={wrapRef}>
         <canvas ref={canvasRef} />
         <div className={`pdf-annotation-layer tool-${activeTool}`} style={{ pointerEvents: rendered ? 'auto' : 'none' }} onPointerDown={startInteraction} onPointerMove={moveInteraction} onPointerUp={endInteraction} onPointerCancel={endInteraction} onClick={addAtPoint}>
@@ -241,13 +349,43 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   const [selectedText, setSelectedText] = useState(null);
   const [selectedShape, setSelectedShape] = useState(null);
   const [selectedDrawing, setSelectedDrawing] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [activePage, setActivePage] = useState(1);
   const [brushOptionsOpen, setBrushOptionsOpen] = useState(false);
+  const imageInputRef = useRef(null);
+  const pendingImagePositionRef = useRef(null);
+  const pagesContainerRef = useRef(null);
+
+  const getMostVisiblePage = () => {
+    const container = pagesContainerRef.current;
+    if (!container) return activePage || 1;
+    const containerRect = container.getBoundingClientRect();
+    const containerCenterY = containerRect.top + containerRect.height / 2;
+
+    const pageElements = container.querySelectorAll('[data-page-number]');
+    let closestPage = activePage || 1;
+    let closestDistance = Infinity;
+
+    pageElements.forEach(elem => {
+      const pageNum = Number(elem.getAttribute('data-page-number'));
+      const rect = elem.getBoundingClientRect();
+      const elemCenterY = rect.top + rect.height / 2;
+      const distance = Math.abs(elemCenterY - containerCenterY);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestPage = pageNum;
+      }
+    });
+
+    return closestPage;
+  };
 
   useEffect(() => {
     if (!brushOptionsOpen) return;
     const closeOnOutsideClick = (event) => {
       if (event.target.closest?.('.pdf-annotation-item.text')) return;
       if (event.target.closest?.('.pdf-annotation-item.shape')) return;
+      if (event.target.closest?.('.pdf-annotation-item.image')) return;
       if (event.target.closest?.('.pdf-annotation-drawing')) return;
       if (activeTool === 'pageNumber' && event.target.closest?.('.pdf-crop-preview-panel')) return;
       if (activeTool === 'watermark' && event.target.closest?.('.pdf-crop-preview-panel')) return;
@@ -297,12 +435,46 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   };
 
   const moveAnnotation = (pageNumber, id, changes) => {
-    setAnnotations(current => ({ ...current, [pageNumber]: (current[pageNumber] || []).map(item => item.id === id ? { ...item, ...changes } : item) }));
+    setAnnotations(current => {
+      const pageItems = current[pageNumber] || [];
+      const item = pageItems.find(i => i.id === id);
+      if (item?.type === 'image' && item.applyAll && item.groupId) {
+        const groupId = item.groupId;
+        const next = { ...current };
+        for (let p = 1; p <= pageCount; p++) {
+          if (next[p]) {
+            next[p] = next[p].map(i => (i.id === id || i.groupId === groupId) ? { ...i, ...changes } : i);
+          }
+        }
+        return next;
+      }
+      return {
+        ...current,
+        [pageNumber]: pageItems.map(item => item.id === id ? { ...item, ...changes } : item),
+      };
+    });
     setResult(null);
   };
 
   const removeAnnotation = (pageNumber, id) => {
-    setAnnotations(current => ({ ...current, [pageNumber]: (current[pageNumber] || []).filter(item => item.id !== id) }));
+    setAnnotations(current => {
+      const pageItems = current[pageNumber] || [];
+      const item = pageItems.find(i => i.id === id);
+      if (item?.type === 'image' && item.applyAll && item.groupId) {
+        const groupId = item.groupId;
+        const next = { ...current };
+        for (let p = 1; p <= pageCount; p++) {
+          if (next[p]) {
+            next[p] = next[p].filter(i => i.groupId !== groupId && i.id !== id);
+          }
+        }
+        return next;
+      }
+      return {
+        ...current,
+        [pageNumber]: pageItems.filter(item => item.id !== id),
+      };
+    });
     setResult(null);
   };
 
@@ -365,6 +537,157 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setAnnotations(current => ({ ...current, [selectedDrawing.pageNumber]: (current[selectedDrawing.pageNumber] || []).map(item => item.id === selectedDrawing.id ? { ...item, ...changes } : item) }));
     setResult(null);
   };
+  const updateSelectedImage = (changes) => {
+    if (!selectedImage) return;
+    const currentItem = (annotations[selectedImage.pageNumber] || []).find(i => i.id === selectedImage.id);
+    const isAll = currentItem?.applyAll;
+    const groupId = currentItem?.groupId;
+
+    setAnnotations(prev => {
+      if (!isAll || !groupId) {
+        return {
+          ...prev,
+          [selectedImage.pageNumber]: (prev[selectedImage.pageNumber] || []).map(item => item.id === selectedImage.id ? { ...item, ...changes } : item)
+        };
+      }
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        if (next[p]) {
+          next[p] = next[p].map(item => (item.id === selectedImage.id || item.groupId === groupId) ? { ...item, ...changes } : item);
+        }
+      }
+      return next;
+    });
+    setResult(null);
+  };
+
+  const applyImageToAllPages = (sourceOverride) => {
+    const cur = sourceOverride || selectedImage;
+    if (!cur || !pageCount) return;
+    const item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    if (!item) return;
+
+    const groupId = item.groupId || `imggroup-${item.id}`;
+    const baseProps = {
+      type: 'image',
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height,
+      dataUrl: item.dataUrl,
+      opacity: item.opacity ?? 1,
+      groupId,
+      applyAll: true,
+    };
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        const pageItems = next[p] ? [...next[p]] : [];
+        const existingIdx = pageItems.findIndex(i => i.id === item.id || (i.groupId && i.groupId === groupId));
+        if (existingIdx !== -1) {
+          pageItems[existingIdx] = {
+            ...pageItems[existingIdx],
+            ...baseProps,
+          };
+        } else {
+          pageItems.push({
+            ...baseProps,
+            id: `image-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`,
+          });
+        }
+        next[p] = pageItems;
+      }
+      return next;
+    });
+    setResult(null);
+  };
+
+  const setImageScopeToIndividual = (sourceOverride) => {
+    const cur = sourceOverride || selectedImage;
+    if (!cur) return;
+    const item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    if (!item) return;
+
+    const groupId = item.groupId;
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        if (p === cur.pageNumber) {
+          next[p] = (next[p] || []).map(i => (i.id === item.id || i.groupId === groupId) ? { ...i, applyAll: false } : i);
+        } else if (groupId) {
+          next[p] = (next[p] || []).filter(i => i.groupId !== groupId && i.id !== item.id);
+        }
+      }
+      return next;
+    });
+    setResult(null);
+  };
+
+  const handlePageImageClick = (pageNumber, point) => {
+    setActivePage(pageNumber);
+    pendingImagePositionRef.current = { pageNumber, x: point.x, y: point.y };
+    imageInputRef.current?.click();
+  };
+
+  const handleImageUpload = (event) => {
+    const uploadedFile = event.target.files?.[0];
+    if (!uploadedFile) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const img = new Image();
+      img.onload = () => {
+        const aspect = (img.naturalHeight || 1) / (img.naturalWidth || 1);
+        const defaultWidth = 0.28;
+        const defaultHeight = Math.min(0.5, Math.max(0.04, defaultWidth * aspect * 0.75));
+
+        const pending = pendingImagePositionRef.current;
+        pendingImagePositionRef.current = null;
+
+        if (pending?.replaceId) {
+          moveAnnotation(pending.pageNumber, pending.replaceId, {
+            dataUrl,
+            width: pending.width || defaultWidth,
+            height: pending.height || defaultHeight,
+          });
+          return;
+        }
+
+        const targetPage = pending?.pageNumber || getMostVisiblePage() || activePage || 1;
+        const x = pending?.x !== undefined ? Math.max(0, Math.min(1 - defaultWidth, pending.x - defaultWidth / 2)) : 0.36;
+        const y = pending?.y !== undefined ? Math.max(0, Math.min(1 - defaultHeight, pending.y - defaultHeight / 2)) : 0.35;
+
+        const groupId = `imggroup-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newImageItem = {
+          id: `image-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          type: 'image',
+          x,
+          y,
+          width: defaultWidth,
+          height: defaultHeight,
+          dataUrl,
+          opacity: 1,
+          groupId,
+          applyAll: false,
+        };
+
+        addAnnotation(targetPage, newImageItem);
+        setActivePage(targetPage);
+        setActiveTool('drag');
+        setSelectedText(null);
+        setSelectedShape(null);
+        setSelectedDrawing(null);
+        setSelectedImage({ pageNumber: targetPage, id: newImageItem.id });
+        setBrushOptionsOpen(true);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(uploadedFile);
+    event.target.value = '';
+  };
 
   const clearAnnotations = (pageNumber) => {
     setAnnotations(current => ({ ...current, [pageNumber]: [] }));
@@ -418,6 +741,59 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
             if (item.shape === 'circle') page.drawEllipse({ x, y: height - yTop - shapeHeight, xScale: shapeWidth / 2, yScale: shapeHeight / 2, color: ink, borderColor: ink, borderWidth: 2 });
             else if (item.shape === 'line') page.drawLine({ start: { x, y: height - yTop }, end: { x: x + shapeWidth, y: height - yTop - shapeHeight }, thickness: 2, color: ink });
             else page.drawRectangle({ x, y: height - yTop - shapeHeight, width: shapeWidth, height: shapeHeight, color: ink, borderColor: ink, borderWidth: 2 });
+            continue;
+          }
+          if (item.type === 'image' && item.dataUrl) {
+            try {
+              let embeddedImage;
+              try {
+                if (item.dataUrl.startsWith('data:image/jpeg') || item.dataUrl.startsWith('data:image/jpg')) {
+                  const base64Data = item.dataUrl.split(',')[1];
+                  const binaryStr = atob(base64Data);
+                  const bytes = new Uint8Array(binaryStr.length);
+                  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                  embeddedImage = await output.embedJpg(bytes);
+                } else if (item.dataUrl.startsWith('data:image/png')) {
+                  const base64Data = item.dataUrl.split(',')[1];
+                  const binaryStr = atob(base64Data);
+                  const bytes = new Uint8Array(binaryStr.length);
+                  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                  embeddedImage = await output.embedPng(bytes);
+                } else {
+                  throw new Error('Rasterize');
+                }
+              } catch {
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                  img.onload = resolve;
+                  img.onerror = reject;
+                  img.src = item.dataUrl;
+                });
+                const offscreen = document.createElement('canvas');
+                offscreen.width = img.naturalWidth || 400;
+                offscreen.height = img.naturalHeight || 400;
+                const offCtx = offscreen.getContext('2d');
+                offCtx.drawImage(img, 0, 0);
+                const pngDataUrl = offscreen.toDataURL('image/png');
+                const base64Data = pngDataUrl.split(',')[1];
+                const binaryStr = atob(base64Data);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                embeddedImage = await output.embedPng(bytes);
+              }
+
+              const imgWidth = (item.width || 0.28) * width;
+              const imgHeight = (item.height || 0.2) * height;
+              page.drawImage(embeddedImage, {
+                x,
+                y: Math.max(0, height - yTop - imgHeight),
+                width: imgWidth,
+                height: imgHeight,
+                opacity: item.opacity ?? 1,
+              });
+            } catch (imgErr) {
+              console.error('Failed to embed image:', imgErr);
+            }
             continue;
           }
           const text = item.type === 'pageNumber' ? String(index + 1) : item.type === 'watermark' ? (item.text || 'WATERMARK') : (item.text || 'Text');
@@ -490,8 +866,15 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setSelectedText(null);
     setSelectedShape(null);
     setSelectedDrawing(null);
+    setSelectedImage(null);
     setActiveTool(tool);
-    setBrushOptionsOpen(tool === 'draw' || tool === 'eraser' || tool === 'shape' || tool === 'pageNumber' || tool === 'watermark');
+    setBrushOptionsOpen(tool === 'draw' || tool === 'eraser' || tool === 'shape' || tool === 'pageNumber' || tool === 'watermark' || tool === 'image');
+    if (tool === 'image') {
+      const currentPage = getMostVisiblePage() || activePage || 1;
+      setActivePage(currentPage);
+      pendingImagePositionRef.current = { pageNumber: currentPage, x: 0.36, y: 0.35 };
+      imageInputRef.current?.click();
+    }
     if (tool === 'pageNumber' && pageCount) {
       setAnnotations(current => Object.fromEntries(Array.from({ length: pageCount }, (_, index) => {
         const pageNumber = index + 1;
@@ -512,9 +895,11 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   const showWatermarkSettings = activeTool === 'watermark' && brushOptionsOpen;
   const selectedShapeItem = selectedShape ? (annotations[selectedShape.pageNumber] || []).find(item => item.id === selectedShape.id) : null;
   const selectedDrawingItem = selectedDrawing ? (annotations[selectedDrawing.pageNumber] || []).find(item => item.id === selectedDrawing.id) : null;
+  const selectedImageItem = selectedImage ? (annotations[selectedImage.pageNumber] || []).find(item => item.id === selectedImage.id) : null;
   const showShapeSettings = brushOptionsOpen && (activeTool === 'shape' || Boolean(selectedShapeItem));
   const showDrawingSettings = brushOptionsOpen && Boolean(selectedDrawingItem);
-  const showSideProperties = brushOptionsOpen && (editingExistingText || showPageNumberSettings || showWatermarkSettings || showShapeSettings || showDrawingSettings);
+  const showImageSettings = brushOptionsOpen && (activeTool === 'image' || Boolean(selectedImageItem));
+  const showSideProperties = brushOptionsOpen && (editingExistingText || showPageNumberSettings || showWatermarkSettings || showShapeSettings || showDrawingSettings || showImageSettings);
   const currentTextSize = editingExistingText ? selectedTextItem.fontSize || 16 : textSize;
   const currentTextColor = editingExistingText ? selectedTextItem.color || '#111827' : textColor;
   const currentFontFamily = editingExistingText ? selectedTextItem.fontFamily || 'Helvetica' : fontFamily;
@@ -523,33 +908,155 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     <div className="app-container reducer-page pdf-tool-page pdf-edit-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
-        <section className={`reducer-workspace ${(editingExistingText || showPageNumberSettings || showWatermarkSettings || showShapeSettings || showDrawingSettings) && brushOptionsOpen ? 'has-side-properties' : ''}`}>
-          {!file && (
+        <section className={`reducer-workspace ${(editingExistingText || showPageNumberSettings || showWatermarkSettings || showShapeSettings || showDrawingSettings || showImageSettings) && brushOptionsOpen ? 'has-side-properties' : ''}`}>
+          {!file ? (
             <>
-              <div className="reducer-heading"><div><p>PDF Editor</p><h1>Edit your PDF pages</h1></div><Layers2 size={34} /></div>
-          <p className="pdf-stacker-intro">Add page numbers, shapes, drawings, text, and watermarks, then drag items into place.</p>
+              <div className="reducer-heading">
+                <div>
+                  <p>PDF Tools</p>
+                  <h1>Edit PDF</h1>
+                </div>
+                <Layers2 size={34} />
+              </div>
+
+              <div className="pdf-merge-upload-hero">
+                <p className="pdf-stacker-intro" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
+                  Add images, text, page numbers, shapes, drawings, and watermarks, then drag items into place.
+                </p>
+                <label
+                  className="pdf-merge-dropzone"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.length) {
+                      handleFile(e.dataTransfer.files);
+                    }
+                  }}
+                >
+                  <div className="pdf-merge-upload-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                    <Upload size={32} />
+                  </div>
+                  <strong style={{ fontSize: '1.25rem' }}>Select PDF to edit</strong>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    Drag & drop PDF here, or click to browse
+                  </span>
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={(event) => handleFile(event.target.files)}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
+                <div className="pdf-merge-features-badges">
+                  <div className="pdf-merge-badge-item">
+                    <Type size={16} />
+                    <span>Text & Numbers</span>
+                  </div>
+                  <div className="pdf-merge-badge-item">
+                    <ImageIcon size={16} />
+                    <span>Images & Watermarks</span>
+                  </div>
+                  <div className="pdf-merge-badge-item">
+                    <Pencil size={16} />
+                    <span>Freehand & Shapes</span>
+                  </div>
+                </div>
+                {error && <p className="reducer-error" style={{ textAlign: 'center', marginTop: '1rem' }}>{error}</p>}
+              </div>
             </>
-          )}
-          <div className={`reducer-grid merger-grid pdf-stacker-grid ${file ? 'has-file' : 'no-file'} ${showSideProperties ? 'has-side-properties' : ''}`}>
-            <section className="reducer-panel">
-              <label className="reducer-upload"><Upload size={24} /><strong>{file ? file.name : 'Choose a PDF'}</strong><span>{file ? `${pageCount} pages loaded` : 'Select a PDF to edit'}</span><input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} /></label>
-              {file && <>
+          ) : (
+            <div className={`reducer-grid merger-grid pdf-stacker-grid has-file ${showSideProperties ? 'has-side-properties' : ''}`}>
+              <section className="reducer-panel">
+                <label className="reducer-upload">
+                  <Upload size={24} />
+                  <strong>{file.name}</strong>
+                  <span>{pageCount} pages loaded · Click to change PDF</span>
+                  <input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} />
+                </label>
                 <div className="pdf-editor-tool-list">
                   {[
-                    ['drag', Move, 'Drag'], ['pageNumber', FileText, 'Add page number'], ['shape', Shapes, 'Add shape'],
+                    ['drag', Move, 'Drag'], ['image', ImageIcon, 'Add image'], ['pageNumber', FileText, 'Add page number'], ['shape', Shapes, 'Add shape'],
                     ['draw', Pencil, 'Draw'], ['text', Type, 'Add text'], ['eraser', Eraser, 'Eraser'], ['watermark', Stamp, 'Add watermark'],
                   ].map(([tool, Icon, label]) => <button key={tool} type="button" className={activeTool === tool ? 'active' : ''} onClick={() => selectPdfTool(tool)}><Icon size={16} />{label}</button>)}
                 </div>
-                <div className="pdf-crop-count">{annotationCount} item{annotationCount === 1 ? '' : 's'} added · Active tool: {activeTool === 'pageNumber' ? 'Page number' : activeTool === 'watermark' ? 'Watermark' : activeTool === 'shape' ? 'Shape' : activeTool === 'text' ? 'Text' : activeTool === 'draw' ? 'Draw' : activeTool === 'eraser' ? 'Eraser' : 'Drag'}</div>
+                <div className="pdf-crop-count">Page {activePage} of {pageCount} · {annotationCount} item{annotationCount === 1 ? '' : 's'} added · Active tool: {activeTool === 'image' ? 'Image' : activeTool === 'pageNumber' ? 'Page number' : activeTool === 'watermark' ? 'Watermark' : activeTool === 'shape' ? 'Shape' : activeTool === 'text' ? 'Text' : activeTool === 'draw' ? 'Draw' : activeTool === 'eraser' ? 'Eraser' : 'Drag'}</div>
                 <button className="btn-primary reducer-action" type="button" onClick={createEditedPdf} disabled={isProcessing || !annotationCount}><Layers2 size={18} /><span>{isProcessing ? 'Applying edits...' : 'Create edited PDF'}</span></button>
                 {result && <button className="btn-primary reducer-action" type="button" onClick={download}><Download size={18} /><span>Download edited PDF</span></button>}
-              </>}
-              {error && <p className="reducer-error">{error}</p>}
-            </section>
+                {error && <p className="reducer-error">{error}</p>}
+              </section>
             {pdfDocument && <section className="reducer-panel pdf-crop-preview-panel">
-              {pdfDocument ? <div className="pdf-all-pages-list">
+              {pdfDocument ? <div
+                className="pdf-all-pages-list"
+                ref={pagesContainerRef}
+                onScroll={() => {
+                  const visible = getMostVisiblePage();
+                  if (visible && visible !== activePage) {
+                    setActivePage(visible);
+                  }
+                }}
+              >
                 {pageOptions.map(pageNumber => <div className="pdf-editor-page-preview" key={pageNumber}>
-                  <PagePreview pdfDocument={pdfDocument} pageNumber={pageNumber} items={annotations[pageNumber] || []} activeTool={activeTool} onAddItem={addAnnotation} onMoveItem={moveAnnotation} onRemoveItem={removeAnnotation} onEraseItem={eraseDrawSegment} onEditText={editAnnotationText} onTextAdded={() => { setActiveTool('drag'); setSelectedShape(null); setSelectedDrawing(null); setBrushOptionsOpen(false); }} onSelectText={(selectedPage, item) => { if (selectedPage && item?.type === 'text') { setSelectedShape(null); setSelectedDrawing(null); setSelectedText({ pageNumber: selectedPage, id: item.id }); setBrushOptionsOpen(true); } else if (selectedPage && item?.type === 'shape') { setSelectedText(null); setSelectedDrawing(null); setSelectedShape({ pageNumber: selectedPage, id: item.id }); setShape(item.shape || 'rectangle'); setColor(item.color || '#2563eb'); setBrushOptionsOpen(true); } else if (selectedPage && item?.type === 'draw') { setSelectedText(null); setSelectedShape(null); setSelectedDrawing({ pageNumber: selectedPage, id: item.id }); setBrushSize(item.brushSize || 3); setColor(item.color || '#2563eb'); setBrushOptionsOpen(true); } else { setSelectedText(null); setSelectedShape(null); setSelectedDrawing(null); setBrushOptionsOpen(false); } }} color={activeTool === 'text' ? textColor : color} brushSize={brushSize} eraserSize={eraserSize} textSize={textSize} pageNumberSize={pageNumberSize} watermarkSize={watermarkSize} fontFamily={fontFamily} />
+                  <PagePreview
+                    pdfDocument={pdfDocument}
+                    pageNumber={pageNumber}
+                    items={annotations[pageNumber] || []}
+                    activeTool={activeTool}
+                    activePage={activePage}
+                    onPageFocus={setActivePage}
+                    onAddItem={addAnnotation}
+                    onMoveItem={moveAnnotation}
+                    onRemoveItem={removeAnnotation}
+                    onEraseItem={eraseDrawSegment}
+                    onEditText={editAnnotationText}
+                    onTextAdded={() => { setActiveTool('drag'); setSelectedShape(null); setSelectedDrawing(null); setSelectedImage(null); setBrushOptionsOpen(false); }}
+                    onAddImageClick={handlePageImageClick}
+                    onSelectText={(selectedPage, item) => {
+                      setActivePage(selectedPage || 1);
+                      if (selectedPage && item?.type === 'text') {
+                        setSelectedShape(null);
+                        setSelectedDrawing(null);
+                        setSelectedImage(null);
+                        setSelectedText({ pageNumber: selectedPage, id: item.id });
+                        setBrushOptionsOpen(true);
+                      } else if (selectedPage && item?.type === 'shape') {
+                        setSelectedText(null);
+                        setSelectedDrawing(null);
+                        setSelectedImage(null);
+                        setSelectedShape({ pageNumber: selectedPage, id: item.id });
+                        setShape(item.shape || 'rectangle');
+                        setColor(item.color || '#2563eb');
+                        setBrushOptionsOpen(true);
+                      } else if (selectedPage && item?.type === 'draw') {
+                        setSelectedText(null);
+                        setSelectedShape(null);
+                        setSelectedImage(null);
+                        setSelectedDrawing({ pageNumber: selectedPage, id: item.id });
+                        setBrushSize(item.brushSize || 3);
+                        setColor(item.color || '#2563eb');
+                        setBrushOptionsOpen(true);
+                      } else if (selectedPage && item?.type === 'image') {
+                        setSelectedText(null);
+                        setSelectedShape(null);
+                        setSelectedDrawing(null);
+                        setSelectedImage({ pageNumber: selectedPage, id: item.id });
+                        setBrushOptionsOpen(true);
+                      } else {
+                        setSelectedText(null);
+                        setSelectedShape(null);
+                        setSelectedDrawing(null);
+                        setSelectedImage(null);
+                        setBrushOptionsOpen(false);
+                      }
+                    }}
+                    color={activeTool === 'text' ? textColor : color}
+                    brushSize={brushSize}
+                    eraserSize={eraserSize}
+                    textSize={textSize}
+                    pageNumberSize={pageNumberSize}
+                    watermarkSize={watermarkSize}
+                    fontFamily={fontFamily}
+                  />
                   {(annotations[pageNumber] || []).length > 0 && <button className="pdf-clear-crop" type="button" onClick={() => clearAnnotations(pageNumber)}><Trash2 size={15} /> Clear page items</button>}
                 </div>)}
               </div> : null}
@@ -651,9 +1158,183 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
               </div>
               <div className="pdf-draw-font-preview" style={{ color, fontSize: `${pageNumberSize}px` }}>1</div>
             </aside>}
+            {showImageSettings && selectedImageItem && (
+              <aside className="pdf-text-properties-panel">
+                <header>
+                  <div>
+                    <span>PDF Editor</span>
+                    <h2>Image settings</h2>
+                  </div>
+                  <button type="button" aria-label="Close image settings" onClick={() => setBrushOptionsOpen(false)}>
+                    <X size={18} />
+                  </button>
+                </header>
+
+                <label>
+                  <span>Opacity <strong>{Math.round((selectedImageItem.opacity ?? 1) * 100)}%</strong></span>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    value={Math.round((selectedImageItem.opacity ?? 1) * 100)}
+                    onChange={event => updateSelectedImage({ opacity: Number(event.target.value) / 100 })}
+                  />
+                </label>
+
+                <div style={{ marginTop: '0.85rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '0.45rem' }}>
+                    Apply to Pages
+                  </span>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.55rem' }}>
+                    <button
+                      type="button"
+                      className={`pdf-remove-quick-btn ${!selectedImageItem.applyAll ? 'active' : ''}`}
+                      style={{
+                        padding: '0.5rem 0.4rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        borderRadius: '7px',
+                        border: !selectedImageItem.applyAll ? '1.5px solid var(--primary, #2563eb)' : '1px solid var(--border)',
+                        background: !selectedImageItem.applyAll ? 'rgba(37, 99, 235, 0.1)' : 'var(--tool-bg)',
+                        color: !selectedImageItem.applyAll ? 'var(--primary, #2563eb)' : 'var(--text-main)',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setImageScopeToIndividual()}
+                    >
+                      <FileText size={13} />
+                      <span>This Page ({selectedImage.pageNumber})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`pdf-remove-quick-btn ${selectedImageItem.applyAll ? 'active' : ''}`}
+                      style={{
+                        padding: '0.5rem 0.4rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        borderRadius: '7px',
+                        border: selectedImageItem.applyAll ? '1.5px solid var(--primary, #2563eb)' : '1px solid var(--border)',
+                        background: selectedImageItem.applyAll ? 'rgba(37, 99, 235, 0.1)' : 'var(--tool-bg)',
+                        color: selectedImageItem.applyAll ? 'var(--primary, #2563eb)' : 'var(--text-main)',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => applyImageToAllPages()}
+                    >
+                      <Copy size={13} />
+                      <span>All Pages ({pageCount})</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{
+                      width: '100%',
+                      padding: '0.62rem 0.85rem',
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      borderRadius: '7px',
+                      background: selectedImageItem.applyAll ? '#16a34a' : undefined,
+                      borderColor: selectedImageItem.applyAll ? '#16a34a' : undefined,
+                      color: selectedImageItem.applyAll ? '#ffffff' : undefined,
+                    }}
+                    onClick={() => {
+                      if (selectedImageItem.applyAll) {
+                        setImageScopeToIndividual();
+                      } else {
+                        applyImageToAllPages();
+                      }
+                    }}
+                  >
+                    {selectedImageItem.applyAll ? (
+                      <>
+                        <Check size={15} />
+                        <span>Applied on all {pageCount} pages (Revert)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={15} />
+                        <span>Apply to All Pages (Same Place)</span>
+                      </>
+                    )}
+                  </button>
+
+                  <p style={{ margin: '0.45rem 0 0', fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
+                    {selectedImageItem.applyAll
+                      ? `✓ Synced at same position across all ${pageCount} pages. Dragging or resizing here will update every page identically.`
+                      : `Placed on Page ${selectedImage.pageNumber} only. Click above to stamp this image at the exact same location across all ${pageCount} pages.`}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '1rem' }}>
+                  <button
+                    className="btn-primary"
+                    type="button"
+                    style={{ width: '100%', padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+                    onClick={() => {
+                      pendingImagePositionRef.current = {
+                        pageNumber: selectedImage.pageNumber,
+                        replaceId: selectedImage.id,
+                        width: selectedImageItem.width,
+                        height: selectedImageItem.height,
+                      };
+                      imageInputRef.current?.click();
+                    }}
+                  >
+                    <Upload size={14} style={{ marginRight: '6px' }} />
+                    Replace Image
+                  </button>
+
+                  <button
+                    className="pdf-remove-quick-btn"
+                    type="button"
+                    style={{ color: '#ef4444', borderColor: '#ef4444', justifyContent: 'center' }}
+                    onClick={() => {
+                      removeAnnotation(selectedImage.pageNumber, selectedImage.id);
+                      setSelectedImage(null);
+                      setBrushOptionsOpen(false);
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    <span>Delete Image</span>
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '1.25rem', padding: '0.75rem', background: 'var(--tool-bg)', borderRadius: '8px', textAlign: 'center' }}>
+                  <img
+                    src={selectedImageItem.dataUrl}
+                    alt="Current selection"
+                    style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'contain', borderRadius: '4px' }}
+                  />
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    💡 Drag the corner handles to resize. Drag the image to reposition {selectedImageItem.applyAll ? `on all ${pageCount} pages.` : `on Page ${selectedImage.pageNumber}.`}
+                  </p>
+                </div>
+              </aside>
+            )}
             {pdfDocument && !showSideProperties && <aside className="pdf-text-properties-panel pdf-text-properties-reserved" aria-hidden="true" />}
           </div>
+        )}
         </section>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+          onChange={handleImageUpload}
+          style={{ display: 'none' }}
+        />
       </main>
       {brushOptionsOpen && (activeTool === 'draw' || activeTool === 'eraser') && <div className="pdf-draw-modal-backdrop" onPointerDown={event => { if (event.target === event.currentTarget) setBrushOptionsOpen(false); }}>
         <section className="pdf-draw-modal" role="dialog" aria-modal={editingExistingText ? 'false' : 'true'} aria-labelledby="pdf-draw-modal-title">

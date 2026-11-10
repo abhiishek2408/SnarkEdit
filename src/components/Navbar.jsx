@@ -16,6 +16,7 @@ import {
   Files,
   Scissors,
   Crop,
+  FileMinus,
   FilePlus,
   Palette,
   Columns2,
@@ -154,9 +155,10 @@ const Navbar = ({
               <summary>PDF Tools <ChevronDown size={14} /></summary>
               <div className="landing-tools-dropdown">
                 {APP_TOOL_LINKS.filter((tool) => [
+                  '/remove-pdf-pages',
                   '/split-pdf-page',
+                  '/merge-pdf',
                   '/edit-pdf',
-                  '/merge-documents',
                   '/stack-pdf-pages',
                   '/crop-pdf-whitespace',
                   '/create-pdf-from-image',
@@ -424,6 +426,21 @@ const Navbar = ({
             </div>
             <div className="mobile-drawer-links">
               <NavLink
+                to="/remove-pdf-pages"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => `mobile-drawer-link ${isActive ? 'active' : ''}`}
+              >
+                <div className="link-icon-wrap" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+                  <FileMinus size={18} />
+                </div>
+                <div className="link-text-wrap">
+                  <strong>Remove PDF Pages</strong>
+                  <small>Delete unwanted pages from PDF</small>
+                </div>
+                <span className="mobile-badge-new">New</span>
+              </NavLink>
+
+              <NavLink
                 to="/split-pdf-page"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => `mobile-drawer-link ${isActive ? 'active' : ''}`}
@@ -475,14 +492,14 @@ const Navbar = ({
               </NavLink>
 
               <NavLink
-                to="/merge-documents"
+                to="/merge-pdf"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) => `mobile-drawer-link ${isActive ? 'active' : ''}`}
               >
                 <div className="link-icon-wrap"><Files size={18} /></div>
                 <div className="link-text-wrap">
-                  <strong>Merge Documents</strong>
-                  <small>Combine multiple PDFs & images</small>
+                  <strong>Merge PDF Files</strong>
+                  <small>Combine multiple PDFs in any order</small>
                 </div>
               </NavLink>
 

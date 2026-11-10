@@ -1,8 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { PDFDocument } from 'pdf-lib';
-import { Download, Files, RotateCcw, Scissors, Undo2, Upload, X } from 'lucide-react';
+import { PDFDocument, rgb } from 'pdf-lib';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Files,
+  RotateCcw,
+  Scissors,
+  Undo2,
+  Upload,
+  X,
+  CheckCircle2,
+  Sparkles,
+  RefreshCw,
+  AlertCircle,
+  Check,
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -51,10 +66,19 @@ const removeBandsFromCanvas = (source, bands) => {
   return result;
 };
 
-const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, onUndo, onReset }) => {
-  const [isCropping, setIsCropping] = useState(false);
-  const [pendingBands, setPendingBands] = useState([]);
-  const [activeBandId, setActiveBandId] = useState(null);
+// Single Page Preview & Interactive Canvas
+const PdfPreviewPage = ({
+  pdfDocument,
+  pageNumber,
+  edit,
+  isActive,
+  isCropping,
+  pendingBands,
+  activeBandId,
+  setPendingBands,
+  setActiveBandId,
+  onSelectPage,
+}) => {
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -86,26 +110,29 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
 
   // Initial render of page from PDF
   useEffect(() => {
-    if (!isVisible) return undefined;
+    if (!isVisible && !isActive) return undefined;
     let cancelled = false;
 
     const render = async () => {
       try {
         const page = await pdfDocument.getPage(pageNumber);
         const baseViewport = page.getViewport({ scale: 1 });
-        const viewport = page.getViewport({ scale: Math.min(1.15, 680 / baseViewport.width) });
-        viewportRef.current = viewport;
+        const displayScale = Math.min(1.6, Math.max(1.1, 820 / baseViewport.width));
         const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const renderScale = displayScale * pixelRatio;
+        const viewport = page.getViewport({ scale: renderScale });
+        viewportRef.current = viewport;
 
         const offscreen = window.document.createElement('canvas');
-        offscreen.width = Math.ceil(viewport.width * pixelRatio);
-        offscreen.height = Math.ceil(viewport.height * pixelRatio);
+        offscreen.width = Math.ceil(viewport.width);
+        offscreen.height = Math.ceil(viewport.height);
         const offscreenCtx = offscreen.getContext('2d');
+        offscreenCtx.fillStyle = '#ffffff';
+        offscreenCtx.fillRect(0, 0, offscreen.width, offscreen.height);
 
         const task = page.render({
           canvasContext: offscreenCtx,
           viewport,
-          transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0],
         });
         renderTaskRef.current = task;
         await task.promise;
@@ -113,9 +140,6 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
         if (cancelled) return;
 
         originalCanvasRef.current = offscreen;
-        if (wrapRef.current) {
-          wrapRef.current.style.width = `${viewport.width}px`;
-        }
         setIsRendered(true);
       } catch (err) {
         if (err?.name !== 'RenderingCancelledException' && !cancelled) {
@@ -129,28 +153,28 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
       cancelled = true;
       renderTaskRef.current?.cancel();
     };
-  }, [pdfDocument, pageNumber, isVisible]);
+  }, [pdfDocument, pageNumber, isVisible, isActive]);
 
   // Synchronize display canvas with cut steps
   useEffect(() => {
     if (!isRendered || !originalCanvasRef.current || !canvasRef.current) return;
     const baseCanvas = originalCanvasRef.current;
-    let current = baseCanvas;
+    let stitchedContent = baseCanvas;
 
     if (edit?.cutSteps?.length) {
       for (const step of edit.cutSteps) {
         if (step.bands && step.bands.length > 0) {
-          current = removeBandsFromCanvas(current, step.bands);
+          stitchedContent = removeBandsFromCanvas(stitchedContent, step.bands);
         }
       }
     }
 
-    workingCanvasRef.current = current;
+    workingCanvasRef.current = stitchedContent;
     const canvas = canvasRef.current;
-    canvas.width = current.width;
-    canvas.height = current.height;
+    canvas.width = stitchedContent.width;
+    canvas.height = stitchedContent.height;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(current, 0, 0);
+    ctx.drawImage(stitchedContent, 0, 0);
   }, [isRendered, edit]);
 
   const pointFromEvent = (event) => {
@@ -163,8 +187,9 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
   };
 
   const handlePointerDown = (event) => {
-    if (!isCropping) return;
+    if (!isCropping || !isActive) return;
     if (event.button !== 0 && event.pointerType === 'mouse') return;
+    event.stopPropagation();
     const point = pointFromEvent(event);
     if (!point) return;
 
@@ -196,7 +221,7 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
       }
     }
 
-    // Check if inside an existing cut band
+    // Check if moving an existing cut
     const bandElem = event.target.closest('[data-band-id]');
     if (bandElem) {
       const bandId = bandElem.dataset.bandId;
@@ -226,7 +251,7 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
   };
 
   const handlePointerMove = (event) => {
-    if (!dragActionRef.current || !isCropping) return;
+    if (!dragActionRef.current || !isCropping || !isActive) return;
     const point = pointFromEvent(event);
     if (!point) return;
     const action = dragActionRef.current;
@@ -263,6 +288,7 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
   };
 
   const handlePointerUp = (event) => {
+    event?.stopPropagation?.();
     if (event?.currentTarget?.hasPointerCapture?.(event.pointerId)) {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
@@ -282,74 +308,67 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
     if (activeBandId === bandId) setActiveBandId(null);
   };
 
-  const applyPendingCuts = () => {
-    const validBands = pendingBands.filter(b => b.height >= 0.005);
-    if (!validBands.length) return;
-
-    const existingSteps = edit?.cutSteps ? [...edit.cutSteps] : [];
-    const cleanBands = mergeBands(validBands.map(b => ({ y: b.y, height: b.height })));
-    const nextSteps = [...existingSteps, { bands: cleanBands }];
-    const totalCuts = nextSteps.reduce((sum, s) => sum + s.bands.length, 0);
-
-    onApply(pageNumber, {
-      cutSteps: nextSteps,
-      totalCuts,
-    });
-
-    setPendingBands([]);
-    setIsCropping(false);
-  };
-
-  const applyPendingCutsToAll = () => {
-    const validBands = pendingBands.filter(b => b.height >= 0.005);
-    if (!validBands.length) return;
-    const cleanBands = mergeBands(validBands.map(b => ({ y: b.y, height: b.height })));
-    onApplyAll(cleanBands);
-    setPendingBands([]);
-    setIsCropping(false);
-  };
-
-  const validBands = pendingBands.filter(b => b.height >= 0.005);
+  const validBands = isActive ? pendingBands.filter(b => b.height >= 0.005) : [];
   const totalCutsApplied = edit?.totalCuts || edit?.cutSteps?.reduce((sum, s) => sum + s.bands.length, 0) || 0;
 
   return (
-    <article className="pdf-all-pages-item" ref={itemRef}>
+    <article
+      id={`crop-page-${pageNumber}`}
+      className={`pdf-all-pages-item ${isActive ? 'active' : ''}`}
+      ref={itemRef}
+      onClick={(e) => {
+        if (!isActive) {
+          onSelectPage(pageNumber);
+        }
+      }}
+    >
       <div className="pdf-all-pages-heading">
-        <strong>Page {pageNumber}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <strong>Page {pageNumber}</strong>
+          {isActive && (
+            <span className="pdf-crop-active-badge">Active Page</span>
+          )}
+        </div>
+
         {totalCutsApplied > 0 ? (
           <span className="pdf-page-removed-status">
             ✓ {totalCutsApplied} section{totalCutsApplied === 1 ? '' : 's'} cut out · Merged
           </span>
-        ) : isCropping ? (
+        ) : isActive && isCropping ? (
           <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
             {validBands.length > 0
-              ? `${validBands.length} section${validBands.length > 1 ? 's' : ''} marked to cut out & merge`
-              : 'Drag across sections you want to cut out (Multiple cuts supported)'}
+              ? `${validBands.length} cut${validBands.length > 1 ? 's' : ''} marked`
+              : 'Drag across sections to cut out'}
           </span>
         ) : (
-          <span>Ready to crop</span>
+          <span>{isActive ? 'Selected' : 'Click to select'}</span>
         )}
       </div>
 
       <div className="pdf-crop-canvas-wrap" ref={wrapRef}>
         <canvas ref={canvasRef} />
 
-        {isCropping && validBands.length === 0 && (
+        {isActive && isCropping && validBands.length === 0 && (
           <div className="pdf-crop-draw-hint">
-            <Scissors size={18} />
-            <span>Drag over any section to cut out. You can draw multiple cuts!</span>
+            <Scissors size={16} />
+            <span>Drag across any section to cut out</span>
           </div>
         )}
 
+        {/* Selection Cut Layer (Active only on the currently active page during crop mode) */}
         <div
-          className={`pdf-crop-selection-layer ${isCropping ? 'active' : ''}`}
-          style={{ display: isCropping ? 'block' : 'none', pointerEvents: isCropping && isRendered ? 'auto' : 'none' }}
+          className={`pdf-crop-selection-layer ${isActive && isCropping ? 'active' : ''}`}
+          style={{
+            display: isActive && isCropping ? 'block' : 'none',
+            pointerEvents: isActive && isCropping && isRendered ? 'auto' : 'none',
+          }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onClick={(e) => e.stopPropagation()}
         >
-          {isCropping && pendingBands.map((band, index) => {
+          {isActive && isCropping && pendingBands.map((band, index) => {
             if (band.height < 0.001) return null;
             return (
               <div
@@ -407,106 +426,6 @@ const PdfPreviewPage = ({ pdfDocument, pageNumber, edit, onApply, onApplyAll, on
           })}
         </div>
       </div>
-
-      <div className="pdf-all-pages-actions">
-        {isCropping ? (
-          <>
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={applyPendingCuts}
-              disabled={validBands.length === 0}
-              title="Cut out all selected sections and merge the remaining parts together"
-            >
-              <Scissors size={16} />
-              <span>
-                {validBands.length > 0
-                  ? `Cut & Merge (${validBands.length} Section${validBands.length > 1 ? 's' : ''})`
-                  : 'Select section to cut'}
-              </span>
-            </button>
-            {validBands.length > 0 && (
-              <>
-                <button
-                  className="pdf-clear-crop"
-                  type="button"
-                  onClick={applyPendingCutsToAll}
-                  title="Cut out these exact sections from every page in the PDF"
-                >
-                  <Files size={15} />
-                  <span>Cut on All Pages</span>
-                </button>
-                <button
-                  className="pdf-clear-crop"
-                  type="button"
-                  onClick={() => setPendingBands([])}
-                  title="Clear current selections"
-                >
-                  <RotateCcw size={15} />
-                  <span>Clear Cuts</span>
-                </button>
-              </>
-            )}
-            <button
-              className="pdf-clear-crop"
-              type="button"
-              onClick={() => {
-                setPendingBands([]);
-                setIsCropping(false);
-              }}
-            >
-              <X size={15} />
-              <span>Cancel</span>
-            </button>
-          </>
-        ) : edit && totalCutsApplied > 0 ? (
-          <>
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={() => {
-                setIsCropping(true);
-                setPendingBands([]);
-              }}
-              title="Cut another section from this merged page"
-            >
-              <Scissors size={16} />
-              <span>Cut Another Section</span>
-            </button>
-            <button
-              className="pdf-clear-crop"
-              type="button"
-              onClick={() => onUndo(pageNumber)}
-              title="Undo the last cut operation on this page"
-            >
-              <Undo2 size={15} />
-              <span>Undo Last Cut</span>
-            </button>
-            <button
-              className="pdf-clear-crop"
-              type="button"
-              onClick={() => onReset(pageNumber)}
-              title="Reset this page back to original"
-            >
-              <RotateCcw size={15} />
-              <span>Reset to Original</span>
-            </button>
-          </>
-        ) : (
-          <button
-            className="btn-primary"
-            type="button"
-            onClick={() => {
-              setIsCropping(true);
-              setPendingBands([]);
-            }}
-            disabled={!isRendered}
-          >
-            <Scissors size={16} />
-            <span>Crop & Remove Section</span>
-          </button>
-        )}
-      </div>
     </article>
   );
 };
@@ -519,6 +438,12 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
   const [error, setError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
 
+  // Unified global crop state for the left sidebar
+  const [activePage, setActivePage] = useState(1);
+  const [isCropping, setIsCropping] = useState(false);
+  const [pendingBands, setPendingBands] = useState([]);
+  const [activeBandId, setActiveBandId] = useState(null);
+
   const handleFile = async (selected) => {
     const nextFile = selected?.[0];
     if (!nextFile) return;
@@ -526,6 +451,9 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
     setPdfDocument(null);
     setPageEdits({});
     setPageCount(0);
+    setActivePage(1);
+    setIsCropping(false);
+    setPendingBands([]);
     setError('');
     try {
       const data = new Uint8Array(await nextFile.arrayBuffer());
@@ -534,109 +462,163 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
       setPdfDocument(document);
       setPageCount(document.numPages);
     } catch (err) {
-      setError(err.message || 'Could not open this PDF. Try a valid, unprotected PDF.');
+      console.error(err);
+      setError('Could not read this PDF. Try another file.');
     }
   };
 
-  const savePageEdit = (pageNumber, edit) => {
-    setPageEdits(current => ({ ...current, [pageNumber]: edit }));
-    setError('');
+  const handleSelectPage = (pageNum) => {
+    if (pageNum === activePage) return;
+    setActivePage(pageNum);
+    // Clear pending bands only when switching to a completely different page
+    setPendingBands([]);
+    setActiveBandId(null);
+    const elem = document.getElementById(`crop-page-${pageNum}`);
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   };
 
-  const undoPageEdit = (pageNumber) => {
-    setPageEdits(current => {
-      const currentEdit = current[pageNumber];
-      if (!currentEdit || !currentEdit.cutSteps || currentEdit.cutSteps.length <= 1) {
-        const next = { ...current };
-        delete next[pageNumber];
+  const startCropping = (pageNum) => {
+    const targetPage = pageNum || activePage;
+    setActivePage(targetPage);
+    setIsCropping(true);
+    setPendingBands([]);
+    setActiveBandId(null);
+    const elem = document.getElementById(`crop-page-${targetPage}`);
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const cancelCropping = () => {
+    setPendingBands([]);
+    setActiveBandId(null);
+    setIsCropping(false);
+  };
+
+  const toggleCropping = () => {
+    if (isCropping) {
+      setPendingBands([]);
+      setActiveBandId(null);
+      setIsCropping(false);
+    } else {
+      startCropping(activePage);
+    }
+  };
+
+  const applyPendingCutsToCurrentPage = () => {
+    const validBands = pendingBands.filter(b => b.height >= 0.005);
+    if (!validBands.length) return;
+
+    // Apply cuts strictly and ONLY to the active page
+    const targetPage = activePage;
+    const currentEdit = pageEdits[targetPage];
+    const existingSteps = currentEdit?.cutSteps ? [...currentEdit.cutSteps] : [];
+    const cleanBands = mergeBands(validBands.map(b => ({ y: b.y, height: b.height })));
+    const nextSteps = [...existingSteps, { bands: cleanBands }];
+    const totalCuts = nextSteps.reduce((sum, s) => sum + s.bands.length, 0);
+
+    setPageEdits(prev => ({
+      ...prev,
+      [targetPage]: {
+        cutSteps: nextSteps,
+        totalCuts,
+      },
+    }));
+
+    setPendingBands([]);
+    setActiveBandId(null);
+    // Keep isCropping true so user can continue cutting until they click to deselect
+  };
+
+  const undoActivePageEdit = () => {
+    setPageEdits(prev => {
+      const current = prev[activePage];
+      if (!current || !current.cutSteps || current.cutSteps.length === 0) return prev;
+      const nextSteps = current.cutSteps.slice(0, -1);
+      if (nextSteps.length === 0) {
+        const next = { ...prev };
+        delete next[activePage];
         return next;
       }
-      const nextSteps = currentEdit.cutSteps.slice(0, -1);
-      const totalCuts = nextSteps.reduce((sum, s) => sum + s.bands.length, 0);
       return {
-        ...current,
-        [pageNumber]: {
+        ...prev,
+        [activePage]: {
           cutSteps: nextSteps,
-          totalCuts,
+          totalCuts: nextSteps.reduce((sum, s) => sum + s.bands.length, 0),
         },
       };
     });
   };
 
-  const resetPage = (pageNumber) => {
-    setPageEdits(current => {
-      const next = { ...current };
-      delete next[pageNumber];
+  const resetActivePage = () => {
+    setPageEdits(prev => {
+      const next = { ...prev };
+      delete next[activePage];
       return next;
     });
   };
 
   const resetAllPages = () => {
     setPageEdits({});
+    setPendingBands([]);
+    setIsCropping(false);
   };
 
-  const applyCropToAllPages = (bands) => {
-    if (!bands || !bands.length || pageCount === 0) return;
-    setPageEdits(current => {
-      const next = { ...current };
-      for (let i = 1; i <= pageCount; i++) {
-        const existing = current[i];
-        const existingSteps = existing?.cutSteps ? [...existing.cutSteps] : [];
-        const nextSteps = [...existingSteps, { bands }];
-        const totalCuts = nextSteps.reduce((sum, s) => sum + s.bands.length, 0);
-        next[i] = { cutSteps: nextSteps, totalCuts };
-      }
-      return next;
-    });
-  };
-
+  // Build the final merged PDF
   const download = async () => {
-    if (!file || !Object.keys(pageEdits).length) return;
+    if (!file || !pageCount) return;
     setIsExporting(true);
     setError('');
-    try {
-      const originalBytes = await file.arrayBuffer();
-      const original = await PDFDocument.load(originalBytes, { ignoreEncryption: true });
-      const output = await PDFDocument.create();
-      const numPages = original.getPageCount();
 
-      for (let index = 0; index < numPages; index++) {
+    try {
+      const sourcePdf = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+      const outputPdf = await PDFDocument.create();
+
+      for (let index = 0; index < pageCount; index++) {
         const pageNumber = index + 1;
         const edit = pageEdits[pageNumber];
 
         if (!edit || !edit.cutSteps?.length) {
-          const [copiedPage] = await output.copyPages(original, [index]);
-          output.addPage(copiedPage);
+          const [copied] = await outputPdf.copyPages(sourcePdf, [index]);
+          outputPdf.addPage(copied);
           continue;
         }
 
         const sourcePage = await pdfDocument.getPage(pageNumber);
-        const baseViewport = sourcePage.getViewport({ scale: 1 });
-        const scale = 2.5; // High resolution rendering for sharp print-quality output
-        const viewport = sourcePage.getViewport({ scale });
-        const sourceCanvas = window.document.createElement('canvas');
-        sourceCanvas.width = Math.ceil(viewport.width);
-        sourceCanvas.height = Math.ceil(viewport.height);
-        await sourcePage.render({ canvasContext: sourceCanvas.getContext('2d'), viewport }).promise;
+        const baseVp = sourcePage.getViewport({ scale: 1 });
+        const scale = Math.min(2.5, 2600 / baseVp.width);
+        const exportVp = sourcePage.getViewport({ scale });
 
-        let workingCanvas = sourceCanvas;
+        const canvas = window.document.createElement('canvas');
+        canvas.width = Math.ceil(exportVp.width);
+        canvas.height = Math.ceil(exportVp.height);
+        const ctx = canvas.getContext('2d');
+        await sourcePage.render({ canvasContext: ctx, viewport: exportVp }).promise;
+
+        let workingCanvas = canvas;
         for (const step of edit.cutSteps) {
           if (step.bands && step.bands.length > 0) {
             workingCanvas = removeBandsFromCanvas(workingCanvas, step.bands);
           }
         }
 
-        const png = await new Promise(resolve => workingCanvas.toBlob(resolve, 'image/png'));
-        if (png) {
-          const image = await output.embedPng(await png.arrayBuffer());
-          const pageWidth = baseViewport.width;
-          const pageHeight = (workingCanvas.height / workingCanvas.width) * pageWidth;
-          const newPage = output.addPage([pageWidth, pageHeight]);
-          newPage.drawImage(image, { x: 0, y: 0, width: pageWidth, height: pageHeight });
-        }
+        const pngBlob = await new Promise((resolve) => workingCanvas.toBlob(resolve, 'image/png'));
+        const embeddedImage = await outputPdf.embedPng(await pngBlob.arrayBuffer());
+
+        const finalHeightPt = baseVp.height * (workingCanvas.height / canvas.height);
+        const newPage = outputPdf.addPage([baseVp.width, Math.max(10, finalHeightPt)]);
+        newPage.drawImage(embeddedImage, {
+          x: 0,
+          y: 0,
+          width: baseVp.width,
+          height: Math.max(10, finalHeightPt),
+        });
       }
 
-      const blob = new Blob([await output.save()], { type: 'application/pdf' });
+      const mergedBytes = await outputPdf.save();
+      const blob = new Blob([mergedBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = window.document.createElement('a');
       link.href = url;
@@ -657,79 +639,194 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
     0
   );
 
+  const activePageEdit = pageEdits[activePage];
+  const activePageCutsCount = activePageEdit?.totalCuts || activePageEdit?.cutSteps?.reduce((sum, s) => sum + s.bands.length, 0) || 0;
+  const validBands = pendingBands.filter(b => b.height >= 0.005);
+
   return (
-    <div className="app-container reducer-page pdf-tool-page">
+    <div className="app-container reducer-page pdf-tool-page pdf-crop-page">
       <Navbar onHome={() => {}} theme={theme} toggleTheme={toggleTheme} hideEditorControls={true} />
       <main className="reducer-shell">
         <section className="reducer-workspace">
+          {/* Header (shown only when no PDF is loaded) */}
           {!pdfDocument && (
-            <>
-              <div className="reducer-heading">
-                <div>
-                  <p>PDF Tool</p>
-                  <h1>Crop & Merge PDF Sections</h1>
-                </div>
-                <Scissors size={34} />
+            <div className="reducer-heading">
+              <div>
+                <p>PDF Tools</p>
+                <h1>Crop PDF Content</h1>
               </div>
-              <p className="pdf-stacker-intro">
-                Select unwanted sections or whitespace gaps to cut them out. You can make multiple cuts, and remaining parts merge together seamlessly with zero white gap.
-              </p>
-            </>
+              <Scissors size={34} className="desktop-only" />
+            </div>
           )}
 
-          <div className={`pdf-crop-layout ${pdfDocument ? 'has-pdf' : 'no-pdf'}`}>
-            <section className="reducer-panel pdf-crop-controls">
-              <label className="reducer-upload">
-                <Upload size={24} />
-                <strong>{file ? file.name : 'Choose a PDF'}</strong>
-                <span>{file ? `${pageCount} page${pageCount > 1 ? 's' : ''} loaded` : 'Select the PDF you want to crop'}</span>
-                <input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} />
+          {!pdfDocument ? (
+            <div className="pdf-merge-upload-hero">
+              <p className="pdf-stacker-intro" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
+                Select unwanted sections or whitespace gaps to cut them out. Remaining parts merge together seamlessly with zero white gap.
+              </p>
+              <label className="pdf-merge-dropzone">
+                <div className="pdf-merge-upload-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                  <Scissors size={32} />
+                </div>
+                <strong style={{ fontSize: '1.25rem' }}>Select PDF to Crop</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  Drag & drop or click to browse
+                </span>
+                <input type="file" accept="application/pdf,.pdf" onChange={(event) => handleFile(event.target.files)} style={{ display: 'none' }} />
               </label>
 
-              {file && (
-                <>
-                  <div className="pdf-crop-stats">
-                    <div className="pdf-crop-count">
-                      <strong>{editedCount}</strong> of <strong>{pageCount}</strong> pages edited
-                      {totalCutsCount > 0 && ` (${totalCutsCount} total cuts applied)`}
+              <div className="pdf-merge-features-badges">
+                <div className="pdf-merge-badge-item">
+                  <Scissors size={15} style={{ color: '#3b82f6' }} />
+                  <span>Precision Cutting</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <Sparkles size={15} style={{ color: '#3b82f6' }} />
+                  <span>Gapless Merging</span>
+                </div>
+                <div className="pdf-merge-badge-item">
+                  <CheckCircle2 size={15} style={{ color: '#10b981' }} />
+                  <span>Lossless Quality</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className={`pdf-crop-layout ${pdfDocument ? 'has-pdf' : 'no-pdf'}`}>
+              {/* Left Column: Stats & Export */}
+              <aside className="pdf-remove-sidebar">
+                {/* File Info */}
+                <div className="reducer-panel pdf-remove-card">
+                  <div className="pdf-remove-file-header">
+                    <div className="pdf-remove-file-icon" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                      <Files size={20} />
+                    </div>
+                    <div className="pdf-remove-file-meta">
+                      <strong title={file?.name}>{file?.name}</strong>
+                      <span>{pageCount} pages</span>
+                    </div>
+                  </div>
+                  <button className="pdf-remove-change-btn" onClick={() => document.querySelector('.change-pdf-input').click()}>
+                    <RefreshCw size={14} />
+                    <span>Change PDF</span>
+                    <input
+                      type="file"
+                      className="change-pdf-input"
+                      accept="application/pdf,.pdf"
+                      onChange={(e) => handleFile(e.target.files)}
+                      style={{ display: 'none' }}
+                    />
+                  </button>
+                </div>
+
+                {/* Edit Stats */}
+                <div className="reducer-panel pdf-remove-card">
+                  <h3 className="pdf-remove-section-title">Edit Summary</h3>
+                  <div className="pdf-split-stats-box" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                    <div className="pdf-split-stat-row">
+                      <span>Edited Pages:</span>
+                      <strong style={{ color: editedCount > 0 ? '#10b981' : 'inherit' }}>{editedCount}</strong>
+                    </div>
+                    <div className="pdf-split-stat-row">
+                      <span>Total Cuts:</span>
+                      <strong>{totalCutsCount}</strong>
                     </div>
                   </div>
 
-                  {editedCount > 0 && (
-                    <div className="pdf-crop-bulk-actions">
-                      <button
-                        className="pdf-clear-crop"
-                        type="button"
-                        onClick={resetAllPages}
-                      >
-                        <RotateCcw size={15} />
-                        <span>Reset All Pages</span>
-                      </button>
-                    </div>
-                  )}
-
                   <button
-                    className="btn-primary reducer-action"
+                    className="btn-primary pdf-crop-download-btn"
                     type="button"
                     onClick={download}
                     disabled={!editedCount || isExporting}
                   >
-                    <Download size={18} />
-                    <span>{isExporting ? 'Generating PDF...' : 'Download Merged PDF'}</span>
+                    {isExporting ? (
+                      <>
+                        <RefreshCw size={17} className="spin" />
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={17} />
+                        <span>Download Result</span>
+                      </>
+                    )}
                   </button>
 
-                  <p className="pdf-crop-tip">
-                    💡 <strong>Multiple Cuts Support:</strong> Click <strong>Crop & Remove Section</strong>, drag across any sections you want to cut out (you can select multiple areas simultaneously), then click <strong>Cut & Merge Parts</strong>. You can also click <strong>Cut Another Section</strong> to make further cuts on the merged result, or <strong>Undo Last Cut</strong> anytime!
-                  </p>
-                </>
-              )}
+                  {editedCount > 0 && (
+                    <button
+                      className="pdf-remove-quick-btn"
+                      type="button"
+                      onClick={resetAllPages}
+                      style={{ borderStyle: 'dashed' }}
+                    >
+                      <RotateCcw size={14} />
+                      <span>Reset All Edits</span>
+                    </button>
+                  )}
+                </div>
 
-              {error && <p className="reducer-error">{error}</p>}
-            </section>
+                <div className="pdf-crop-side-guide" style={{ background: 'var(--bg-card)' }}>
+                  <strong>💡 How it works:</strong>
+                  <ol>
+                    <li>Click a page to select it</li>
+                    <li>Click <strong>Start Cutting</strong> below</li>
+                    <li>Drag over areas to remove</li>
+                    <li>Click <strong>Apply Cuts</strong></li>
+                  </ol>
+                </div>
 
-            {pdfDocument && (
-              <section className="reducer-panel pdf-crop-preview-panel">
-                <div className="pdf-all-pages-list">
+                {error && (
+                  <div className="reducer-error pdf-remove-alert-box">
+                    <AlertCircle size={15} />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </aside>
+
+              {/* Center Column: PDF Preview */}
+              <section className="pdf-remove-gallery-panel pdf-crop-preview-panel">
+                <div className="pdf-split-page-nav-bar" style={{ paddingBottom: '0.65rem' }}>
+                  <div className="pdf-split-nav-controls">
+                    <button
+                      type="button"
+                      className="pdf-split-nav-arrow"
+                      disabled={activePage <= 1}
+                      onClick={() => handleSelectPage(Math.max(1, activePage - 1))}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <span className="pdf-split-page-counter">
+                      Page <strong>{activePage}</strong> of <strong>{pageCount}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      className="pdf-split-nav-arrow"
+                      disabled={activePage >= pageCount}
+                      onClick={() => handleSelectPage(Math.min(pageCount, activePage + 1))}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+
+                  <div className="pdf-split-page-pills">
+                    {Array.from({ length: pageCount }, (_, i) => {
+                      const pNum = i + 1;
+                      const hasEdits = Boolean(pageEdits[pNum]);
+                      return (
+                        <button
+                          key={pNum}
+                          type="button"
+                          className={`pdf-split-pill ${activePage === pNum ? 'active' : ''} ${hasEdits ? 'has-split' : ''}`}
+                          onClick={() => handleSelectPage(pNum)}
+                        >
+                          <span>{pNum}</span>
+                          {hasEdits && <span className="pill-dot" style={{ background: '#10b981' }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pdf-all-pages-list" style={{ background: 'var(--tool-bg)', borderRadius: '8px' }}>
                   {Array.from({ length: pageCount }, (_, index) => {
                     const pageNumber = index + 1;
                     return (
@@ -738,17 +835,113 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
                         pdfDocument={pdfDocument}
                         pageNumber={pageNumber}
                         edit={pageEdits[pageNumber]}
-                        onApply={savePageEdit}
-                        onApplyAll={applyCropToAllPages}
-                        onUndo={undoPageEdit}
-                        onReset={resetPage}
+                        isActive={activePage === pageNumber}
+                        isCropping={isCropping && activePage === pageNumber}
+                        pendingBands={pendingBands}
+                        activeBandId={activeBandId}
+                        setPendingBands={setPendingBands}
+                        setActiveBandId={setActiveBandId}
+                        onSelectPage={handleSelectPage}
                       />
                     );
                   })}
                 </div>
               </section>
-            )}
-          </div>
+
+              {/* Right Column: Controls */}
+              <aside className="pdf-crop-right-panel">
+                <div className="pdf-crop-right-header">
+                  <div>
+                    <span className="pdf-crop-right-header-title">Tool Controls</span>
+                    <strong className="pdf-crop-right-header-page">
+                      Page {activePage}
+                    </strong>
+                  </div>
+                  {activePageCutsCount > 0 && (
+                    <span className="pdf-crop-page-cut-badge">
+                      {activePageCutsCount} Cuts
+                    </span>
+                  )}
+                </div>
+
+                <div className="pdf-crop-main-actions">
+                  <button
+                    className={`btn-primary pdf-crop-btn-lg ${isCropping ? 'pdf-crop-btn-active' : ''}`}
+                    type="button"
+                    onClick={toggleCropping}
+                  >
+                    <Scissors size={18} />
+                    <span>{isCropping ? 'Stop Cutting Content' : 'Cut Pdf'}</span>
+                  </button>
+
+                  {isCropping && (
+                    <div className="pdf-crop-active-section" style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {validBands.length > 0 ? (
+                        <>
+                          <button
+                            className="btn-primary pdf-crop-btn-lg"
+                            type="button"
+                            onClick={applyPendingCutsToCurrentPage}
+                          >
+                            <Check size={16} />
+                            <span>Apply {validBands.length} Cut{validBands.length > 1 ? 's' : ''}</span>
+                          </button>
+                          <button
+                            className="pdf-remove-quick-btn"
+                            type="button"
+                            onClick={() => {
+                              setPendingBands([]);
+                              setActiveBandId(null);
+                            }}
+                          >
+                            <X size={14} />
+                            <span>Clear Selection</span>
+                          </button>
+                        </>
+                      ) : (
+                        <div style={{
+                          padding: '0.65rem 0.75rem',
+                          background: 'color-mix(in srgb, var(--primary) 8%, var(--tool-bg))',
+                          border: '1px dashed var(--primary)',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          color: 'var(--text-main)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          lineHeight: 1.4
+                        }}>
+                          <Scissors size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                          <span>Drag on Page {activePage} to cut out section</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activePageCutsCount > 0 && (
+                    <div className="pdf-crop-sub-actions" style={{ marginTop: '0.75rem' }}>
+                      <button
+                        className="pdf-remove-quick-btn"
+                        type="button"
+                        onClick={undoActivePageEdit}
+                      >
+                        <Undo2 size={14} />
+                        <span>Undo Last</span>
+                      </button>
+                      <button
+                        className="pdf-remove-quick-btn"
+                        type="button"
+                        onClick={resetActivePage}
+                      >
+                        <RotateCcw size={14} />
+                        <span>Reset Page</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </aside>
+            </div>
+          )}
         </section>
       </main>
     </div>

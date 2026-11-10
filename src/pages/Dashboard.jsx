@@ -15,7 +15,7 @@ import {
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
   Database, ShieldCheck, StickyNote, ChevronLeft, ChevronRight, Parentheses, ArrowUp, ArrowLeft, ArrowDown, CornerDownRight, CornerDownLeft, CornerUpLeft, CornerUpRight, Eraser,
-  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain
+  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain, FileMinus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
@@ -1900,8 +1900,9 @@ function Dashboard({ theme, toggleTheme, initialStudioMode = false, initialBlank
   };
 
   const homeTools = [
+    { title: 'Remove PDF Pages', description: 'Delete unwanted pages from a PDF document.', path: '/remove-pdf-pages', icon: FileMinus, color: '#ef4444' },
     { title: 'Edit PDF', description: 'Stack pages and make page edits.', path: '/edit-pdf', icon: Files, color: '#f2644b' },
-    { title: 'Merge PDF', description: 'Combine PDFs and other documents.', path: '/merge-documents', icon: Files, color: '#7650b8' },
+    { title: 'Merge PDF', description: 'Combine multiple PDF files in any order.', path: '/merge-pdf', icon: Files, color: '#7650b8' },
     { title: 'Stack PDF', description: 'Place two PDF pages on one page.', path: '/stack-pdf-pages', icon: Layers, color: '#df456a' },
     { title: 'Crop PDF', description: 'Trim whitespace from PDF pages.', path: '/crop-pdf-whitespace', icon: Crop, color: '#16a6ad' },
     { title: 'Split PDF', description: 'Divide large pages into two pages.', path: '/split-pdf-page', icon: Columns2, color: '#e11d48' },
