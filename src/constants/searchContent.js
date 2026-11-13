@@ -1,4 +1,5 @@
 import {
+  ArrowDownUp,
   Briefcase,
   Columns2,
   Cookie,
@@ -155,6 +156,13 @@ export const APP_TOOL_LINKS = [
     path: '/edit-pdf',
     icon: Files,
     keywords: ['edit pdf', 'add image to pdf', 'insert image', 'add picture to pdf', 'add signature', 'add text to pdf'],
+  },
+  {
+    title: 'Organize PDF Pages',
+    description: 'Rearrange, rotate, delete, or insert new pages anywhere in your PDF.',
+    path: '/organize-pdf',
+    icon: ArrowDownUp,
+    keywords: ['organize pdf', 'arrange pdf pages', 'reorder pdf pages', 'add pages to pdf', 'insert pages into pdf', 'rotate pdf pages', 'sort pdf pages'],
   },
 ];
 

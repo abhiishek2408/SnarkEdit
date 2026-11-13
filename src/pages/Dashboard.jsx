@@ -15,7 +15,7 @@ import {
   AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter,
   Activity, Layout, Triangle, Box, Grid as GridIcon, Diamond, Award, Leaf, Bookmark, GripVertical, ArrowDownWideNarrow,
   Database, ShieldCheck, StickyNote, ChevronLeft, ChevronRight, Parentheses, ArrowUp, ArrowLeft, ArrowDown, CornerDownRight, CornerDownLeft, CornerUpLeft, CornerUpRight, Eraser,
-  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain, FileMinus
+  Pentagon, Magnet, PlusCircle, LayoutList, X, Brain, FileMinus, ArrowDownUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { removeBackground } from '@imgly/background-removal';
@@ -1900,6 +1900,7 @@ function Dashboard({ theme, toggleTheme, initialStudioMode = false, initialBlank
   };
 
   const homeTools = [
+    { title: 'Organize PDF', description: 'Reorder, remove, or insert pages anywhere in your PDF.', path: '/organize-pdf', icon: ArrowDownUp, color: '#2563eb' },
     { title: 'Remove PDF Pages', description: 'Delete unwanted pages from a PDF document.', path: '/remove-pdf-pages', icon: FileMinus, color: '#ef4444' },
     { title: 'Edit PDF', description: 'Stack pages and make page edits.', path: '/edit-pdf', icon: Files, color: '#f2644b' },
     { title: 'Merge PDF', description: 'Combine multiple PDF files in any order.', path: '/merge-pdf', icon: Files, color: '#7650b8' },

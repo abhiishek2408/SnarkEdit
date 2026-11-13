@@ -12,6 +12,7 @@ import PdfWhitespaceCropPage from './pages/PdfWhitespaceCropPage';
 import PdfPageSplitterPage from './pages/PdfPageSplitterPage';
 import PdfRemovePagesPage from './pages/PdfRemovePagesPage';
 import EditPdfPage from './pages/EditPdfPage';
+import PdfOrganizePage from './pages/PdfOrganizePage';
 import AppToolRail from './components/AppToolRail';
 
 function App() {
@@ -50,6 +51,9 @@ function App() {
           <Route path="/divide-pdf-page" element={<PdfPageSplitterPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/info/:pageId" element={<InfoPage theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/edit-pdf" element={<EditPdfPage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/organize-pdf" element={<PdfOrganizePage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/organize-pdf-pages" element={<PdfOrganizePage theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/arrange-pdf-pages" element={<PdfOrganizePage theme={theme} toggleTheme={toggleTheme} />} />
         </Routes>
         <AppToolRail />
       </>

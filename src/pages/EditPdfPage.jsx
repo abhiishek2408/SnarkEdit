@@ -16,7 +16,7 @@ const PdfTextEditor = ({ value, onChange }) => {
   return <div ref={editorRef} role="textbox" aria-label="Edit added PDF text" aria-multiline="true" contentEditable suppressContentEditableWarning className="pdf-annotation-text-editor" onInput={event => onChange(event.currentTarget.innerText.replace(/\n$/, ''))} onBlur={event => setDraft(event.currentTarget.innerText.replace(/\n$/, ''))}>{draft}</div>;
 };
 
-const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, onPageFocus, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onAddImageClick, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily }) => {
+const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, onPageFocus, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onAddImageClick, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily, selectedShape, selectedImage }) => {
   const [visible, setVisible] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -25,6 +25,14 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
   const drawingRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedShape && selectedShape.pageNumber === pageNumber) {
+      setSelectedItemId(selectedShape.id);
+    } else if (selectedImage && selectedImage.pageNumber === pageNumber) {
+      setSelectedItemId(selectedImage.id);
+    }
+  }, [selectedShape, selectedImage, pageNumber]);
 
   useEffect(() => {
     const node = itemRef.current;
@@ -192,8 +200,10 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
     }
     const point = pointFromEvent(event);
     if (point) {
-      onAddItem(pageNumber, { id: `${Date.now()}-${Math.random()}`, type: activeTool, x: point.x, y: point.y, width: activeTool === 'shape' ? 0.22 : activeTool === 'text' ? 0.28 : undefined, height: activeTool === 'shape' ? 0.1 : activeTool === 'text' ? 0.028 : undefined, color, fontSize: activeTool === 'pageNumber' ? pageNumberSize : activeTool === 'watermark' ? watermarkSize : textSize, fontFamily });
-      if (activeTool === 'text' || activeTool === 'shape') onTextAdded();
+      const newId = `${Date.now()}-${Math.random()}`;
+      setSelectedItemId(newId);
+      onAddItem(pageNumber, { id: newId, type: activeTool, x: point.x, y: point.y, width: activeTool === 'shape' ? 0.22 : activeTool === 'text' ? 0.28 : undefined, height: activeTool === 'shape' ? 0.1 : activeTool === 'text' ? 0.028 : undefined, color, fontSize: activeTool === 'pageNumber' ? pageNumberSize : activeTool === 'watermark' ? watermarkSize : textSize, fontFamily });
+      if (activeTool === 'text' || activeTool === 'shape') onTextAdded(activeTool, pageNumber, newId);
     }
   };
 
@@ -239,7 +249,15 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
                 boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
               }}
             >
-              All Pages
+              {annotation.pageScope === 'odd'
+                ? (annotation.skipCover ? 'Odd Pages (Except Cover)' : 'Odd Pages Only')
+                : annotation.pageScope === 'even'
+                ? 'Even Pages Only'
+                : annotation.pageScope === 'custom'
+                ? `Pages: ${annotation.customRange || 'Custom'}`
+                : annotation.skipCover
+                ? 'All Pages (Except Cover)'
+                : 'All Pages'}
             </span>
           )}
           {isSelected && (
@@ -267,6 +285,35 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
     const label = annotation.type === 'pageNumber' ? String(pageNumber) : annotation.type === 'watermark' ? (annotation.text || 'WATERMARK') : annotation.type === 'text' ? (annotation.text ?? 'Text') : '';
     return <div key={annotation.id + (hiddenUnderlayCopy ? '-underlay' : '-overlay')} data-item-id={annotation.id} className={`pdf-annotation-item ${annotation.type} ${annotation.shape || ''} ${selectedItemId === annotation.id ? 'selected' : ''}`} style={{ left: `${(annotation.x || 0) * 100}%`, top: `${(annotation.y || 0) * 100}%`, width: `${(annotation.width || 0.2) * 100}%`, height: `${(annotation.height || (annotation.type === 'text' ? 0.035 : 0.08)) * 100}%`, color: annotation.color || '#2563eb', backgroundColor: annotation.type === 'pageNumber' ? annotation.backgroundColor || 'transparent' : undefined, fontSize: annotation.type === 'text' || annotation.type === 'pageNumber' || annotation.type === 'watermark' ? `${annotation.fontSize || 16}px` : undefined, fontFamily: annotation.type === 'text' || annotation.type === 'watermark' ? (annotation.fontFamily === 'TimesRoman' ? 'Georgia, serif' : annotation.fontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif') : undefined, fontWeight: annotation.type === 'watermark' ? (annotation.bold ? 800 : 400) : undefined, fontStyle: annotation.type === 'watermark' && annotation.italic ? 'italic' : undefined, textDecoration: annotation.type === 'watermark' && annotation.underline ? 'underline' : undefined, opacity: annotation.type === 'watermark' ? annotation.opacity ?? 1 : undefined, transform: annotation.type === 'watermark' && annotation.rotation ? 'rotate(' + annotation.rotation + 'deg)' : undefined }}>
       {annotation.type === 'text' ? <PdfTextEditor value={label} onChange={text => onEditText(pageNumber, annotation.id, text)} /> : label}
+      {annotation.type === 'shape' && selectedItemId === annotation.id && annotation.applyAll && (
+        <span
+          style={{
+            position: 'absolute',
+            top: '-20px',
+            left: '0',
+            background: '#2563eb',
+            color: '#ffffff',
+            fontSize: '10px',
+            fontWeight: 600,
+            padding: '1px 6px',
+            borderRadius: '4px',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+            zIndex: 10,
+          }}
+        >
+          {annotation.pageScope === 'odd'
+            ? (annotation.skipCover ? 'Odd Pages (Except Cover)' : 'Odd Pages Only')
+            : annotation.pageScope === 'even'
+            ? 'Even Pages Only'
+            : annotation.pageScope === 'custom'
+            ? `Pages: ${annotation.customRange || 'Custom'}`
+            : annotation.skipCover
+            ? 'All Pages (Except Cover)'
+            : 'All Pages'}
+        </span>
+      )}
       {annotation.type === 'text' && selectedItemId === annotation.id && <button type="button" className="pdf-annotation-delete" title="Delete text" aria-label="Delete text" onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); onRemoveItem(pageNumber, annotation.id); setSelectedItemId(null); }}><X size={12} /></button>}
       {annotation.type === 'shape' && selectedItemId === annotation.id && <button type="button" className="pdf-annotation-delete" title="Delete shape" aria-label="Delete shape" onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); onRemoveItem(pageNumber, annotation.id); setSelectedItemId(null); }}><X size={12} /></button>}
       {(annotation.type === 'shape' || annotation.type === 'text') && selectedItemId === annotation.id && ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(handle => <span key={handle} data-resize={handle} className={`pdf-shape-resize-handle handle-${handle}`} />)}
@@ -318,6 +365,232 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
   );
 };
 
+const parsePageRangeString = (str, max) => {
+  if (!str || typeof str !== 'string') return [];
+  const pages = new Set();
+  const parts = str.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean);
+  for (const part of parts) {
+    if (part.includes('-')) {
+      const [startStr, endStr] = part.split('-');
+      const start = parseInt(startStr, 10);
+      const end = parseInt(endStr, 10);
+      if (!isNaN(start) && !isNaN(end)) {
+        const minP = Math.max(1, Math.min(start, end));
+        const maxP = Math.min(max, Math.max(start, end));
+        for (let p = minP; p <= maxP; p++) pages.add(p);
+      }
+    } else {
+      const p = parseInt(part, 10);
+      if (!isNaN(p) && p >= 1 && p <= max) {
+        pages.add(p);
+      }
+    }
+  }
+  return Array.from(pages).sort((a, b) => a - b);
+};
+
+const computeTargetPages = (scopeMode, customRange, skipCover, totalPages) => {
+  let pages = [];
+  if (scopeMode === 'odd') {
+    pages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p % 2 === 1);
+  } else if (scopeMode === 'even') {
+    pages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p % 2 === 0);
+  } else if (scopeMode === 'custom') {
+    pages = parsePageRangeString(customRange, totalPages);
+  } else {
+    pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (skipCover) {
+    pages = pages.filter(p => p !== 1);
+  }
+  return pages;
+};
+
+const PageRangeRadioGroup = ({
+  pageCount,
+  activePage,
+  scopeMode, // 'all' | 'odd' | 'even' | 'custom'
+  customRange,
+  skipCover,
+  onChangeScope,
+  onChangeCustomRange,
+  onToggleSkipCover,
+}) => {
+  const targetPages = computeTargetPages(scopeMode, customRange, skipCover, pageCount);
+
+  return (
+    <div style={{
+      marginTop: '0.65rem',
+      padding: '0.75rem',
+      background: 'var(--tool-bg, #f8fafc)',
+      borderRadius: '8px',
+      border: '1px solid var(--border, #e2e8f0)',
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        {/* All */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', userSelect: 'none' }}>
+          <span style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            border: scopeMode === 'all' ? '2px solid #2563eb' : '2px solid #9ca3af',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'border-color 0.15s ease',
+          }}>
+            {scopeMode === 'all' && (
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#2563eb', display: 'block' }} />
+            )}
+          </span>
+          <input
+            type="radio"
+            name="pageRangeScope"
+            checked={scopeMode === 'all'}
+            onChange={() => onChangeScope('all')}
+            style={{ display: 'none' }}
+          />
+          <span>All</span>
+        </label>
+
+        {/* Odd pages only */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', userSelect: 'none' }}>
+          <span style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            border: scopeMode === 'odd' ? '2px solid #2563eb' : '2px solid #9ca3af',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'border-color 0.15s ease',
+          }}>
+            {scopeMode === 'odd' && (
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#2563eb', display: 'block' }} />
+            )}
+          </span>
+          <input
+            type="radio"
+            name="pageRangeScope"
+            checked={scopeMode === 'odd'}
+            onChange={() => onChangeScope('odd')}
+            style={{ display: 'none' }}
+          />
+          <span>Odd pages only</span>
+        </label>
+
+        {/* Even pages only */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', userSelect: 'none' }}>
+          <span style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            border: scopeMode === 'even' ? '2px solid #2563eb' : '2px solid #9ca3af',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'border-color 0.15s ease',
+          }}>
+            {scopeMode === 'even' && (
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#2563eb', display: 'block' }} />
+            )}
+          </span>
+          <input
+            type="radio"
+            name="pageRangeScope"
+            checked={scopeMode === 'even'}
+            onChange={() => onChangeScope('even')}
+            style={{ display: 'none' }}
+          />
+          <span>Even pages only</span>
+        </label>
+
+        {/* Custom Range with input */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', userSelect: 'none' }}>
+          <span style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            border: scopeMode === 'custom' ? '2px solid #2563eb' : '2px solid #9ca3af',
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'border-color 0.15s ease',
+          }}>
+            {scopeMode === 'custom' && (
+              <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#2563eb', display: 'block' }} />
+            )}
+          </span>
+          <input
+            type="radio"
+            name="pageRangeScope"
+            checked={scopeMode === 'custom'}
+            onChange={() => onChangeScope('custom')}
+            style={{ display: 'none' }}
+          />
+          <input
+            type="text"
+            placeholder="e.g. 1-5, 8, 11-13"
+            value={customRange || ''}
+            onFocus={() => {
+              if (scopeMode !== 'custom') onChangeScope('custom');
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (scopeMode !== 'custom') onChangeScope('custom');
+            }}
+            onChange={(e) => {
+              onChangeCustomRange(e.target.value);
+            }}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '0.42rem 0.65rem',
+              fontSize: '0.82rem',
+              borderRadius: '7px',
+              border: scopeMode === 'custom' ? '1.5px solid #2563eb' : '1px solid var(--border, #d1d5db)',
+              background: 'var(--bg-card, #ffffff)',
+              color: 'var(--text-main)',
+              outline: 'none',
+              transition: 'border-color 0.15s ease',
+            }}
+          />
+        </label>
+      </div>
+
+      {/* Skip Cover Option */}
+      {pageCount > 1 && (
+        <div style={{ marginTop: '0.65rem', paddingTop: '0.55rem', borderTop: '1px solid var(--border)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text-main)', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={Boolean(skipCover)}
+              onChange={(e) => onToggleSkipCover(e.target.checked)}
+              style={{ accentColor: '#2563eb', width: '15px', height: '15px', cursor: 'pointer' }}
+            />
+            <span>Except Cover Page (Skip Page 1)</span>
+          </label>
+        </div>
+      )}
+
+      {/* Live Active Summary */}
+      <p style={{ margin: '0.5rem 0 0', fontSize: '0.73rem', color: targetPages.length > 0 ? 'var(--primary, #2563eb)' : '#ef4444', fontWeight: 500, lineHeight: 1.35 }}>
+        {targetPages.length > 0
+          ? `✓ Active on ${targetPages.length} of ${pageCount} pages: [${targetPages.slice(0, 10).join(', ')}${targetPages.length > 10 ? '...' : ''}]`
+          : '⚠️ No pages selected. Enter a valid page range.'}
+      </p>
+    </div>
+  );
+};
+
 const EditPdfPage = ({ theme, toggleTheme }) => {
   const [file, setFile] = useState(null);
   const [pdfDocument, setPdfDocument] = useState(null);
@@ -326,6 +599,10 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   const [activeTool, setActiveTool] = useState('drag');
   const [annotationText, setAnnotationText] = useState('Your text');
   const [shape, setShape] = useState('rectangle');
+  const [shapeScope, setShapeScope] = useState('single');
+  const [shapeScopeMode, setShapeScopeMode] = useState('all');
+  const [shapeCustomRange, setShapeCustomRange] = useState('');
+  const [shapeSkipCover, setShapeSkipCover] = useState(false);
   const [color, setColor] = useState('#2563eb');
   const [textColor, setTextColor] = useState('#111827');
   const [brushSize, setBrushSize] = useState(3);
@@ -355,6 +632,8 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   const imageInputRef = useRef(null);
   const pendingImagePositionRef = useRef(null);
   const pagesContainerRef = useRef(null);
+  const activeShapeDraftRef = useRef(null);
+  const activeImageDraftRef = useRef(null);
 
   const getMostVisiblePage = () => {
     const container = pagesContainerRef.current;
@@ -413,6 +692,16 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setPdfDocument(null);
     setPageCount(0);
     setAnnotations({});
+    setSelectedText(null);
+    setSelectedShape(null);
+    setSelectedDrawing(null);
+    setSelectedImage(null);
+    activeShapeDraftRef.current = null;
+    activeImageDraftRef.current = null;
+    setShapeScope('single');
+    setShapeScopeMode('all');
+    setShapeCustomRange('');
+    setShapeSkipCover(false);
     setResult(null);
     setError('');
     try {
@@ -430,7 +719,58 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   };
 
   const addAnnotation = (pageNumber, annotation) => {
-    setAnnotations(current => ({ ...current, [pageNumber]: [...(current[pageNumber] || []), { ...annotation, text: annotation.type === 'text' ? annotationText : annotation.type === 'watermark' ? (annotationText || 'WATERMARK') : annotation.text, shape }] }));
+    if (annotation.type === 'shape' && (shapeScope === 'all' || annotation.applyAll) && pageCount > 1) {
+      const groupId = `shapegroup-${annotation.id}`;
+      const scopeMode = shapeScopeMode || 'all';
+      const customRange = shapeCustomRange || '';
+      const skipCover = shapeSkipCover || false;
+      const targetPages = computeTargetPages(scopeMode, customRange, skipCover, pageCount);
+      const excludedPages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => !targetPages.includes(p));
+
+      const baseProps = {
+        type: 'shape',
+        shape: annotation.shape || shape || 'rectangle',
+        x: annotation.x,
+        y: annotation.y,
+        width: annotation.width || 0.22,
+        height: annotation.height || 0.1,
+        color: annotation.color || color || '#2563eb',
+        groupId,
+        applyAll: true,
+        pageScope: scopeMode,
+        customRange,
+        skipCover,
+        excludedPages,
+        targetPages,
+      };
+      setAnnotations(prev => {
+        const next = { ...prev };
+        for (let p = 1; p <= pageCount; p++) {
+          if (!targetPages.includes(p)) continue;
+          const list = next[p] ? [...next[p]] : [];
+          list.push({
+            ...baseProps,
+            id: p === pageNumber ? annotation.id : `shape-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`,
+          });
+          next[p] = list;
+        }
+        return next;
+      });
+      setResult(null);
+      return;
+    }
+
+    setAnnotations(current => ({
+      ...current,
+      [pageNumber]: [
+        ...(current[pageNumber] || []),
+        {
+          ...annotation,
+          text: annotation.type === 'text' ? annotationText : annotation.type === 'watermark' ? (annotationText || 'WATERMARK') : annotation.text,
+          shape: annotation.type === 'shape' ? (annotation.shape || shape) : annotation.shape,
+        }
+      ]
+    }));
     setResult(null);
   };
 
@@ -438,7 +778,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setAnnotations(current => {
       const pageItems = current[pageNumber] || [];
       const item = pageItems.find(i => i.id === id);
-      if (item?.type === 'image' && item.applyAll && item.groupId) {
+      if ((item?.type === 'image' || item?.type === 'shape') && item.applyAll && item.groupId) {
         const groupId = item.groupId;
         const next = { ...current };
         for (let p = 1; p <= pageCount; p++) {
@@ -460,7 +800,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setAnnotations(current => {
       const pageItems = current[pageNumber] || [];
       const item = pageItems.find(i => i.id === id);
-      if (item?.type === 'image' && item.applyAll && item.groupId) {
+      if ((item?.type === 'image' || item?.type === 'shape') && item.applyAll && item.groupId) {
         const groupId = item.groupId;
         const next = { ...current };
         for (let p = 1; p <= pageCount; p++) {
@@ -529,19 +869,181 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   };
   const updateSelectedShape = (changes) => {
     if (!selectedShape) return;
-    setAnnotations(current => ({ ...current, [selectedShape.pageNumber]: (current[selectedShape.pageNumber] || []).map(item => item.id === selectedShape.id ? { ...item, ...changes } : item) }));
+    let currentItem = (annotations[selectedShape.pageNumber] || []).find(i => i.id === selectedShape.id);
+    if (!currentItem && selectedShape?.groupId) {
+      for (let p = 1; p <= pageCount; p++) {
+        const found = (annotations[p] || []).find(i => i.groupId === selectedShape.groupId);
+        if (found) { currentItem = found; break; }
+      }
+    }
+    if (!currentItem && activeShapeDraftRef.current) {
+      currentItem = activeShapeDraftRef.current;
+    }
+    const isAll = currentItem?.applyAll;
+    const groupId = currentItem?.groupId || selectedShape?.groupId;
+
+    if (activeShapeDraftRef.current) {
+      activeShapeDraftRef.current = { ...activeShapeDraftRef.current, ...changes };
+    }
+
+    setAnnotations(prev => {
+      if (!isAll || !groupId) {
+        return {
+          ...prev,
+          [selectedShape.pageNumber]: (prev[selectedShape.pageNumber] || []).map(item => item.id === selectedShape.id ? { ...item, ...changes } : item)
+        };
+      }
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        if (next[p]) {
+          next[p] = next[p].map(item => (item.id === selectedShape.id || item.groupId === groupId) ? { ...item, ...changes } : item);
+        }
+      }
+      return next;
+    });
     setResult(null);
   };
+
+  const applyShapeToAllPages = (sourceOverride, newScopeMode = null, newCustomRange = null, newSkipCover = null) => {
+    const cur = sourceOverride || selectedShape;
+    if (!cur || !pageCount) return;
+    let item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    if (!item && cur.groupId) {
+      for (let p = 1; p <= pageCount; p++) {
+        const found = (annotations[p] || []).find(i => i.groupId === cur.groupId);
+        if (found) { item = found; break; }
+      }
+    }
+    if (!item && activeShapeDraftRef.current) {
+      item = activeShapeDraftRef.current;
+    }
+    if (!item) return;
+
+    const groupId = item.groupId || `shapegroup-${item.id}`;
+    const scopeMode = newScopeMode !== null ? newScopeMode : (item.pageScope || shapeScopeMode || 'all');
+    const customRange = newCustomRange !== null ? newCustomRange : (item.customRange || shapeCustomRange || '');
+    const skipCover = newSkipCover !== null ? newSkipCover : (item.skipCover !== undefined ? item.skipCover : shapeSkipCover);
+
+    const targetPages = computeTargetPages(scopeMode, customRange, skipCover, pageCount);
+    const excludedPages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => !targetPages.includes(p));
+
+    const baseProps = {
+      type: 'shape',
+      shape: item.shape || shape || 'rectangle',
+      x: item.x,
+      y: item.y,
+      width: item.width || 0.22,
+      height: item.height || 0.1,
+      color: item.color || color || '#2563eb',
+      groupId,
+      applyAll: true,
+      pageScope: scopeMode,
+      customRange,
+      skipCover,
+      excludedPages,
+      targetPages,
+    };
+
+    activeShapeDraftRef.current = { ...baseProps };
+
+    let targetPage = cur.pageNumber;
+    if (!targetPages.includes(targetPage)) {
+      targetPage = targetPages.length > 0 ? targetPages[0] : null;
+    }
+
+    let targetId = null;
+    if (targetPage !== null) {
+      const existingOnTarget = (annotations[targetPage] || []).find(i => i.groupId === groupId || i.id === item.id);
+      targetId = existingOnTarget ? existingOnTarget.id : `shape-${Date.now()}-${targetPage}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        const pageItems = next[p] ? [...next[p]] : [];
+        const isIncluded = targetPages.includes(p);
+        const existingIdx = pageItems.findIndex(i => i.id === item.id || (i.groupId && i.groupId === groupId));
+
+        if (!isIncluded) {
+          if (existingIdx !== -1) {
+            pageItems.splice(existingIdx, 1);
+          }
+        } else {
+          if (existingIdx !== -1) {
+            pageItems[existingIdx] = {
+              ...pageItems[existingIdx],
+              ...baseProps,
+              id: pageItems[existingIdx].id,
+            };
+          } else {
+            const newId = p === targetPage && targetId ? targetId : `shape-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`;
+            pageItems.push({
+              ...baseProps,
+              id: newId,
+            });
+          }
+        }
+        next[p] = pageItems;
+      }
+      return next;
+    });
+
+    if (targetPage !== null && targetId) {
+      setSelectedShape({ pageNumber: targetPage, id: targetId, groupId });
+      setActivePage(targetPage);
+    } else {
+      setSelectedShape(prev => prev ? { ...prev, groupId } : { pageNumber: activePage || 1, id: item.id, groupId });
+    }
+    setBrushOptionsOpen(true);
+    setResult(null);
+  };
+
+  const setShapeScopeToIndividual = (sourceOverride) => {
+    const cur = sourceOverride || selectedShape;
+    if (!cur) return;
+    const item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    if (!item) return;
+
+    const groupId = item.groupId;
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        if (p === cur.pageNumber) {
+          next[p] = (next[p] || []).map(i => (i.id === item.id || i.groupId === groupId) ? { ...i, applyAll: false, excludedPages: [] } : i);
+        } else if (groupId) {
+          next[p] = (next[p] || []).filter(i => i.groupId !== groupId && i.id !== item.id);
+        }
+      }
+      return next;
+    });
+    setResult(null);
+  };
+
   const updateSelectedDrawing = (changes) => {
     if (!selectedDrawing) return;
     setAnnotations(current => ({ ...current, [selectedDrawing.pageNumber]: (current[selectedDrawing.pageNumber] || []).map(item => item.id === selectedDrawing.id ? { ...item, ...changes } : item) }));
     setResult(null);
   };
+
   const updateSelectedImage = (changes) => {
     if (!selectedImage) return;
-    const currentItem = (annotations[selectedImage.pageNumber] || []).find(i => i.id === selectedImage.id);
+    let currentItem = (annotations[selectedImage.pageNumber] || []).find(i => i.id === selectedImage.id);
+    if (!currentItem && selectedImage?.groupId) {
+      for (let p = 1; p <= pageCount; p++) {
+        const found = (annotations[p] || []).find(i => i.groupId === selectedImage.groupId);
+        if (found) { currentItem = found; break; }
+      }
+    }
+    if (!currentItem && activeImageDraftRef.current) {
+      currentItem = activeImageDraftRef.current;
+    }
     const isAll = currentItem?.applyAll;
-    const groupId = currentItem?.groupId;
+    const groupId = currentItem?.groupId || selectedImage?.groupId;
+
+    if (activeImageDraftRef.current) {
+      activeImageDraftRef.current = { ...activeImageDraftRef.current, ...changes };
+    }
 
     setAnnotations(prev => {
       if (!isAll || !groupId) {
@@ -561,13 +1063,29 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     setResult(null);
   };
 
-  const applyImageToAllPages = (sourceOverride) => {
+  const applyImageToAllPages = (sourceOverride, newScopeMode = null, newCustomRange = null, newSkipCover = null) => {
     const cur = sourceOverride || selectedImage;
     if (!cur || !pageCount) return;
-    const item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    let item = (annotations[cur.pageNumber] || []).find(i => i.id === cur.id);
+    if (!item && cur.groupId) {
+      for (let p = 1; p <= pageCount; p++) {
+        const found = (annotations[p] || []).find(i => i.groupId === cur.groupId);
+        if (found) { item = found; break; }
+      }
+    }
+    if (!item && activeImageDraftRef.current) {
+      item = activeImageDraftRef.current;
+    }
     if (!item) return;
 
     const groupId = item.groupId || `imggroup-${item.id}`;
+    const scopeMode = newScopeMode !== null ? newScopeMode : (item.pageScope || 'all');
+    const customRange = newCustomRange !== null ? newCustomRange : (item.customRange || '');
+    const skipCover = newSkipCover !== null ? newSkipCover : (item.skipCover !== undefined ? item.skipCover : false);
+
+    const targetPages = computeTargetPages(scopeMode, customRange, skipCover, pageCount);
+    const excludedPages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => !targetPages.includes(p));
+
     const baseProps = {
       type: 'image',
       x: item.x,
@@ -578,28 +1096,64 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
       opacity: item.opacity ?? 1,
       groupId,
       applyAll: true,
+      pageScope: scopeMode,
+      customRange,
+      skipCover,
+      excludedPages,
+      targetPages,
     };
+
+    activeImageDraftRef.current = { ...baseProps };
+
+    let targetPage = cur.pageNumber;
+    if (!targetPages.includes(targetPage)) {
+      targetPage = targetPages.length > 0 ? targetPages[0] : null;
+    }
+
+    let targetId = null;
+    if (targetPage !== null) {
+      const existingOnTarget = (annotations[targetPage] || []).find(i => i.groupId === groupId || i.id === item.id);
+      targetId = existingOnTarget ? existingOnTarget.id : `image-${Date.now()}-${targetPage}-${Math.random().toString(36).slice(2, 6)}`;
+    }
 
     setAnnotations(prev => {
       const next = { ...prev };
       for (let p = 1; p <= pageCount; p++) {
         const pageItems = next[p] ? [...next[p]] : [];
+        const isIncluded = targetPages.includes(p);
         const existingIdx = pageItems.findIndex(i => i.id === item.id || (i.groupId && i.groupId === groupId));
-        if (existingIdx !== -1) {
-          pageItems[existingIdx] = {
-            ...pageItems[existingIdx],
-            ...baseProps,
-          };
+
+        if (!isIncluded) {
+          if (existingIdx !== -1) {
+            pageItems.splice(existingIdx, 1);
+          }
         } else {
-          pageItems.push({
-            ...baseProps,
-            id: `image-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`,
-          });
+          if (existingIdx !== -1) {
+            pageItems[existingIdx] = {
+              ...pageItems[existingIdx],
+              ...baseProps,
+              id: pageItems[existingIdx].id,
+            };
+          } else {
+            const newId = p === targetPage && targetId ? targetId : `image-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`;
+            pageItems.push({
+              ...baseProps,
+              id: newId,
+            });
+          }
         }
         next[p] = pageItems;
       }
       return next;
     });
+
+    if (targetPage !== null && targetId) {
+      setSelectedImage({ pageNumber: targetPage, id: targetId, groupId });
+      setActivePage(targetPage);
+    } else {
+      setSelectedImage(prev => prev ? { ...prev, groupId } : { pageNumber: activePage || 1, id: item.id, groupId });
+    }
+    setBrushOptionsOpen(true);
     setResult(null);
   };
 
@@ -615,7 +1169,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
       const next = { ...prev };
       for (let p = 1; p <= pageCount; p++) {
         if (p === cur.pageNumber) {
-          next[p] = (next[p] || []).map(i => (i.id === item.id || i.groupId === groupId) ? { ...i, applyAll: false } : i);
+          next[p] = (next[p] || []).map(i => (i.id === item.id || i.groupId === groupId) ? { ...i, applyAll: false, excludedPages: [] } : i);
         } else if (groupId) {
           next[p] = (next[p] || []).filter(i => i.groupId !== groupId && i.id !== item.id);
         }
@@ -623,6 +1177,207 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
       return next;
     });
     setResult(null);
+  };
+
+  const updatePageScopeForGroup = (groupId, itemType, newScopeMode, newCustomRange, newSkipCover) => {
+    let masterItem = null;
+    let masterPageNumber = null;
+    for (let p = 1; p <= pageCount; p++) {
+      const found = (annotations[p] || []).find(i => i.groupId === groupId);
+      if (found) {
+        masterItem = found;
+        masterPageNumber = p;
+        break;
+      }
+    }
+    if (!masterItem) {
+      if (itemType === 'shape' && activeShapeDraftRef.current?.groupId === groupId) {
+        masterItem = activeShapeDraftRef.current;
+      } else if (itemType === 'image' && activeImageDraftRef.current?.groupId === groupId) {
+        masterItem = activeImageDraftRef.current;
+      }
+    }
+    if (!masterItem) return;
+
+    const targetPages = computeTargetPages(newScopeMode, newCustomRange, newSkipCover, pageCount);
+    const excludedPages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => !targetPages.includes(p));
+
+    const baseProps = {
+      ...masterItem,
+      groupId,
+      applyAll: true,
+      pageScope: newScopeMode,
+      customRange: newCustomRange,
+      skipCover: Boolean(newSkipCover),
+      excludedPages,
+      targetPages,
+    };
+
+    if (itemType === 'shape') {
+      activeShapeDraftRef.current = { ...baseProps };
+    } else {
+      activeImageDraftRef.current = { ...baseProps };
+    }
+
+    const currentSelectedPage = itemType === 'shape' ? selectedShape?.pageNumber : selectedImage?.pageNumber;
+    let targetPage = currentSelectedPage;
+    if (!targetPages.includes(targetPage)) {
+      targetPage = targetPages.length > 0 ? targetPages[0] : null;
+    }
+
+    let targetId = null;
+    if (targetPage !== null) {
+      const existingOnTarget = (annotations[targetPage] || []).find(i => i.groupId === groupId || i.id === masterItem.id);
+      targetId = existingOnTarget ? existingOnTarget.id : `${itemType}-${Date.now()}-${targetPage}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        const list = next[p] ? [...next[p]] : [];
+        const isIncluded = targetPages.includes(p);
+        const existingIdx = list.findIndex(i => i.groupId === groupId || i.id === masterItem.id);
+
+        if (!isIncluded) {
+          if (existingIdx !== -1) {
+            list.splice(existingIdx, 1);
+          }
+        } else {
+          if (existingIdx !== -1) {
+            list[existingIdx] = {
+              ...list[existingIdx],
+              ...baseProps,
+              id: list[existingIdx].id,
+            };
+          } else {
+            const newId = p === targetPage && targetId ? targetId : `${itemType}-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`;
+            list.push({
+              ...baseProps,
+              id: newId,
+            });
+          }
+        }
+        next[p] = list;
+      }
+      return next;
+    });
+
+    if (targetPage !== null && targetId) {
+      const nextSel = { pageNumber: targetPage, id: targetId, groupId };
+      if (itemType === 'shape') {
+        setSelectedShape(nextSel);
+        setActivePage(targetPage);
+      } else if (itemType === 'image') {
+        setSelectedImage(nextSel);
+        setActivePage(targetPage);
+      }
+    } else {
+      const fallbackSel = { pageNumber: activePage || 1, id: masterItem.id, groupId };
+      if (itemType === 'shape') {
+        setSelectedShape(fallbackSel);
+      } else if (itemType === 'image') {
+        setSelectedImage(fallbackSel);
+      }
+    }
+    setBrushOptionsOpen(true);
+    setResult(null);
+  };
+
+  const updateExcludedPagesForGroup = (groupId, itemType, newExcludedPages) => {
+    const validExcluded = Array.from(new Set(newExcludedPages.map(Number).filter(p => p >= 1 && p <= pageCount))).sort((a, b) => a - b);
+
+    let masterItem = null;
+    let masterPageNumber = null;
+    for (let p = 1; p <= pageCount; p++) {
+      const found = (annotations[p] || []).find(i => i.groupId === groupId);
+      if (found) {
+        masterItem = found;
+        masterPageNumber = p;
+        break;
+      }
+    }
+    if (!masterItem) return;
+
+    const baseProps = {
+      ...masterItem,
+      groupId,
+      applyAll: true,
+      excludedPages: validExcluded,
+    };
+
+    let nextSelection = null;
+    const currentSelectedPage = itemType === 'shape' ? selectedShape?.pageNumber : selectedImage?.pageNumber;
+    let targetPage = currentSelectedPage;
+    if (validExcluded.includes(targetPage)) {
+      targetPage = Array.from({ length: pageCount }, (_, i) => i + 1).find(p => !validExcluded.includes(p)) || null;
+    }
+
+    setAnnotations(prev => {
+      const next = { ...prev };
+      for (let p = 1; p <= pageCount; p++) {
+        const list = next[p] ? [...next[p]] : [];
+        const isExcluded = validExcluded.includes(p);
+        const existingIdx = list.findIndex(i => i.groupId === groupId || i.id === masterItem.id);
+
+        if (isExcluded) {
+          if (existingIdx !== -1) {
+            list.splice(existingIdx, 1);
+          }
+        } else {
+          if (existingIdx !== -1) {
+            list[existingIdx] = {
+              ...list[existingIdx],
+              ...baseProps,
+              id: list[existingIdx].id,
+            };
+            if (p === targetPage) {
+              nextSelection = { pageNumber: p, id: list[existingIdx].id };
+            }
+          } else {
+            const newId = `${itemType}-${Date.now()}-${p}-${Math.random().toString(36).slice(2, 6)}`;
+            list.push({
+              ...baseProps,
+              id: newId,
+            });
+            if (p === targetPage) {
+              nextSelection = { pageNumber: p, id: newId };
+            }
+          }
+        }
+        next[p] = list;
+      }
+      return next;
+    });
+
+    if (nextSelection) {
+      if (itemType === 'shape') {
+        setSelectedShape(nextSelection);
+      } else if (itemType === 'image') {
+        setSelectedImage(nextSelection);
+      }
+    } else if (targetPage === null) {
+      if (itemType === 'shape') setSelectedShape(null);
+      else if (itemType === 'image') setSelectedImage(null);
+    }
+    setResult(null);
+  };
+
+  const toggleExcludePageForShape = (pageToToggle) => {
+    if (!selectedShapeItem || !selectedShapeItem.groupId) return;
+    const currentExcluded = selectedShapeItem.excludedPages || [];
+    const nextExcluded = currentExcluded.includes(pageToToggle)
+      ? currentExcluded.filter(p => p !== pageToToggle)
+      : [...currentExcluded, pageToToggle];
+    updateExcludedPagesForGroup(selectedShapeItem.groupId, 'shape', nextExcluded);
+  };
+
+  const toggleExcludePageForImage = (pageToToggle) => {
+    if (!selectedImageItem || !selectedImageItem.groupId) return;
+    const currentExcluded = selectedImageItem.excludedPages || [];
+    const nextExcluded = currentExcluded.includes(pageToToggle)
+      ? currentExcluded.filter(p => p !== pageToToggle)
+      : [...currentExcluded, pageToToggle];
+    updateExcludedPagesForGroup(selectedImageItem.groupId, 'image', nextExcluded);
   };
 
   const handlePageImageClick = (pageNumber, point) => {
@@ -893,9 +1648,43 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
   const editingExistingText = Boolean(selectedTextItem);
   const showPageNumberSettings = activeTool === 'pageNumber' && brushOptionsOpen;
   const showWatermarkSettings = activeTool === 'watermark' && brushOptionsOpen;
-  const selectedShapeItem = selectedShape ? (annotations[selectedShape.pageNumber] || []).find(item => item.id === selectedShape.id) : null;
+  let currentShapeItem = selectedShape ? (annotations[selectedShape.pageNumber] || []).find(item => item.id === selectedShape.id) : null;
+  if (!currentShapeItem && selectedShape?.groupId) {
+    for (let p = 1; p <= pageCount; p++) {
+      const found = (annotations[p] || []).find(item => item.groupId === selectedShape.groupId);
+      if (found) {
+        currentShapeItem = found;
+        break;
+      }
+    }
+  }
+  if (!currentShapeItem && activeShapeDraftRef.current && (brushOptionsOpen && selectedShape)) {
+    currentShapeItem = activeShapeDraftRef.current;
+  }
+  if (currentShapeItem) {
+    activeShapeDraftRef.current = currentShapeItem;
+  }
+  const selectedShapeItem = currentShapeItem;
+
   const selectedDrawingItem = selectedDrawing ? (annotations[selectedDrawing.pageNumber] || []).find(item => item.id === selectedDrawing.id) : null;
-  const selectedImageItem = selectedImage ? (annotations[selectedImage.pageNumber] || []).find(item => item.id === selectedImage.id) : null;
+
+  let currentImageItem = selectedImage ? (annotations[selectedImage.pageNumber] || []).find(item => item.id === selectedImage.id) : null;
+  if (!currentImageItem && selectedImage?.groupId) {
+    for (let p = 1; p <= pageCount; p++) {
+      const found = (annotations[p] || []).find(item => item.groupId === selectedImage.groupId);
+      if (found) {
+        currentImageItem = found;
+        break;
+      }
+    }
+  }
+  if (!currentImageItem && activeImageDraftRef.current && (brushOptionsOpen && selectedImage)) {
+    currentImageItem = activeImageDraftRef.current;
+  }
+  if (currentImageItem) {
+    activeImageDraftRef.current = currentImageItem;
+  }
+  const selectedImageItem = currentImageItem;
   const showShapeSettings = brushOptionsOpen && (activeTool === 'shape' || Boolean(selectedShapeItem));
   const showDrawingSettings = brushOptionsOpen && Boolean(selectedDrawingItem);
   const showImageSettings = brushOptionsOpen && (activeTool === 'image' || Boolean(selectedImageItem));
@@ -1003,13 +1792,30 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                     items={annotations[pageNumber] || []}
                     activeTool={activeTool}
                     activePage={activePage}
+                    selectedShape={selectedShape}
+                    selectedImage={selectedImage}
                     onPageFocus={setActivePage}
                     onAddItem={addAnnotation}
                     onMoveItem={moveAnnotation}
                     onRemoveItem={removeAnnotation}
                     onEraseItem={eraseDrawSegment}
                     onEditText={editAnnotationText}
-                    onTextAdded={() => { setActiveTool('drag'); setSelectedShape(null); setSelectedDrawing(null); setSelectedImage(null); setBrushOptionsOpen(false); }}
+                    onTextAdded={(tool, pageNum, itemId) => {
+                      setActiveTool('drag');
+                      setSelectedText(null);
+                      setSelectedDrawing(null);
+                      setSelectedImage(null);
+                      if (tool === 'shape' && itemId) {
+                        const itm = (annotations[pageNum] || []).find(i => i.id === itemId);
+                        if (itm) activeShapeDraftRef.current = itm;
+                        setSelectedShape({ pageNumber: pageNum, id: itemId, groupId: itm?.groupId });
+                        setBrushOptionsOpen(true);
+                      } else {
+                        setSelectedShape(null);
+                        activeShapeDraftRef.current = null;
+                        setBrushOptionsOpen(false);
+                      }
+                    }}
                     onAddImageClick={handlePageImageClick}
                     onSelectText={(selectedPage, item) => {
                       setActivePage(selectedPage || 1);
@@ -1023,7 +1829,8 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                         setSelectedText(null);
                         setSelectedDrawing(null);
                         setSelectedImage(null);
-                        setSelectedShape({ pageNumber: selectedPage, id: item.id });
+                        activeShapeDraftRef.current = item;
+                        setSelectedShape({ pageNumber: selectedPage, id: item.id, groupId: item.groupId });
                         setShape(item.shape || 'rectangle');
                         setColor(item.color || '#2563eb');
                         setBrushOptionsOpen(true);
@@ -1039,13 +1846,16 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                         setSelectedText(null);
                         setSelectedShape(null);
                         setSelectedDrawing(null);
-                        setSelectedImage({ pageNumber: selectedPage, id: item.id });
+                        activeImageDraftRef.current = item;
+                        setSelectedImage({ pageNumber: selectedPage, id: item.id, groupId: item.groupId });
                         setBrushOptionsOpen(true);
                       } else {
                         setSelectedText(null);
                         setSelectedShape(null);
                         setSelectedDrawing(null);
                         setSelectedImage(null);
+                        activeShapeDraftRef.current = null;
+                        activeImageDraftRef.current = null;
                         setBrushOptionsOpen(false);
                       }
                     }}
@@ -1123,6 +1933,185 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 </div>
               </div>
               <div className="pdf-shape-settings-preview"><div className={`pdf-shape-settings-preview-shape ${selectedShapeItem?.shape || shape}`} style={{ '--shape-color': selectedShapeItem?.color || color }} /></div>
+
+              {pageCount > 1 && (
+                <div style={{ marginTop: '0.85rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '0.45rem' }}>
+                    Apply to Pages
+                  </span>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.55rem' }}>
+                    <button
+                      type="button"
+                      className={`pdf-remove-quick-btn ${(selectedShapeItem ? !selectedShapeItem.applyAll : shapeScope === 'single') ? 'active' : ''}`}
+                      style={{
+                        padding: '0.5rem 0.4rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        borderRadius: '7px',
+                        border: (selectedShapeItem ? !selectedShapeItem.applyAll : shapeScope === 'single') ? '1.5px solid var(--primary, #2563eb)' : '1px solid var(--border)',
+                        background: (selectedShapeItem ? !selectedShapeItem.applyAll : shapeScope === 'single') ? 'rgba(37, 99, 235, 0.1)' : 'var(--tool-bg)',
+                        color: (selectedShapeItem ? !selectedShapeItem.applyAll : shapeScope === 'single') ? 'var(--primary, #2563eb)' : 'var(--text-main)',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        setShapeScope('single');
+                        if (selectedShapeItem?.applyAll) {
+                          setShapeScopeToIndividual();
+                        }
+                      }}
+                    >
+                      <FileText size={13} />
+                      <span>This Page ({selectedShape ? selectedShape.pageNumber : activePage})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`pdf-remove-quick-btn ${(selectedShapeItem ? selectedShapeItem.applyAll : shapeScope === 'all') ? 'active' : ''}`}
+                      style={{
+                        padding: '0.5rem 0.4rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        borderRadius: '7px',
+                        border: (selectedShapeItem ? selectedShapeItem.applyAll : shapeScope === 'all') ? '1.5px solid var(--primary, #2563eb)' : '1px solid var(--border)',
+                        background: (selectedShapeItem ? selectedShapeItem.applyAll : shapeScope === 'all') ? 'rgba(37, 99, 235, 0.1)' : 'var(--tool-bg)',
+                        color: (selectedShapeItem ? selectedShapeItem.applyAll : shapeScope === 'all') ? 'var(--primary, #2563eb)' : 'var(--text-main)',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        setShapeScope('all');
+                        if (selectedShapeItem && !selectedShapeItem.applyAll) {
+                          applyShapeToAllPages();
+                        }
+                      }}
+                    >
+                      <Copy size={13} />
+                      <span>All Pages ({pageCount})</span>
+                    </button>
+                  </div>
+
+                  {selectedShapeItem && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{
+                        width: '100%',
+                        padding: '0.62rem 0.85rem',
+                        fontSize: '0.84rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        borderRadius: '7px',
+                        background: selectedShapeItem.applyAll ? '#16a34a' : undefined,
+                        borderColor: selectedShapeItem.applyAll ? '#16a34a' : undefined,
+                        color: selectedShapeItem.applyAll ? '#ffffff' : undefined,
+                      }}
+                      onClick={() => {
+                        if (selectedShapeItem.applyAll) {
+                          setShapeScope('single');
+                          setShapeScopeToIndividual();
+                        } else {
+                          setShapeScope('all');
+                          applyShapeToAllPages();
+                        }
+                      }}
+                    >
+                      {selectedShapeItem.applyAll ? (
+                        <>
+                          <Check size={15} />
+                          <span>Applied on all {pageCount} pages (Revert)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={15} />
+                          <span>Apply to All Pages (Same Place)</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  <p style={{ margin: '0.45rem 0 0', fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
+                    {selectedShapeItem
+                      ? (selectedShapeItem.applyAll
+                        ? `✓ Synced across pages. Dragging, resizing or editing color/type will update every active page identically.`
+                        : `Placed on Page ${selectedShape.pageNumber} only. Click above to stamp this shape at the exact same location across pages.`)
+                      : (shapeScope === 'all'
+                        ? `✓ All pages selected. Click on any page to place this shape across the specified pages.`
+                        : `Placed on Page ${activePage} only. Click to add on this page, or choose 'All Pages' above.`)}
+                  </p>
+
+                  {((selectedShapeItem && selectedShapeItem.applyAll) || (!selectedShapeItem && shapeScope === 'all')) && pageCount > 1 && (
+                    <PageRangeRadioGroup
+                      pageCount={pageCount}
+                      activePage={selectedShape ? selectedShape.pageNumber : activePage}
+                      scopeMode={selectedShapeItem ? (selectedShapeItem.pageScope || 'all') : shapeScopeMode}
+                      customRange={selectedShapeItem ? (selectedShapeItem.customRange || '') : shapeCustomRange}
+                      skipCover={selectedShapeItem ? Boolean(selectedShapeItem.skipCover) : shapeSkipCover}
+                      onChangeScope={(newScope) => {
+                        if (selectedShapeItem && selectedShapeItem.groupId) {
+                          updatePageScopeForGroup(selectedShapeItem.groupId, 'shape', newScope, selectedShapeItem.customRange || '', selectedShapeItem.skipCover || false);
+                        } else {
+                          setShapeScopeMode(newScope);
+                        }
+                      }}
+                      onChangeCustomRange={(newRange) => {
+                        if (selectedShapeItem && selectedShapeItem.groupId) {
+                          updatePageScopeForGroup(selectedShapeItem.groupId, 'shape', 'custom', newRange, selectedShapeItem.skipCover || false);
+                        } else {
+                          setShapeCustomRange(newRange);
+                          setShapeScopeMode('custom');
+                        }
+                      }}
+                      onToggleSkipCover={(checked) => {
+                        if (selectedShapeItem && selectedShapeItem.groupId) {
+                          updatePageScopeForGroup(selectedShapeItem.groupId, 'shape', selectedShapeItem.pageScope || 'all', selectedShapeItem.customRange || '', checked);
+                        } else {
+                          setShapeSkipCover(checked);
+                        }
+                      }}
+                    />
+                  )}
+
+                  {selectedShapeItem && (
+                    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                      {selectedShapeItem.applyAll && (
+                        <button
+                          className="pdf-remove-quick-btn"
+                          type="button"
+                          style={{ color: '#d97706', borderColor: '#d97706', width: '100%', justifyContent: 'center' }}
+                          onClick={() => toggleExcludePageForShape(selectedShape.pageNumber)}
+                        >
+                          <FileText size={14} />
+                          <span>Exclude Page {selectedShape.pageNumber} Only</span>
+                        </button>
+                      )}
+                      <button
+                        className="pdf-remove-quick-btn"
+                        type="button"
+                        style={{ color: '#ef4444', borderColor: '#ef4444', width: '100%', justifyContent: 'center' }}
+                        onClick={() => {
+                          activeShapeDraftRef.current = null;
+                          removeAnnotation(selectedShape.pageNumber, selectedShape.id);
+                          setSelectedShape(null);
+                          setBrushOptionsOpen(false);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                        <span>Delete Shape {selectedShapeItem.applyAll ? `(All Pages)` : ''}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </aside>}
             {showDrawingSettings && selectedDrawingItem && <aside className="pdf-text-properties-panel">
               <header><div><span>PDF Editor</span><h2>Drawing settings</h2></div><button type="button" aria-label="Close drawing settings" onClick={() => setBrushOptionsOpen(false)}><X size={18} /></button></header>
@@ -1273,9 +2262,28 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
 
                   <p style={{ margin: '0.45rem 0 0', fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.35 }}>
                     {selectedImageItem.applyAll
-                      ? `✓ Synced at same position across all ${pageCount} pages. Dragging or resizing here will update every page identically.`
-                      : `Placed on Page ${selectedImage.pageNumber} only. Click above to stamp this image at the exact same location across all ${pageCount} pages.`}
+                      ? `✓ Synced across pages. Dragging or resizing here will update every active page identically.`
+                      : `Placed on Page ${selectedImage.pageNumber} only. Click above to stamp this image at the exact same location across pages.`}
                   </p>
+
+                  {selectedImageItem.applyAll && pageCount > 1 && (
+                    <PageRangeRadioGroup
+                      pageCount={pageCount}
+                      activePage={selectedImage.pageNumber}
+                      scopeMode={selectedImageItem.pageScope || 'all'}
+                      customRange={selectedImageItem.customRange || ''}
+                      skipCover={Boolean(selectedImageItem.skipCover)}
+                      onChangeScope={(newScope) => {
+                        updatePageScopeForGroup(selectedImageItem.groupId, 'image', newScope, selectedImageItem.customRange || '', selectedImageItem.skipCover || false);
+                      }}
+                      onChangeCustomRange={(newRange) => {
+                        updatePageScopeForGroup(selectedImageItem.groupId, 'image', 'custom', newRange, selectedImageItem.skipCover || false);
+                      }}
+                      onToggleSkipCover={(checked) => {
+                        updatePageScopeForGroup(selectedImageItem.groupId, 'image', selectedImageItem.pageScope || 'all', selectedImageItem.customRange || '', checked);
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '1rem' }}>
@@ -1297,18 +2305,31 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                     Replace Image
                   </button>
 
+                  {selectedImageItem.applyAll && (
+                    <button
+                      className="pdf-remove-quick-btn"
+                      type="button"
+                      style={{ color: '#d97706', borderColor: '#d97706', justifyContent: 'center' }}
+                      onClick={() => toggleExcludePageForImage(selectedImage.pageNumber)}
+                    >
+                      <FileText size={14} />
+                      <span>Exclude Page {selectedImage.pageNumber} Only</span>
+                    </button>
+                  )}
+
                   <button
                     className="pdf-remove-quick-btn"
                     type="button"
                     style={{ color: '#ef4444', borderColor: '#ef4444', justifyContent: 'center' }}
                     onClick={() => {
+                      activeImageDraftRef.current = null;
                       removeAnnotation(selectedImage.pageNumber, selectedImage.id);
                       setSelectedImage(null);
                       setBrushOptionsOpen(false);
                     }}
                   >
                     <Trash2 size={14} />
-                    <span>Delete Image</span>
+                    <span>Delete Image {selectedImageItem.applyAll ? `(All Pages)` : ''}</span>
                   </button>
                 </div>
 

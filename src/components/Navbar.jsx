@@ -23,6 +23,7 @@ import {
   Sliders,
   Wand2,
   Home,
+  ArrowDownUp,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { APP_TOOL_LINKS, SEARCH_ITEMS } from '../constants/searchContent';
@@ -155,6 +156,7 @@ const Navbar = ({
               <summary>PDF Tools <ChevronDown size={14} /></summary>
               <div className="landing-tools-dropdown">
                 {APP_TOOL_LINKS.filter((tool) => [
+                  '/organize-pdf',
                   '/remove-pdf-pages',
                   '/split-pdf-page',
                   '/merge-pdf',
@@ -425,6 +427,21 @@ const Navbar = ({
               <span>PDF Tools</span>
             </div>
             <div className="mobile-drawer-links">
+              <NavLink
+                to="/organize-pdf"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => `mobile-drawer-link ${isActive ? 'active' : ''}`}
+              >
+                <div className="link-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+                  <ArrowDownUp size={18} />
+                </div>
+                <div className="link-text-wrap">
+                  <strong>Organize PDF Pages</strong>
+                  <small>Arrange, reorder, delete & insert pages</small>
+                </div>
+                <span className="mobile-badge-new">New</span>
+              </NavLink>
+
               <NavLink
                 to="/remove-pdf-pages"
                 onClick={() => setIsMobileMenuOpen(false)}
