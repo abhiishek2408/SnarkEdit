@@ -2269,11 +2269,14 @@ input[type="range"] {
   }
 
   .reducer-heading {
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .reducer-heading h1 {
     font-size: 1.55rem;
+    text-align: center;
   }
 
   .reducer-controls,
@@ -8870,23 +8873,57 @@ h6 {
     padding: 0 !important;
   }
 
-  /* Responsive Headings */
-  .reducer-heading {
+  /* Responsive Headings - Centered across all PDF tools on mobile */
+  .reducer-heading,
+  .pdf-tool-page .reducer-heading,
+  .pdf-organize-page .reducer-heading,
+  .pdf-merge-page .reducer-heading,
+  .pdf-split-page .reducer-heading,
+  .pdf-stacker-page .reducer-heading,
+  .pdf-edit-page .reducer-heading {
+    display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.25rem !important;
-    margin-bottom: 0.85rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 0.35rem !important;
+    margin: 0 auto 1rem !important;
+    width: 100% !important;
   }
 
-  .reducer-heading h1 {
-    font-size: 1.55rem !important;
-    line-height: 1.2 !important;
-    margin: 0 !important;
+  .reducer-heading > div,
+  .pdf-tool-page .reducer-heading > div,
+  .pdf-organize-page .reducer-heading > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin: 0 auto !important;
   }
 
-  .reducer-heading p {
-    font-size: 0.72rem !important;
-    margin-bottom: 0.15rem !important;
+  .reducer-heading h1,
+  .pdf-tool-page .reducer-heading h1,
+  .pdf-organize-page .reducer-heading h1 {
+    font-size: 1.65rem !important;
+    line-height: 1.25 !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+
+  .reducer-heading p,
+  .pdf-tool-page .reducer-heading p,
+  .pdf-organize-page .reducer-heading p {
+    font-size: 0.75rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+    margin: 0 auto 0.25rem !important;
+    width: 100% !important;
   }
 
   .desktop-only {
