@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
@@ -25,6 +25,7 @@ import {
   Eye,
   X,
   Check,
+  ArrowLeftRight,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
@@ -47,6 +48,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
   const [zoomSize, setZoomSize] = useState('medium'); // 'small', 'medium', 'large'
   const [activeInsertMenuIndex, setActiveInsertMenuIndex] = useState(null); // slot index where menu is open
   const [previewModalItem, setPreviewModalItem] = useState(null);
+  const [sidebarInsertPos, setSidebarInsertPos] = useState('end'); // 'end', 'start', 'selected', or page number
 
   // Drag and Drop state
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -62,6 +64,47 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
   const sourceDocsRef = useRef(new Map());
   const cancelThumbnailsRef = useRef(false);
 
+  // Selected pages computation
+  const selectedIndices = pages
+    .map((p, i) => (selectedIds.has(p.id) ? i : -1))
+    .filter((i) => i !== -1);
+  const lastSelectedIndex = selectedIndices.length ? selectedIndices[selectedIndices.length - 1] : null;
+  const selectedPageNum = lastSelectedIndex !== null ? lastSelectedIndex + 1 : null;
+
+  // Auto-focus sidebar insert position on selected page if available
+  useEffect(() => {
+    if (selectedPageNum !== null) {
+      setSidebarInsertPos('selected');
+    }
+  }, [selectedPageNum]);
+
+  // Compute exact slot index from sidebar selection
+  const getTargetSlotFromSidebar = () => {
+    if (sidebarInsertPos === 'selected' && lastSelectedIndex !== null) {
+      return lastSelectedIndex + 1;
+    }
+    if (sidebarInsertPos === 'start') {
+      return 0;
+    }
+    if (sidebarInsertPos === 'end') {
+      return pages.length;
+    }
+    const parsed = parseInt(sidebarInsertPos, 10);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= pages.length) {
+      return parsed;
+    }
+    return pages.length;
+  };
+
+  // Helper to reliably trigger targeted insertion dialog
+  const triggerInsertAt = (slotIndex) => {
+    targetInsertSlotRef.current = slotIndex;
+    if (insertFileInputRef.current) {
+      insertFileInputRef.current.value = '';
+      insertFileInputRef.current.click();
+    }
+  };
+
   // Push state to undo history
   const pushHistory = (currentPages) => {
     setHistory((prev) => [...prev.slice(-20), currentPages]);
@@ -75,7 +118,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
   };
 
   // Render thumbnail for a specific page item
-  const renderThumbnail = async (sourceDoc, pageNum, rotation = 0) => {
+  const renderThumbnail = async (sourceDoc, pageNum, _rotation = 0) => {
     try {
       const page = await sourceDoc.getPage(pageNum);
       const base = page.getViewport({ scale: 1 });
@@ -96,7 +139,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
   };
 
   // Process and load an uploaded PDF file into the cache and return new page items
-  const parsePdfFile = async (fileObj, sourceId) => {
+  const parsePdfFile = async (fileObj, sourceId, initialSequenceOffset = 0, isInitial = false) => {
     const data = new Uint8Array(await fileObj.arrayBuffer());
     const doc = await pdfjs.getDocument({ data: data.slice() }).promise;
     sourceDocsRef.current.set(sourceId, {
@@ -115,6 +158,8 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
         sourceFileName: fileObj.name,
         sourcePageIndex: i - 1, // 0-based for pdf-lib
         originalPageNum: i,
+        originalNumber: isInitial ? (initialSequenceOffset + i) : null,
+        isInserted: !isInitial,
         rotation: 0,
         thumbnailUrl: '',
       });
@@ -136,7 +181,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
     try {
       const sourceId = 'orig-' + Date.now();
       sourceDocsRef.current.clear();
-      const { doc, newItems } = await parsePdfFile(file, sourceId);
+      const { doc, newItems } = await parsePdfFile(file, sourceId, 0, true);
       setInitialFile(file);
       setPages(newItems);
       cancelThumbnailsRef.current = false;
@@ -156,35 +201,14 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
     }
   };
 
-  // Append new PDF files at the end of the document
-  const handleAppendFiles = async (files) => {
+  // Append new PDF files (uses sidebar position or target slot)
+  const handleAppendFiles = async (files, slotIndex = null) => {
     if (!files || !files.length) return;
-    pushHistory(pages);
-    setError('');
-
-    try {
-      for (const f of Array.from(files)) {
-        const sourceId = `extra-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        const { doc, newItems } = await parsePdfFile(f, sourceId);
-        setPages((curr) => [...curr, ...newItems]);
-
-        // Progressively render thumbnails for added pages
-        for (let i = 0; i < newItems.length; i++) {
-          const url = await renderThumbnail(doc, newItems[i].originalPageNum);
-          setPages((curr) =>
-            curr.map((p) => (p.id === newItems[i].id ? { ...p, thumbnailUrl: url } : p))
-          );
-        }
-      }
-      setSuccessMsg(`Added pages from ${files.length} file(s).`);
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (err) {
-      console.error(err);
-      setError('Could not add pages from selected file(s).');
-    }
+    const targetSlot = typeof slotIndex === 'number' ? slotIndex : getTargetSlotFromSidebar();
+    await handleInsertPdfAtSlot(files, targetSlot);
   };
 
-  // Insert PDF files at a specific index
+  // Insert PDF files at a specific slot index
   const handleInsertPdfAtSlot = async (files, slotIndex) => {
     if (!files || !files.length) return;
     pushHistory(pages);
@@ -192,19 +216,32 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
     setActiveInsertMenuIndex(null);
 
     try {
-      let insertAt = slotIndex;
+      const validSlot = typeof slotIndex === 'number'
+        ? Math.max(0, Math.min(slotIndex, pages.length))
+        : pages.length;
+
+      const allNewItems = [];
+      const renderTasks = [];
+
       for (const f of Array.from(files)) {
-        const sourceId = `slot-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        const { doc, newItems } = await parsePdfFile(f, sourceId);
+        const sourceId = `insert-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const { doc, newItems } = await parsePdfFile(f, sourceId, 0, false);
+        allNewItems.push(...newItems);
+        renderTasks.push({ doc, newItems });
+      }
 
-        setPages((curr) => {
-          const next = [...curr];
-          next.splice(insertAt, 0, ...newItems);
-          return next;
-        });
-        insertAt += newItems.length;
+      setPages((curr) => {
+        const next = [...curr];
+        next.splice(validSlot, 0, ...allNewItems);
+        return next;
+      });
 
-        // Progressively render thumbnails
+      const positionLabel = validSlot === 0 ? 'the beginning' : `after Page #${validSlot}`;
+      setSuccessMsg(`Merged & inserted ${allNewItems.length} page(s) ${positionLabel}!`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+
+      // Progressively render thumbnails for all inserted pages
+      for (const { doc, newItems } of renderTasks) {
         for (let i = 0; i < newItems.length; i++) {
           const url = await renderThumbnail(doc, newItems[i].originalPageNum);
           setPages((curr) =>
@@ -212,17 +249,19 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
           );
         }
       }
-      setSuccessMsg(`Inserted pages successfully!`);
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
-      setError('Could not insert pages from selected file.');
+      setError('Could not insert pages from selected file(s).');
     }
   };
 
   // Insert a blank page at a specific slot index
   const insertBlankPageAtSlot = (slotIndex) => {
     pushHistory(pages);
+    const validSlot = typeof slotIndex === 'number'
+      ? Math.max(0, Math.min(slotIndex, pages.length))
+      : pages.length;
+
     const blankItem = {
       id: `blank-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       sourceType: 'blank',
@@ -230,15 +269,20 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
       sourceFileName: 'Blank Sheet',
       sourcePageIndex: -1,
       originalPageNum: 0,
+      originalNumber: null,
+      isInserted: true,
       rotation: 0,
       thumbnailUrl: '',
     };
     setPages((curr) => {
       const next = [...curr];
-      next.splice(slotIndex, 0, blankItem);
+      next.splice(validSlot, 0, blankItem);
       return next;
     });
     setActiveInsertMenuIndex(null);
+    const positionLabel = validSlot === 0 ? 'the beginning' : `after Page #${validSlot}`;
+    setSuccessMsg(`Added blank page ${positionLabel}!`);
+    setTimeout(() => setSuccessMsg(''), 3000);
   };
 
   // Page reordering (move from index to index)
@@ -251,6 +295,22 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
       next.splice(toIndex, 0, moved);
       return next;
     });
+  };
+
+  // Reset page sequence back to original order
+  const resetOrder = () => {
+    pushHistory(pages);
+    setPages((curr) => {
+      const sorted = [...curr].sort((a, b) => {
+        if (a.originalNumber && b.originalNumber) return a.originalNumber - b.originalNumber;
+        if (a.originalNumber) return -1;
+        if (b.originalNumber) return 1;
+        return 0;
+      });
+      return sorted;
+    });
+    setSuccessMsg('Restored original page order.');
+    setTimeout(() => setSuccessMsg(''), 2500);
   };
 
   // Delete an individual page
@@ -272,6 +332,8 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
     const duplicated = {
       ...target,
       id: `copy-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      isDuplicate: true,
+      originalNumber: null,
     };
     setPages((curr) => {
       const next = [...curr];
@@ -349,6 +411,11 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
 
   const handleDragOverCard = (e, index) => {
     e.preventDefault();
+    if (e.dataTransfer.types.includes('Files')) {
+      setDragOverIndex(index);
+      e.dataTransfer.dropEffect = 'copy';
+      return;
+    }
     if (draggedIndex === null || draggedIndex === index) return;
     setDragOverIndex(index);
     e.dataTransfer.dropEffect = 'move';
@@ -356,6 +423,12 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
 
   const handleDropCard = (e, index) => {
     e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleInsertPdfAtSlot(e.dataTransfer.files, index + 1);
+      setDragOverIndex(null);
+      setDraggedIndex(null);
+      return;
+    }
     if (draggedIndex !== null && draggedIndex !== index) {
       movePage(draggedIndex, index);
     }
@@ -437,8 +510,9 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
     return () => document.removeEventListener('pointerdown', handleOutsideClick);
   }, []);
 
-  const addedCount = pages.filter((p) => p.sourceId !== 'orig-' + (pages[0]?.sourceId?.split('-')?.[1] || '')).length;
+  const _addedCount = pages.filter((p) => p.sourceId !== 'orig-' + (pages[0]?.sourceId?.split('-')?.[1] || '')).length;
   const rotatedCount = pages.filter((p) => (p.rotation || 0) !== 0).length;
+  const displacedCount = pages.filter((p, idx) => p.originalNumber && p.originalNumber !== idx + 1).length;
 
   return (
     <div className="app-container reducer-page pdf-tool-page pdf-organize-page">
@@ -451,7 +525,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
             <div className="reducer-heading">
               <div>
                 <p>PDF Tools</p>
-                <h1>Organize PDF Pages</h1>
+                <h1 style={{ fontWeight: 900 }}>Organize PDF Pages</h1>
               </div>
               <LayoutGrid size={34} className="desktop-only" />
             </div>
@@ -464,7 +538,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                 className="pdf-stacker-intro"
                 style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 1.5rem' }}
               >
-                Arrange, sort, and organize PDF pages effortlessly. Drag & drop to reorder, delete unwanted sheets, rotate orientations, or insert pages and blank sheets anywhere simultaneously.
+                Sort, reorder, and organize PDF pages.
               </p>
 
               <label
@@ -557,6 +631,12 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                       <span>Total Output Pages:</span>
                       <strong style={{ color: 'var(--primary)', fontSize: '1rem' }}>{pages.length}</strong>
                     </div>
+                    {displacedCount > 0 && (
+                      <div className="pdf-split-stat-row">
+                        <span>Displaced / Moved:</span>
+                        <strong style={{ color: 'var(--primary)' }}>{displacedCount}</strong>
+                      </div>
+                    )}
                     {rotatedCount > 0 && (
                       <div className="pdf-split-stat-row">
                         <span>Rotated Pages:</span>
@@ -565,21 +645,62 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                     )}
                   </div>
 
-                  {/* Add Pages Globally Buttons */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                  {/* Add / Merge Pages Section */}
+                  <div className="pdf-organize-insert-section" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Merge / Insert Position:
+                      </label>
+                      <select
+                        className="pdf-organize-insert-select"
+                        value={sidebarInsertPos}
+                        onChange={(e) => setSidebarInsertPos(e.target.value)}
+                      >
+                        {selectedPageNum !== null && (
+                          <option value="selected">After Selected Page (#{selectedPageNum})</option>
+                        )}
+                        <option value="end">At End of Document (Page #{pages.length})</option>
+                        <option value="start">At Beginning (Before Page #1)</option>
+                        {pages.map((_, i) => (
+                          <option key={i} value={i + 1}>
+                            After Page #{i + 1}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <button
                       className="pdf-remove-quick-btn pdf-stacker-add-btn"
                       type="button"
-                      onClick={() => appendFileInputRef.current?.click()}
+                      onClick={() => {
+                        if (appendFileInputRef.current) {
+                          appendFileInputRef.current.value = '';
+                          appendFileInputRef.current.click();
+                        }
+                      }}
+                      style={{ justifyContent: 'center' }}
                     >
                       <FilePlus size={15} />
-                      <span>Add More PDF Pages</span>
+                      <span>
+                        {sidebarInsertPos === 'selected' && selectedPageNum !== null
+                          ? `Insert PDF After Page #${selectedPageNum}`
+                          : sidebarInsertPos === 'start'
+                          ? 'Insert PDF at Beginning'
+                          : sidebarInsertPos === 'end'
+                          ? 'Add PDF at End'
+                          : `Insert PDF After Page #${sidebarInsertPos}`}
+                      </span>
                       <input
                         ref={appendFileInputRef}
                         type="file"
                         accept="application/pdf,.pdf"
                         multiple
-                        onChange={(e) => handleAppendFiles(e.target.files)}
+                        onChange={(e) => {
+                          if (e.target.files?.length) {
+                            handleAppendFiles(e.target.files);
+                          }
+                          e.target.value = '';
+                        }}
                         style={{ display: 'none' }}
                       />
                     </button>
@@ -587,10 +708,22 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                     <button
                       className="pdf-remove-quick-btn"
                       type="button"
-                      onClick={() => insertBlankPageAtSlot(pages.length)}
+                      onClick={() => {
+                        const slot = getTargetSlotFromSidebar();
+                        insertBlankPageAtSlot(slot);
+                      }}
+                      style={{ justifyContent: 'center' }}
                     >
                       <Plus size={15} />
-                      <span>Add Blank Page at End</span>
+                      <span>
+                        {sidebarInsertPos === 'selected' && selectedPageNum !== null
+                          ? `Add Blank After Page #${selectedPageNum}`
+                          : sidebarInsertPos === 'start'
+                          ? 'Add Blank at Beginning'
+                          : sidebarInsertPos === 'end'
+                          ? 'Add Blank Page at End'
+                          : `Add Blank After Page #${sidebarInsertPos}`}
+                      </span>
                     </button>
                   </div>
 
@@ -622,11 +755,12 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                   <button
                     className="pdf-remove-quick-btn"
                     type="button"
-                    onClick={resetToOriginal}
+                    onClick={displacedCount > 0 ? resetOrder : resetToOriginal}
                     style={{ marginTop: '0.5rem', borderStyle: 'dashed' }}
+                    title={displacedCount > 0 ? 'Restore original page sequence' : 'Reset PDF order & edits'}
                   >
                     <RefreshCw size={14} />
-                    <span>Reset Order & Edits</span>
+                    <span>{displacedCount > 0 ? `Reset Order (${displacedCount} Moved)` : 'Reset Order & Edits'}</span>
                   </button>
 
                   {/* Export Button */}
@@ -703,6 +837,18 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                       <span>{selectedIds.size === pages.length ? 'Deselect All' : 'Select All'}</span>
                     </button>
 
+                    {selectedPageNum !== null && (
+                      <button
+                        className="pdf-remove-quick-btn pdf-organize-toolbar-insert-btn"
+                        type="button"
+                        onClick={() => triggerInsertAt(lastSelectedIndex + 1)}
+                        title={`Insert / Merge PDF after Page #${selectedPageNum}`}
+                      >
+                        <FilePlus size={14} />
+                        <span>Insert PDF After Page #{selectedPageNum}</span>
+                      </button>
+                    )}
+
                     {selectedIds.size > 0 && (
                       <>
                         <button
@@ -758,35 +904,41 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                 {/* Dark Gallery Stage just outside the pages */}
                 <div className="pdf-organize-stage">
                   <div className={`pdf-organize-grid size-${zoomSize}`}>
-                    {/* Insert slot at the very beginning (index 0) */}
-                    <InsertSlot
-                      slotIndex={0}
-                      isOpen={activeInsertMenuIndex === 0}
-                      onToggleOpen={() =>
-                        setActiveInsertMenuIndex(activeInsertMenuIndex === 0 ? null : 0)
-                      }
-                      onInsertBlank={() => insertBlankPageAtSlot(0)}
-                      onTriggerFileInput={() => {
-                        targetInsertSlotRef.current = 0;
-                        insertFileInputRef.current?.click();
-                      }}
-                    />
-
                     {pages.map((item, index) => {
                       const isSelected = selectedIds.has(item.id);
                       const isDragged = draggedIndex === index;
                       const isDragOver = dragOverIndex === index;
+                      const currentPos = index + 1;
+                      const origPos = item.originalNumber;
+                      const isDisplaced = Boolean(origPos && origPos !== currentPos);
 
                       return (
-                        <React.Fragment key={item.id}>
+                        <div className="pdf-organize-cell" key={item.id}>
+                          {/* Insert slot at the very beginning (index 0) */}
+                          {index === 0 && (
+                            <div className="pdf-organize-slot-anchor slot-start">
+                              <InsertSlot
+                                slotIndex={0}
+                                isOpen={activeInsertMenuIndex === 0}
+                                onToggleOpen={() =>
+                                  setActiveInsertMenuIndex(activeInsertMenuIndex === 0 ? null : 0)
+                                }
+                                onInsertBlank={() => insertBlankPageAtSlot(0)}
+                                onTriggerFileInput={() => triggerInsertAt(0)}
+                                onDropFiles={(files) => handleInsertPdfAtSlot(files, 0)}
+                              />
+                            </div>
+                          )}
+
                           {/* Page Thumbnail Card */}
                           <div
-                            className={`pdf-organize-card ${isSelected ? 'selected' : ''} ${isDragged ? 'is-dragged' : ''} ${isDragOver ? 'is-drag-over' : ''}`}
+                            className={`pdf-organize-card ${isSelected ? 'selected' : ''} ${isDisplaced ? 'is-displaced' : ''} ${isDragged ? 'is-dragged' : ''} ${isDragOver ? 'is-drag-over' : ''}`}
                             draggable
                             onDragStart={(e) => handleDragStart(e, index)}
                             onDragOver={(e) => handleDragOverCard(e, index)}
                             onDrop={(e) => handleDropCard(e, index)}
                             onDragEnd={handleDragEnd}
+                            onClick={() => toggleSelectPage(item.id)}
                           >
                             {/* Card Header Bar */}
                             <div className="pdf-organize-card-header">
@@ -796,8 +948,31 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                                   checked={isSelected}
                                   onChange={() => toggleSelectPage(item.id)}
                                 />
-                                <span className="pdf-organize-badge">#{index + 1}</span>
+                                <span
+                                  className={`pdf-organize-badge ${isDisplaced ? 'is-displaced' : ''}`}
+                                  title={isDisplaced ? `Currently page #${currentPos} (originally page #${origPos})` : `Page #${currentPos}`}
+                                >
+                                  #{currentPos}
+                                </span>
                               </label>
+
+                              {isDisplaced && (
+                                <span
+                                  className="pdf-organize-displacement-header-tag"
+                                  title={`Displaced: Originally page #${origPos}, now at page #${currentPos}`}
+                                >
+                                  {origPos} → {currentPos}
+                                </span>
+                              )}
+
+                              {item.isInserted && (
+                                <span
+                                  className="pdf-organize-source-tag is-inserted"
+                                  title={`Merged/Inserted from ${item.sourceFileName}`}
+                                >
+                                  + Merged
+                                </span>
+                              )}
 
                               <span
                                 className="pdf-organize-source-tag"
@@ -805,8 +980,8 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                               >
                                 {item.sourceType === 'blank'
                                   ? 'Blank'
-                                  : item.sourceFileName?.length > 12
-                                  ? `${item.sourceFileName.slice(0, 10)}...`
+                                  : item.sourceFileName?.length > 10
+                                  ? `${item.sourceFileName.slice(0, 8)}...`
                                   : item.sourceFileName}
                               </span>
 
@@ -814,7 +989,10 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                                 className="pdf-organize-card-zoom-btn"
                                 type="button"
                                 title="Enlarge preview"
-                                onClick={() => setPreviewModalItem(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewModalItem(item);
+                                }}
                               >
                                 <Eye size={13} />
                               </button>
@@ -822,6 +1000,20 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
 
                             {/* Card Thumbnail Canvas / Image */}
                             <div className="pdf-organize-card-preview">
+                              {isDisplaced && (
+                                <div
+                                  className="pdf-organize-displacement-pill"
+                                  title={`Displaced: Originally Page ${origPos}, now Page ${currentPos}. Click to restore back to Page ${origPos}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    movePage(index, origPos - 1);
+                                  }}
+                                >
+                                  <ArrowLeftRight size={11} />
+                                  <span>{origPos} → {currentPos} Displacement</span>
+                                </div>
+                              )}
+
                               {item.sourceType === 'blank' ? (
                                 <div className="pdf-organize-blank-sheet">
                                   <FileText size={32} opacity={0.3} />
@@ -830,7 +1022,7 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                               ) : item.thumbnailUrl ? (
                                 <img
                                   src={item.thumbnailUrl}
-                                  alt={`Page ${index + 1}`}
+                                  alt={`Page ${currentPos}`}
                                   style={{
                                     transform: `rotate(${item.rotation}deg)`,
                                     transition: 'transform 0.2s ease',
@@ -850,7 +1042,10 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                                 type="button"
                                 title="Move left / earlier"
                                 disabled={index === 0}
-                                onClick={() => movePage(index, index - 1)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  movePage(index, index - 1);
+                                }}
                               >
                                 <ChevronLeft size={16} />
                               </button>
@@ -858,15 +1053,33 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                               <button
                                 type="button"
                                 title="Rotate 90 degrees"
-                                onClick={() => rotatePage(item.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rotatePage(item.id);
+                                }}
                               >
                                 <RotateCw size={14} />
                               </button>
 
                               <button
                                 type="button"
+                                className="pdf-organize-action-insert-btn"
+                                title={`Insert / Merge PDF after Page #${currentPos}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  triggerInsertAt(index + 1);
+                                }}
+                              >
+                                <FilePlus size={14} />
+                              </button>
+
+                              <button
+                                type="button"
                                 title="Duplicate page"
-                                onClick={() => duplicatePage(index)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  duplicatePage(index);
+                                }}
                               >
                                 <Copy size={14} />
                               </button>
@@ -875,7 +1088,10 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                                 type="button"
                                 title="Move right / later"
                                 disabled={index === pages.length - 1}
-                                onClick={() => movePage(index, index + 1)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  movePage(index, index + 1);
+                                }}
                               >
                                 <ChevronRight size={16} />
                               </button>
@@ -884,7 +1100,10 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                                 type="button"
                                 className="pdf-organize-delete-btn"
                                 title="Delete page"
-                                onClick={() => deletePage(item.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePage(item.id);
+                                }}
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -892,21 +1111,21 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                           </div>
 
                           {/* Insert slot after this card */}
-                          <InsertSlot
-                            slotIndex={index + 1}
-                            isOpen={activeInsertMenuIndex === index + 1}
-                            onToggleOpen={() =>
-                              setActiveInsertMenuIndex(
-                                activeInsertMenuIndex === index + 1 ? null : index + 1
-                              )
-                            }
-                            onInsertBlank={() => insertBlankPageAtSlot(index + 1)}
-                            onTriggerFileInput={() => {
-                              targetInsertSlotRef.current = index + 1;
-                              insertFileInputRef.current?.click();
-                            }}
-                          />
-                        </React.Fragment>
+                          <div className="pdf-organize-slot-anchor slot-end">
+                            <InsertSlot
+                              slotIndex={index + 1}
+                              isOpen={activeInsertMenuIndex === index + 1}
+                              onToggleOpen={() =>
+                                setActiveInsertMenuIndex(
+                                  activeInsertMenuIndex === index + 1 ? null : index + 1
+                                )
+                              }
+                              onInsertBlank={() => insertBlankPageAtSlot(index + 1)}
+                              onTriggerFileInput={() => triggerInsertAt(index + 1)}
+                              onDropFiles={(files) => handleInsertPdfAtSlot(files, index + 1)}
+                            />
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -920,9 +1139,10 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
                   multiple
                   style={{ display: 'none' }}
                   onChange={(e) => {
-                    if (targetInsertSlotRef.current !== null && e.target.files) {
+                    if (targetInsertSlotRef.current !== null && e.target.files?.length) {
                       handleInsertPdfAtSlot(e.target.files, targetInsertSlotRef.current);
                     }
+                    e.target.value = '';
                   }}
                 />
               </section>
@@ -942,7 +1162,24 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pdf-organize-modal-header">
-              <strong>Page Preview</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <strong>Page Preview</strong>
+                {(() => {
+                  const modalIdx = pages.findIndex((p) => p.id === previewModalItem.id);
+                  if (modalIdx !== -1) {
+                    const currentPos = modalIdx + 1;
+                    const origPos = previewModalItem.originalNumber;
+                    if (origPos && origPos !== currentPos) {
+                      return (
+                        <span className="pdf-organize-displacement-header-tag">
+                          {origPos} → {currentPos} Displacement
+                        </span>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
+              </div>
               <button
                 type="button"
                 className="icon-btn"
@@ -973,27 +1210,65 @@ const PdfOrganizePage = ({ theme, toggleTheme }) => {
 };
 
 // Insert Slot Component between cards
-const InsertSlot = ({ slotIndex, isOpen, onToggleOpen, onInsertBlank, onTriggerFileInput }) => {
+const InsertSlot = ({ slotIndex: _slotIndex, isOpen, onToggleOpen, onInsertBlank, onTriggerFileInput, onDropFiles }) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+
   return (
-    <div className={`pdf-organize-insert-slot ${isOpen ? 'is-open' : ''}`}>
+    <div
+      className={`pdf-organize-insert-slot ${isOpen ? 'is-open' : ''} ${isDragOver ? 'is-drag-over' : ''}`}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('Files')) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(true);
+        }
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+        if (e.dataTransfer.files?.length) {
+          onDropFiles?.(e.dataTransfer.files);
+        }
+      }}
+    >
       <button
         type="button"
         className="pdf-organize-insert-btn"
-        title="Insert page here"
-        onClick={onToggleOpen}
+        title="Insert page here (or drop PDF file here)"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleOpen();
+        }}
       >
         <Plus size={14} />
       </button>
 
       {isOpen && (
-        <div className="pdf-organize-insert-dropdown">
-          <button type="button" onClick={onInsertBlank}>
-            <FileText size={14} />
-            <span>Insert Blank Page</span>
-          </button>
-          <button type="button" onClick={onTriggerFileInput}>
+        <div className="pdf-organize-insert-dropdown" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTriggerFileInput();
+            }}
+          >
             <FilePlus size={14} />
             <span>Insert from PDF...</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onInsertBlank();
+            }}
+          >
+            <FileText size={14} />
+            <span>Insert Blank Page</span>
           </button>
         </div>
       )}

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,6 +19,7 @@ import {
   Check,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import PageDimensionAxis from '../components/PageDimensionAxis';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -78,9 +79,12 @@ const PdfPreviewPage = ({
   setPendingBands,
   setActiveBandId,
   onSelectPage,
+  onApplySingleBand,
+  instantCut = true,
 }) => {
   const [isRendered, setIsRendered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => typeof window === 'undefined' || !('IntersectionObserver' in window));
+  const [pageSize, setPageSize] = useState({ width: 595, height: 842 });
 
   const itemRef = useRef(null);
   const canvasRef = useRef(null);
@@ -90,12 +94,13 @@ const PdfPreviewPage = ({
   const renderTaskRef = useRef(null);
   const originalCanvasRef = useRef(null);
   const workingCanvasRef = useRef(null);
+  const originalWidthPtRef = useRef(595);
+  const originalHeightPtRef = useRef(842);
 
   // Lazy render when page comes near viewport
   useEffect(() => {
     const node = itemRef.current;
     if (!node || !('IntersectionObserver' in window)) {
-      setIsVisible(true);
       return undefined;
     }
     const observer = new IntersectionObserver((entries) => {
@@ -117,6 +122,12 @@ const PdfPreviewPage = ({
       try {
         const page = await pdfDocument.getPage(pageNumber);
         const baseViewport = page.getViewport({ scale: 1 });
+        originalWidthPtRef.current = Math.round(baseViewport.width);
+        originalHeightPtRef.current = Math.round(baseViewport.height);
+        setPageSize({
+          width: Math.round(baseViewport.width),
+          height: Math.round(baseViewport.height),
+        });
         const displayScale = Math.min(1.6, Math.max(1.1, 820 / baseViewport.width));
         const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
         const renderScale = displayScale * pixelRatio;
@@ -175,6 +186,12 @@ const PdfPreviewPage = ({
     canvas.height = stitchedContent.height;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(stitchedContent, 0, 0);
+
+    // Dynamically update pageSize.height so PageDimensionAxis updates instantly
+    if (baseCanvas.height > 0) {
+      const currentHeightPt = Math.round((originalHeightPtRef.current * stitchedContent.height) / baseCanvas.height);
+      setPageSize(prev => ({ ...prev, height: currentHeightPt }));
+    }
   }, [isRendered, edit]);
 
   const pointFromEvent = (event) => {
@@ -195,7 +212,7 @@ const PdfPreviewPage = ({
 
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
-    } catch (e) {}
+    } catch { /* ignore capture error */ }
 
     // Check if delete button on a cut was clicked
     if (event.target.closest('.pdf-crop-band-delete')) {
@@ -292,12 +309,21 @@ const PdfPreviewPage = ({
     if (event?.currentTarget?.hasPointerCapture?.(event.pointerId)) {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch (e) {}
+      } catch { /* ignore release error */ }
     }
 
     if (dragActionRef.current?.mode === 'draw') {
       const drawnId = dragActionRef.current.bandId;
-      setPendingBands(current => current.filter(b => (b.id === drawnId ? b.height >= 0.005 : true)));
+      const drawnBand = pendingBands.find(b => b.id === drawnId);
+      if (drawnBand && drawnBand.height >= 0.005) {
+        if (instantCut && onApplySingleBand) {
+          onApplySingleBand(drawnBand);
+        } else {
+          setPendingBands(current => current.filter(b => (b.id === drawnId ? b.height >= 0.005 : true)));
+        }
+      } else {
+        setPendingBands(current => current.filter(b => b.id !== drawnId));
+      }
     }
 
     dragActionRef.current = null;
@@ -316,7 +342,7 @@ const PdfPreviewPage = ({
       id={`crop-page-${pageNumber}`}
       className={`pdf-all-pages-item ${isActive ? 'active' : ''}`}
       ref={itemRef}
-      onClick={(e) => {
+      onClick={() => {
         if (!isActive) {
           onSelectPage(pageNumber);
         }
@@ -345,87 +371,111 @@ const PdfPreviewPage = ({
         )}
       </div>
 
-      <div className="pdf-crop-canvas-wrap" ref={wrapRef}>
-        <canvas ref={canvasRef} />
+      <PageDimensionAxis
+        widthPt={pageSize.width}
+        heightPt={pageSize.height}
+        mode="crop"
+        cutBands={isActive && isCropping ? pendingBands : (edit?.cutSteps?.flatMap(s => s.bands) || [])}
+      >
+        <div className="pdf-crop-canvas-wrap" ref={wrapRef}>
+          <canvas ref={canvasRef} />
 
-        {isActive && isCropping && validBands.length === 0 && (
-          <div className="pdf-crop-draw-hint">
-            <Scissors size={16} />
-            <span>Drag across any section to cut out</span>
-          </div>
-        )}
+          {isActive && isCropping && validBands.length === 0 && (
+            <div className="pdf-crop-draw-hint">
+              <Scissors size={16} />
+              <span>Drag across any section to cut out</span>
+            </div>
+          )}
 
-        {/* Selection Cut Layer (Active only on the currently active page during crop mode) */}
-        <div
-          className={`pdf-crop-selection-layer ${isActive && isCropping ? 'active' : ''}`}
-          style={{
-            display: isActive && isCropping ? 'block' : 'none',
-            pointerEvents: isActive && isCropping && isRendered ? 'auto' : 'none',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {isActive && isCropping && pendingBands.map((band, index) => {
-            if (band.height < 0.001) return null;
-            return (
-              <div
-                key={band.id}
-                data-band-id={band.id}
-                className={`pdf-crop-selection ${activeBandId === band.id ? 'active' : ''}`}
-                style={{
-                  left: '0%',
-                  top: `${band.y * 100}%`,
-                  width: '100%',
-                  height: `${band.height * 100}%`,
-                }}
-              >
-                {/* Corner Accents */}
-                <span className="pdf-crop-corner corner-nw" />
-                <span className="pdf-crop-corner corner-ne" />
-                <span className="pdf-crop-corner corner-se" />
-                <span className="pdf-crop-corner corner-sw" />
-
-                {/* Top & Bottom Resize Handles */}
+          {/* Selection Cut Layer (Active only on the currently active page during crop mode) */}
+          <div
+            className={`pdf-crop-selection-layer ${isActive && isCropping ? 'active' : ''}`}
+            style={{
+              display: isActive && isCropping ? 'block' : 'none',
+              pointerEvents: isActive && isCropping && isRendered ? 'auto' : 'none',
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isActive && isCropping && pendingBands.map((band, index) => {
+              if (band.height < 0.001) return null;
+              return (
                 <div
-                  className="pdf-crop-handle handle-n"
+                  key={band.id}
                   data-band-id={band.id}
-                  data-resize-edge="n"
-                  title="Drag to adjust top cut line"
-                />
-                <div
-                  className="pdf-crop-handle handle-s"
-                  data-band-id={band.id}
-                  data-resize-edge="s"
-                  title="Drag to adjust bottom cut line"
-                />
-
-                {/* Cut Badge */}
-                <div className="pdf-crop-band-badge">
-                  <Scissors size={12} />
-                  <span>Cut #{index + 1} ({Math.round(band.height * 100)}%)</span>
-                </div>
-
-                {/* Delete button */}
-                <button
-                  type="button"
-                  className="pdf-crop-band-delete"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removePendingBand(band.id);
+                  className={`pdf-crop-selection ${activeBandId === band.id ? 'active' : ''}`}
+                  style={{
+                    left: '0%',
+                    top: `${band.y * 100}%`,
+                    width: '100%',
+                    height: `${band.height * 100}%`,
                   }}
-                  title="Delete this cut"
                 >
-                  <X size={13} />
-                </button>
-              </div>
-            );
-          })}
+                  {/* Corner Accents */}
+                  <span className="pdf-crop-corner corner-nw" />
+                  <span className="pdf-crop-corner corner-ne" />
+                  <span className="pdf-crop-corner corner-se" />
+                  <span className="pdf-crop-corner corner-sw" />
+
+                  {/* Top & Bottom Resize Handles */}
+                  <div
+                    className="pdf-crop-handle handle-n"
+                    data-band-id={band.id}
+                    data-resize-edge="n"
+                    title="Drag to adjust top cut line"
+                  />
+                  <div
+                    className="pdf-crop-handle handle-s"
+                    data-band-id={band.id}
+                    data-resize-edge="s"
+                    title="Drag to adjust bottom cut line"
+                  />
+
+                  {/* Cut Badge */}
+                  <div className="pdf-crop-band-badge">
+                    <Scissors size={12} />
+                    <span>Cut #{index + 1} ({Math.round(band.height * 100)}%)</span>
+                  </div>
+
+                  {/* Band Actions: Cut Now & Delete */}
+                  <div className="pdf-crop-band-actions">
+                    <button
+                      type="button"
+                      className="pdf-crop-band-cut-now-btn"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onApplySingleBand) {
+                          onApplySingleBand(band);
+                        }
+                      }}
+                      title="Cut & Shrink page immediately"
+                    >
+                      <Scissors size={11} />
+                      <span>Cut Now</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-crop-band-delete"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removePendingBand(band.id);
+                      }}
+                      title="Delete this cut"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </PageDimensionAxis>
     </article>
   );
 };
@@ -443,6 +493,7 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
   const [isCropping, setIsCropping] = useState(false);
   const [pendingBands, setPendingBands] = useState([]);
   const [activeBandId, setActiveBandId] = useState(null);
+  const [instantCut, setInstantCut] = useState(true);
 
   const handleFile = async (selected) => {
     const nextFile = selected?.[0];
@@ -491,12 +542,6 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
     }
   };
 
-  const cancelCropping = () => {
-    setPendingBands([]);
-    setActiveBandId(null);
-    setIsCropping(false);
-  };
-
   const toggleCropping = () => {
     if (isCropping) {
       setPendingBands([]);
@@ -530,6 +575,27 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
     setPendingBands([]);
     setActiveBandId(null);
     // Keep isCropping true so user can continue cutting until they click to deselect
+  };
+
+  const applySingleBand = (band) => {
+    if (!band || band.height < 0.005) return;
+    const targetPage = activePage;
+    const currentEdit = pageEdits[targetPage];
+    const existingSteps = currentEdit?.cutSteps ? [...currentEdit.cutSteps] : [];
+    const cleanBands = [{ y: band.y, height: band.height }];
+    const nextSteps = [...existingSteps, { bands: cleanBands }];
+    const totalCuts = nextSteps.reduce((sum, s) => sum + s.bands.length, 0);
+
+    setPageEdits(prev => ({
+      ...prev,
+      [targetPage]: {
+        cutSteps: nextSteps,
+        totalCuts,
+      },
+    }));
+
+    setPendingBands(current => current.filter(b => b.id !== band.id));
+    setActiveBandId(null);
   };
 
   const undoActivePageEdit = () => {
@@ -842,6 +908,8 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
                         setPendingBands={setPendingBands}
                         setActiveBandId={setActiveBandId}
                         onSelectPage={handleSelectPage}
+                        onApplySingleBand={applySingleBand}
+                        instantCut={instantCut}
                       />
                     );
                   })}
@@ -876,6 +944,28 @@ const PdfWhitespaceCropPage = ({ theme, toggleTheme }) => {
 
                   {isCropping && (
                     <div className="pdf-crop-active-section" style={{ marginTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.45rem 0.65rem',
+                        background: 'var(--tool-bg)',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                      }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+                          ⚡ Instant Cut on Release
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={instantCut}
+                          onChange={(e) => setInstantCut(e.target.checked)}
+                          style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                      </label>
                       {validBands.length > 0 ? (
                         <>
                           <button

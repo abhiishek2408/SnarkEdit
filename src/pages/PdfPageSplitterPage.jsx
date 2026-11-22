@@ -11,6 +11,7 @@ import {
 import Navbar from '../components/Navbar';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import CheckCircle2 from 'lucide-react/dist/esm/icons/check-circle-2';
+import PageDimensionAxis from '../components/PageDimensionAxis';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -50,7 +51,7 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
   const [activeCanvas, setActiveCanvas] = useState(null);
   const [part1Preview, setPart1Preview] = useState('');
   const [part2Preview, setPart2Preview] = useState('');
-  const [pageThumbnails, setPageThumbnails] = useState({});
+  const [_pageThumbnails, setPageThumbnails] = useState({});
 
   const canvasWrapRef = useRef(null);
   const renderTaskRef = useRef(null);
@@ -264,7 +265,7 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
     e.preventDefault();
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
-    } catch (_) {}
+    } catch { /* ignore capture error */ }
     setIsDragging(true);
     updateRatioFromPointer(e);
   };
@@ -278,7 +279,7 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
     if (e.currentTarget?.hasPointerCapture?.(e.pointerId)) {
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch (_) {}
+      } catch { /* ignore release error */ }
     }
     setIsDragging(false);
   };
@@ -735,75 +736,83 @@ const PdfPageSplitterPage = ({ theme, toggleTheme }) => {
                     </div>
 
                     <div className="pdf-split-canvas-stage">
-                      <div
-                        className="pdf-split-canvas-wrapper"
-                        ref={canvasWrapRef}
-                        onPointerDown={handlePointerDown}
-                        onPointerMove={handlePointerMove}
-                        onPointerUp={handlePointerUp}
-                        onPointerCancel={handlePointerUp}
+                      <PageDimensionAxis
+                        widthPt={activeMeta?.width || 595}
+                        heightPt={activeMeta?.height || 842}
+                        mode="split"
+                        splitDirection={direction}
+                        splitRatio={ratio}
                       >
-                        {activeCanvas ? (
-                          <canvas
-                            ref={(node) => {
-                              if (node && activeCanvas) {
-                                node.width = activeCanvas.width;
-                                node.height = activeCanvas.height;
-                                const ctx = node.getContext('2d');
-                                ctx.drawImage(activeCanvas, 0, 0);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="pdf-split-loading">Loading page {activePage}...</div>
-                        )}
+                        <div
+                          className="pdf-split-canvas-wrapper"
+                          ref={canvasWrapRef}
+                          onPointerDown={handlePointerDown}
+                          onPointerMove={handlePointerMove}
+                          onPointerUp={handlePointerUp}
+                          onPointerCancel={handlePointerUp}
+                        >
+                          {activeCanvas ? (
+                            <canvas
+                              ref={(node) => {
+                                if (node && activeCanvas) {
+                                  node.width = activeCanvas.width;
+                                  node.height = activeCanvas.height;
+                                  const ctx = node.getContext('2d');
+                                  ctx.drawImage(activeCanvas, 0, 0);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="pdf-split-loading">Loading page {activePage}...</div>
+                          )}
 
-                        {/* Interactive Draggable Cut Divider */}
-                        {activeCanvas && (
-                          <div
-                            className={`pdf-split-divider ${direction} ${isDragging ? 'dragging' : ''}`}
-                            style={{
-                              left: direction === 'vertical' ? `${ratio * 100}%` : '0',
-                              top: direction === 'horizontal' ? `${ratio * 100}%` : '0',
-                              width: direction === 'vertical' ? '4px' : '100%',
-                              height: direction === 'horizontal' ? '4px' : '100%',
-                            }}
-                          >
-                            <div className="pdf-split-divider-handle">
-                              <Scissors size={14} />
-                              <span>
-                                Cut {Math.round(ratio * 100)}%
-                              </span>
+                          {/* Interactive Draggable Cut Divider */}
+                          {activeCanvas && (
+                            <div
+                              className={`pdf-split-divider ${direction} ${isDragging ? 'dragging' : ''}`}
+                              style={{
+                                left: direction === 'vertical' ? `${ratio * 100}%` : '0',
+                                top: direction === 'horizontal' ? `${ratio * 100}%` : '0',
+                                width: direction === 'vertical' ? '4px' : '100%',
+                                height: direction === 'horizontal' ? '4px' : '100%',
+                              }}
+                            >
+                              <div className="pdf-split-divider-handle">
+                                <Scissors size={14} />
+                                <span>
+                                  Cut {Math.round(ratio * 100)}%
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {/* Side Labels on Page */}
-                        {activeCanvas && (
-                          <>
-                            <div
-                              className={`pdf-split-section-label part-1 ${direction}`}
-                              style={
-                                direction === 'vertical'
-                                  ? { left: '10px', top: '10px' }
-                                  : { left: '10px', top: '10px' }
-                              }
-                            >
-                              Page {activePage}A
-                            </div>
-                            <div
-                              className={`pdf-split-section-label part-2 ${direction}`}
-                              style={
-                                direction === 'vertical'
-                                  ? { right: '10px', top: '10px' }
-                                  : { left: '10px', bottom: '10px' }
-                              }
-                            >
-                              Page {activePage}B
-                            </div>
-                          </>
-                        )}
-                      </div>
+                          {/* Side Labels on Page */}
+                          {activeCanvas && (
+                            <>
+                              <div
+                                className={`pdf-split-section-label part-1 ${direction}`}
+                                style={
+                                  direction === 'vertical'
+                                    ? { left: '10px', top: '10px' }
+                                    : { left: '10px', top: '10px' }
+                                }
+                              >
+                                Page {activePage}A
+                              </div>
+                              <div
+                                className={`pdf-split-section-label part-2 ${direction}`}
+                                style={
+                                  direction === 'vertical'
+                                    ? { right: '10px', top: '10px' }
+                                    : { left: '10px', bottom: '10px' }
+                                }
+                              >
+                                Page {activePage}B
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </PageDimensionAxis>
                     </div>
                   </div>
 

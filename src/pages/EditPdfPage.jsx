@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
-import { Download, Layers2, Type, Shapes, Pencil, Move, FileText, Stamp, Upload, Trash2, Eraser, X, Plus, Pipette, Image as ImageIcon, Copy, Check } from 'lucide-react';
+import { Download, Layers2, Type, Shapes, Pencil, Move, FileText, Stamp, Upload, Trash2, Eraser, X, Plus, Pipette, Image as ImageIcon, Copy, Check, Maximize2, RotateCcw } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -10,34 +10,67 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const PdfTextEditor = ({ value, onChange }) => {
   const [draft, setDraft] = useState(value ?? '');
   const editorRef = useRef(null);
+
   useEffect(() => {
-    if (document.activeElement !== editorRef.current) setDraft(value ?? '');
+    if (editorRef.current && document.activeElement !== editorRef.current) {
+      editorRef.current.innerText = value ?? '';
+    }
   }, [value]);
-  return <div ref={editorRef} role="textbox" aria-label="Edit added PDF text" aria-multiline="true" contentEditable suppressContentEditableWarning className="pdf-annotation-text-editor" onInput={event => onChange(event.currentTarget.innerText.replace(/\n$/, ''))} onBlur={event => setDraft(event.currentTarget.innerText.replace(/\n$/, ''))}>{draft}</div>;
+
+  return (
+    <div
+      ref={editorRef}
+      role="textbox"
+      aria-label="Edit added PDF text"
+      aria-multiline="true"
+      contentEditable
+      suppressContentEditableWarning
+      className="pdf-annotation-text-editor"
+      onPointerDown={e => e.stopPropagation()}
+      onMouseDown={e => e.stopPropagation()}
+      onInput={event => onChange(event.currentTarget.innerText.replace(/\n$/, ''))}
+      onBlur={event => setDraft(event.currentTarget.innerText.replace(/\n$/, ''))}
+    >
+      {draft}
+    </div>
+  );
 };
 
-const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, onPageFocus, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onAddImageClick, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily, selectedShape, selectedImage }) => {
-  const [visible, setVisible] = useState(false);
+const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, onPageFocus, onAddItem, onMoveItem, onRemoveItem, onEraseItem, onEditText, onTextAdded, onAddImageClick, onSelectText, color, brushSize, eraserSize, textSize, pageNumberSize, watermarkSize, fontFamily, selectedShape, selectedImage, selectedText }) => {
+  const [visible, setVisible] = useState(() => typeof window === 'undefined' || !('IntersectionObserver' in window));
   const [rendered, setRendered] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState(null);
+  const targetId = (selectedShape && selectedShape.pageNumber === pageNumber ? selectedShape.id : null)
+    || (selectedImage && selectedImage.pageNumber === pageNumber ? selectedImage.id : null)
+    || (selectedText && selectedText.pageNumber === pageNumber ? selectedText.id : null);
+  const [prevTargetId, setPrevTargetId] = useState(targetId);
+  const [selectedItemId, setSelectedItemId] = useState(targetId);
+
+  if (targetId !== prevTargetId) {
+    setPrevTargetId(targetId);
+    setSelectedItemId(targetId);
+  }
+  const [selectionPopup, setSelectionPopup] = useState(null);
+  const [copied, setCopied] = useState(false);
   const itemRef = useRef(null);
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
+  const textLayerRef = useRef(null);
   const dragRef = useRef(null);
   const drawingRef = useRef(null);
 
   useEffect(() => {
-    if (selectedShape && selectedShape.pageNumber === pageNumber) {
-      setSelectedItemId(selectedShape.id);
-    } else if (selectedImage && selectedImage.pageNumber === pageNumber) {
-      setSelectedItemId(selectedImage.id);
-    }
-  }, [selectedShape, selectedImage, pageNumber]);
+    const handleDocMouseDown = (e) => {
+      if (!e.target.closest('.pdf-text-selection-popup')) {
+        setSelectionPopup(null);
+      }
+    };
+    document.addEventListener('mousedown', handleDocMouseDown);
+    return () => document.removeEventListener('mousedown', handleDocMouseDown);
+  }, []);
 
   useEffect(() => {
     const node = itemRef.current;
     if (!node || !('IntersectionObserver' in window)) {
-      setVisible(true);
       return undefined;
     }
     const observer = new IntersectionObserver((entries) => {
@@ -54,6 +87,7 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
     if (!visible) return undefined;
     let cancelled = false;
     let task;
+    let textLayerTask = null;
     const render = async () => {
       try {
         const page = await pdfDocument.getPage(pageNumber);
@@ -70,14 +104,112 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
         context.fillRect(0, 0, canvas.width, canvas.height);
         task = page.render({ canvasContext: context, viewport, transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0] });
         await task.promise;
-        if (!cancelled) setRendered(true);
+        if (!cancelled) {
+          setRendered(true);
+          if (textLayerRef.current) {
+            textLayerRef.current.innerHTML = '';
+            try {
+              const textContent = await page.getTextContent();
+              if (!cancelled && textLayerRef.current) {
+                const textLayer = new pdfjs.TextLayer({
+                  textContentSource: textContent,
+                  container: textLayerRef.current,
+                  viewport,
+                });
+                textLayerTask = textLayer;
+                await textLayer.render();
+              }
+            } catch (tlErr) {
+              if (tlErr?.name !== 'AbortException' && !cancelled) {
+                console.warn(`TextLayer error on page ${pageNumber}:`, tlErr);
+              }
+            }
+          }
+        }
       } catch (err) {
         if (err?.name !== 'RenderingCancelledException' && !cancelled) console.error(`Could not render page ${pageNumber}`, err);
       }
     };
     render();
-    return () => { cancelled = true; task?.cancel(); };
+    return () => {
+      cancelled = true;
+      task?.cancel();
+      try { textLayerTask?.cancel(); } catch { /* ignore cancel error */ }
+    };
   }, [pdfDocument, pageNumber, visible]);
+
+  const handleWrapMouseUp = () => {
+    if (activeTool !== 'drag' && activeTool !== 'text') return;
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const selectedStr = selection?.toString()?.trim();
+      if (selectedStr && wrapRef.current && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (!wrapRef.current.contains(range.commonAncestorContainer)) {
+          setSelectionPopup(null);
+          return;
+        }
+        const rect = range.getBoundingClientRect();
+        const wrapRect = wrapRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const x = Math.max(0, (rect.left - wrapRect.left) / wrapRect.width);
+          const y = Math.max(0, (rect.top - wrapRect.top) / wrapRect.height);
+          const width = Math.min(1 - x, Math.max(0.08, (rect.width + 12) / wrapRect.width));
+          const height = Math.min(1 - y, Math.max(0.026, (rect.height + 4) / wrapRect.height));
+          const fontSize = Math.max(12, Math.round(rect.height * 0.85));
+
+          setSelectionPopup({
+            text: selectedStr,
+            x,
+            y,
+            width,
+            height,
+            fontSize,
+            topPx: Math.max(4, rect.top - wrapRect.top - 8),
+            leftPx: Math.max(40, Math.min(wrapRect.width - 60, rect.left - wrapRect.left + rect.width / 2)),
+          });
+          setCopied(false);
+          return;
+        }
+      }
+      setSelectionPopup(null);
+    }, 20);
+  };
+
+  const applySelectionEdit = (e) => {
+    e.stopPropagation();
+    if (!selectionPopup) return;
+    const newId = `text-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const newTextItem = {
+      id: newId,
+      type: 'text',
+      text: selectionPopup.text,
+      x: selectionPopup.x,
+      y: selectionPopup.y,
+      width: selectionPopup.width,
+      height: selectionPopup.height,
+      color: '#111827',
+      fontSize: selectionPopup.fontSize || 14,
+      fontFamily: 'Helvetica',
+      backgroundColor: '#ffffff', // Whiteout background covers original text
+    };
+    onAddItem(pageNumber, newTextItem);
+    onSelectText(pageNumber, newTextItem);
+    setSelectedItemId(newId);
+    setSelectionPopup(null);
+    window.getSelection()?.removeAllRanges();
+  };
+
+  const applySelectionCopy = (e) => {
+    e.stopPropagation();
+    if (!selectionPopup) return;
+    navigator.clipboard?.writeText(selectionPopup.text);
+    setCopied(true);
+    setTimeout(() => {
+      setSelectionPopup(null);
+      setCopied(false);
+    }, 1200);
+  };
 
   const pointFromEvent = (event) => {
     const bounds = wrapRef.current?.getBoundingClientRect();
@@ -107,9 +239,9 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
   const startInteraction = (event) => {
     const point = pointFromEvent(event);
     if (!point) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
     const target = event.target.closest('[data-item-id]');
     if (activeTool === 'drag' && target) {
+      event.currentTarget.setPointerCapture(event.pointerId);
       const annotation = items.find(item => item.id === target.dataset.itemId);
       if (annotation) {
         setSelectedItemId(annotation.id);
@@ -124,7 +256,9 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
     } else if (activeTool === 'drag') {
       setSelectedItemId(null);
       onSelectText(null, null);
+      // In drag mode without clicking an annotation, let mouse select text in textLayer
     } else if (activeTool === 'image' && target) {
+      event.currentTarget.setPointerCapture(event.pointerId);
       const annotation = items.find(item => item.id === target.dataset.itemId && item.type === 'image');
       if (annotation) {
         setSelectedItemId(annotation.id);
@@ -133,6 +267,7 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
         if (resize) dragRef.current = { item: annotation, start: point, resize };
       }
     } else if (activeTool === 'text' && target) {
+      event.currentTarget.setPointerCapture(event.pointerId);
       const annotation = items.find(item => item.id === target.dataset.itemId && item.type === 'text');
       if (annotation) {
         setSelectedItemId(annotation.id);
@@ -141,11 +276,13 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
         if (resize) dragRef.current = { item: annotation, start: point, resize };
       }
     } else if (activeTool === 'eraser') {
+      event.currentTarget.setPointerCapture(event.pointerId);
       const hit = document.elementFromPoint(event.clientX, event.clientY)?.closest?.('[data-item-id]');
       const item = items.find(candidate => candidate.id === hit?.dataset.itemId) || annotationAtPoint(point) || items.find(candidate => candidate.id === target?.dataset.itemId);
       if (item?.type === 'draw') onEraseItem(pageNumber, item.id, point, eraserSize / 680);
       else if (item) onRemoveItem(pageNumber, item.id);
     } else if (activeTool === 'draw') {
+      event.currentTarget.setPointerCapture(event.pointerId);
       const newItem = { id: `${Date.now()}-${Math.random()}`, type: 'draw', points: [point], color, brushSize };
       drawingRef.current = newItem;
       onAddItem(pageNumber, newItem);
@@ -173,10 +310,46 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
       let width = item.width || 0.2;
       let height = item.height || (item.type === 'text' ? 0.035 : 0.08);
       if (resize && (item.type === 'shape' || item.type === 'text' || item.type === 'image')) {
-        if (resize.includes('e')) width = Math.max(0.025, Math.min(1 - x, width + dx));
-        if (resize.includes('s')) height = Math.max(0.025, Math.min(1 - y, height + dy));
-        if (resize.includes('w')) { const right = x + width; x = Math.max(0, Math.min(right - 0.025, x + dx)); width = right - x; }
-        if (resize.includes('n')) { const bottom = y + height; y = Math.max(0, Math.min(bottom - 0.025, y + dy)); height = bottom - y; }
+        const bounds = wrapRef.current?.getBoundingClientRect();
+        const pageAspect = bounds ? (bounds.height / bounds.width) : 1.414;
+        const imgAspect = item.aspect || (item.naturalHeight && item.naturalWidth ? item.naturalHeight / item.naturalWidth : ((item.height * pageAspect) / (item.width || 0.28)));
+
+        if (item.type === 'image' && ['se', 'sw', 'ne', 'nw'].includes(resize) && imgAspect) {
+          if (resize === 'se') {
+            const rawW = Math.max(0.04, Math.min(1 - x, width + dx));
+            const rawH = Math.max(0.04, Math.min(1 - y, (rawW * imgAspect) / pageAspect));
+            width = (rawH * pageAspect) / imgAspect;
+            height = rawH;
+          } else if (resize === 'sw') {
+            const right = x + width;
+            const rawW = Math.max(0.04, Math.min(right, width - dx));
+            const rawH = Math.max(0.04, Math.min(1 - y, (rawW * imgAspect) / pageAspect));
+            width = (rawH * pageAspect) / imgAspect;
+            height = rawH;
+            x = right - width;
+          } else if (resize === 'ne') {
+            const bottom = y + height;
+            const rawW = Math.max(0.04, Math.min(1 - x, width + dx));
+            const rawH = Math.max(0.04, Math.min(bottom, (rawW * imgAspect) / pageAspect));
+            width = (rawH * pageAspect) / imgAspect;
+            height = rawH;
+            y = bottom - height;
+          } else if (resize === 'nw') {
+            const right = x + width;
+            const bottom = y + height;
+            const rawW = Math.max(0.04, Math.min(right, width - dx));
+            const rawH = Math.max(0.04, Math.min(bottom, (rawW * imgAspect) / pageAspect));
+            width = (rawH * pageAspect) / imgAspect;
+            height = rawH;
+            x = right - width;
+            y = bottom - height;
+          }
+        } else {
+          if (resize.includes('e')) width = Math.max(0.025, Math.min(1 - x, width + dx));
+          if (resize.includes('s')) height = Math.max(0.025, Math.min(1 - y, height + dy));
+          if (resize.includes('w')) { const right = x + width; x = Math.max(0, Math.min(right - 0.025, x + dx)); width = right - x; }
+          if (resize.includes('n')) { const bottom = y + height; y = Math.max(0, Math.min(bottom - 0.025, y + dy)); height = bottom - y; }
+        }
         onMoveItem(pageNumber, item.id, { x, y, width, height });
         dragRef.current = { item: { ...item, x, y, width, height }, start: point, resize };
       } else {
@@ -200,10 +373,50 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
     }
     const point = pointFromEvent(event);
     if (point) {
+      let initialText = 'Text';
+      let itemWidth = activeTool === 'shape' ? 0.22 : 0.28;
+      let itemHeight = activeTool === 'shape' ? 0.1 : 0.035;
+      let itemX = point.x;
+      let itemY = point.y;
+      let itemFontSize = activeTool === 'pageNumber' ? pageNumberSize : activeTool === 'watermark' ? watermarkSize : textSize;
+      let backgroundColor = undefined;
+
+      if (activeTool === 'text') {
+        const elements = document.elementsFromPoint ? document.elementsFromPoint(event.clientX, event.clientY) : [];
+        const textSpan = elements.find(el => el.closest && el.closest('.textLayer') && el.tagName?.toLowerCase() === 'span' && el.textContent?.trim());
+        if (textSpan && wrapRef.current) {
+          const spanRect = textSpan.getBoundingClientRect();
+          const wrapRect = wrapRef.current.getBoundingClientRect();
+          initialText = textSpan.textContent.trim();
+          itemX = Math.max(0, (spanRect.left - wrapRect.left) / wrapRect.width);
+          itemY = Math.max(0, (spanRect.top - wrapRect.top) / wrapRect.height);
+          itemWidth = Math.min(1 - itemX, Math.max(0.08, (spanRect.width + 12) / wrapRect.width));
+          itemHeight = Math.min(1 - itemY, Math.max(0.03, (spanRect.height + 4) / wrapRect.height));
+          itemFontSize = Math.max(12, Math.round(spanRect.height * 0.85));
+          backgroundColor = '#ffffff';
+        }
+      }
+
       const newId = `${Date.now()}-${Math.random()}`;
       setSelectedItemId(newId);
-      onAddItem(pageNumber, { id: newId, type: activeTool, x: point.x, y: point.y, width: activeTool === 'shape' ? 0.22 : activeTool === 'text' ? 0.28 : undefined, height: activeTool === 'shape' ? 0.1 : activeTool === 'text' ? 0.028 : undefined, color, fontSize: activeTool === 'pageNumber' ? pageNumberSize : activeTool === 'watermark' ? watermarkSize : textSize, fontFamily });
-      if (activeTool === 'text' || activeTool === 'shape') onTextAdded(activeTool, pageNumber, newId);
+      const newItem = {
+        id: newId,
+        type: activeTool,
+        x: itemX,
+        y: itemY,
+        width: itemWidth,
+        height: itemHeight,
+        text: activeTool === 'text' ? initialText : undefined,
+        color: activeTool === 'text' ? '#111827' : color,
+        fontSize: itemFontSize,
+        fontFamily,
+        backgroundColor: activeTool === 'text' ? backgroundColor : undefined,
+      };
+      onAddItem(pageNumber, newItem);
+      if (activeTool === 'text' || activeTool === 'shape') {
+        onTextAdded(activeTool, pageNumber, newId);
+        if (activeTool === 'text') onSelectText(pageNumber, newItem);
+      }
     }
   };
 
@@ -282,8 +495,8 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
         </div>
       );
     }
-    const label = annotation.type === 'pageNumber' ? String(pageNumber) : annotation.type === 'watermark' ? (annotation.text || 'WATERMARK') : annotation.type === 'text' ? (annotation.text ?? 'Text') : '';
-    return <div key={annotation.id + (hiddenUnderlayCopy ? '-underlay' : '-overlay')} data-item-id={annotation.id} className={`pdf-annotation-item ${annotation.type} ${annotation.shape || ''} ${selectedItemId === annotation.id ? 'selected' : ''}`} style={{ left: `${(annotation.x || 0) * 100}%`, top: `${(annotation.y || 0) * 100}%`, width: `${(annotation.width || 0.2) * 100}%`, height: `${(annotation.height || (annotation.type === 'text' ? 0.035 : 0.08)) * 100}%`, color: annotation.color || '#2563eb', backgroundColor: annotation.type === 'pageNumber' ? annotation.backgroundColor || 'transparent' : undefined, fontSize: annotation.type === 'text' || annotation.type === 'pageNumber' || annotation.type === 'watermark' ? `${annotation.fontSize || 16}px` : undefined, fontFamily: annotation.type === 'text' || annotation.type === 'watermark' ? (annotation.fontFamily === 'TimesRoman' ? 'Georgia, serif' : annotation.fontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif') : undefined, fontWeight: annotation.type === 'watermark' ? (annotation.bold ? 800 : 400) : undefined, fontStyle: annotation.type === 'watermark' && annotation.italic ? 'italic' : undefined, textDecoration: annotation.type === 'watermark' && annotation.underline ? 'underline' : undefined, opacity: annotation.type === 'watermark' ? annotation.opacity ?? 1 : undefined, transform: annotation.type === 'watermark' && annotation.rotation ? 'rotate(' + annotation.rotation + 'deg)' : undefined }}>
+    const label = annotation.type === 'pageNumber' ? String(pageNumber) : annotation.type === 'watermark' ? (annotation.text || 'WATERMARK') : annotation.type === 'text' ? (annotation.text ?? '') : '';
+    return <div key={annotation.id + (hiddenUnderlayCopy ? '-underlay' : '-overlay')} data-item-id={annotation.id} className={`pdf-annotation-item ${annotation.type} ${annotation.shape || ''} ${selectedItemId === annotation.id ? 'selected' : ''}`} style={{ left: `${(annotation.x || 0) * 100}%`, top: `${(annotation.y || 0) * 100}%`, width: `${(annotation.width || 0.2) * 100}%`, height: `${(annotation.height || (annotation.type === 'text' ? 0.035 : 0.08)) * 100}%`, color: annotation.color || '#2563eb', backgroundColor: annotation.type === 'pageNumber' ? annotation.backgroundColor || 'transparent' : annotation.type === 'text' ? annotation.backgroundColor || 'transparent' : undefined, boxShadow: annotation.type === 'text' && annotation.backgroundColor ? '0 1px 3px rgba(0,0,0,0.1)' : undefined, fontSize: annotation.type === 'text' || annotation.type === 'pageNumber' || annotation.type === 'watermark' ? `${annotation.fontSize || 16}px` : undefined, fontFamily: annotation.type === 'text' || annotation.type === 'watermark' ? (annotation.fontFamily === 'TimesRoman' ? 'Georgia, serif' : annotation.fontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif') : undefined, fontWeight: annotation.type === 'watermark' ? (annotation.bold ? 800 : 400) : undefined, fontStyle: annotation.type === 'watermark' && annotation.italic ? 'italic' : undefined, textDecoration: annotation.type === 'watermark' && annotation.underline ? 'underline' : undefined, opacity: annotation.type === 'watermark' ? annotation.opacity ?? 1 : undefined, transform: annotation.type === 'watermark' && annotation.rotation ? 'rotate(' + annotation.rotation + 'deg)' : undefined }}>
       {annotation.type === 'text' ? <PdfTextEditor value={label} onChange={text => onEditText(pageNumber, annotation.id, text)} /> : label}
       {annotation.type === 'shape' && selectedItemId === annotation.id && annotation.applyAll && (
         <span
@@ -343,7 +556,7 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
             onClick={(e) => {
               e.stopPropagation();
               onPageFocus?.(pageNumber);
-              onAddImageClick(pageNumber, { x: 0.36, y: 0.35 });
+              onAddImageClick(pageNumber, { x: 0.5, y: 0.5 });
             }}
           >
             <ImageIcon size={12} />
@@ -352,11 +565,38 @@ const PagePreview = ({ pdfDocument, pageNumber, items, activeTool, activePage, o
           <span>{items.length} item{items.length === 1 ? '' : 's'} added</span>
         </div>
       </div>
-      <div className="pdf-crop-canvas-wrap" ref={wrapRef}>
+      <div className="pdf-crop-canvas-wrap" ref={wrapRef} onMouseUp={handleWrapMouseUp}>
         <canvas ref={canvasRef} />
+        <div className="textLayer" ref={textLayerRef} />
         <div className={`pdf-annotation-layer tool-${activeTool}`} style={{ pointerEvents: rendered ? 'auto' : 'none' }} onPointerDown={startInteraction} onPointerMove={moveInteraction} onPointerUp={endInteraction} onPointerCancel={endInteraction} onClick={addAtPoint}>
           {items.map(renderItem)}
         </div>
+        {selectionPopup && (
+          <div
+            className="pdf-text-selection-popup"
+            style={{
+              top: `${selectionPopup.topPx}px`,
+              left: `${selectionPopup.leftPx}px`,
+            }}
+          >
+            <button
+              type="button"
+              className="pdf-text-popup-btn edit"
+              onClick={applySelectionEdit}
+            >
+              <Type size={13} />
+              <span>Edit Text</span>
+            </button>
+            <button
+              type="button"
+              className="pdf-text-popup-btn copy"
+              onClick={applySelectionCopy}
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+          </div>
+        )}
       </div>
       <div className="pdf-all-pages-actions">
         <span className="pdf-band-help">Choose a tool, then click the page. Select Drag to move items.</span>
@@ -408,7 +648,6 @@ const computeTargetPages = (scopeMode, customRange, skipCover, totalPages) => {
 
 const PageRangeRadioGroup = ({
   pageCount,
-  activePage,
   scopeMode, // 'all' | 'odd' | 'even' | 'custom'
   customRange,
   skipCover,
@@ -1096,6 +1335,9 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
       opacity: item.opacity ?? 1,
       groupId,
       applyAll: true,
+      naturalWidth: item.naturalWidth,
+      naturalHeight: item.naturalHeight,
+      aspect: item.aspect,
       pageScope: scopeMode,
       customRange,
       skipCover,
@@ -1181,12 +1423,10 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
 
   const updatePageScopeForGroup = (groupId, itemType, newScopeMode, newCustomRange, newSkipCover) => {
     let masterItem = null;
-    let masterPageNumber = null;
     for (let p = 1; p <= pageCount; p++) {
       const found = (annotations[p] || []).find(i => i.groupId === groupId);
       if (found) {
         masterItem = found;
-        masterPageNumber = p;
         break;
       }
     }
@@ -1287,12 +1527,10 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     const validExcluded = Array.from(new Set(newExcludedPages.map(Number).filter(p => p >= 1 && p <= pageCount))).sort((a, b) => a - b);
 
     let masterItem = null;
-    let masterPageNumber = null;
     for (let p = 1; p <= pageCount; p++) {
       const found = (annotations[p] || []).find(i => i.groupId === groupId);
       if (found) {
         masterItem = found;
-        masterPageNumber = p;
         break;
       }
     }
@@ -1382,7 +1620,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
 
   const handlePageImageClick = (pageNumber, point) => {
     setActivePage(pageNumber);
-    pendingImagePositionRef.current = { pageNumber, x: point.x, y: point.y };
+    pendingImagePositionRef.current = { pageNumber, x: point.x, y: point.y, fromPageClick: true };
     imageInputRef.current?.click();
   };
 
@@ -1394,26 +1632,80 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     reader.onload = () => {
       const dataUrl = reader.result;
       const img = new Image();
-      img.onload = () => {
-        const aspect = (img.naturalHeight || 1) / (img.naturalWidth || 1);
-        const defaultWidth = 0.28;
-        const defaultHeight = Math.min(0.5, Math.max(0.04, defaultWidth * aspect * 0.75));
+      img.onload = async () => {
+        const naturalW = img.naturalWidth || 400;
+        const naturalH = img.naturalHeight || 400;
+        const imgAspect = naturalH / naturalW;
 
         const pending = pendingImagePositionRef.current;
         pendingImagePositionRef.current = null;
 
+        const targetPage = pending?.pageNumber || getMostVisiblePage() || activePage || 1;
+
+        // Query real page dimensions in points (scale: 1)
+        let pageWidth = 595.28;
+        let pageHeight = 841.89;
+        try {
+          if (pdfDocument) {
+            const p = await pdfDocument.getPage(targetPage);
+            const vp = p.getViewport({ scale: 1 });
+            if (vp.width && vp.height) {
+              pageWidth = vp.width;
+              pageHeight = vp.height;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not read page viewport:', e);
+        }
+
+        const pageAspect = pageHeight / pageWidth;
+
+        // Determine actual size relative to PDF page:
+        // 1 PDF point = 1/72 inch.
+        // If image fits inside page at 1:1 pixel/point, preserve 1:1 actual size.
+        // If image exceeds page dimensions (e.g. high-res scan or photo), scale to fit page without overflow.
+        const scaleToFit = Math.min(pageWidth / naturalW, pageHeight / naturalH);
+        let width;
+        let height;
+
+        if (scaleToFit < 1) {
+          // Larger than page -> fit page at maximum dimensions keeping true aspect ratio
+          width = (naturalW * scaleToFit) / pageWidth;
+          height = (naturalH * scaleToFit) / pageHeight;
+        } else {
+          // Fits inside page -> keep exact 1:1 actual size
+          width = naturalW / pageWidth;
+          height = naturalH / pageHeight;
+        }
+
+        // Clamp safely
+        width = Math.max(0.04, Math.min(1.0, width));
+        height = Math.max(0.04, Math.min(1.0, height));
+
         if (pending?.replaceId) {
+          const keepWidth = pending.width || width;
+          const keepHeight = Math.min(1.0, (keepWidth * imgAspect) / pageAspect);
           moveAnnotation(pending.pageNumber, pending.replaceId, {
             dataUrl,
-            width: pending.width || defaultWidth,
-            height: pending.height || defaultHeight,
+            width: keepWidth,
+            height: keepHeight,
+            naturalWidth: naturalW,
+            naturalHeight: naturalH,
+            aspect: imgAspect,
           });
           return;
         }
 
-        const targetPage = pending?.pageNumber || getMostVisiblePage() || activePage || 1;
-        const x = pending?.x !== undefined ? Math.max(0, Math.min(1 - defaultWidth, pending.x - defaultWidth / 2)) : 0.36;
-        const y = pending?.y !== undefined ? Math.max(0, Math.min(1 - defaultHeight, pending.y - defaultHeight / 2)) : 0.35;
+        // Position: centered around click point if clicked, otherwise centered on page
+        let x;
+        let y;
+        if (pending?.fromPageClick && pending?.x !== undefined && pending?.y !== undefined) {
+          x = Math.max(0, Math.min(1 - width, pending.x - width / 2));
+          y = Math.max(0, Math.min(1 - height, pending.y - height / 2));
+        } else {
+          x = Math.max(0, (1 - width) / 2);
+          y = Math.max(0, (1 - height) / 2);
+        }
 
         const groupId = `imggroup-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const newImageItem = {
@@ -1421,12 +1713,15 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
           type: 'image',
           x,
           y,
-          width: defaultWidth,
-          height: defaultHeight,
+          width,
+          height,
           dataUrl,
           opacity: 1,
           groupId,
           applyAll: false,
+          naturalWidth: naturalW,
+          naturalHeight: naturalH,
+          aspect: imgAspect,
         };
 
         addAnnotation(targetPage, newImageItem);
@@ -1435,13 +1730,102 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
         setSelectedText(null);
         setSelectedShape(null);
         setSelectedDrawing(null);
-        setSelectedImage({ pageNumber: targetPage, id: newImageItem.id });
+        setSelectedImage({ pageNumber: targetPage, id: newImageItem.id, groupId });
         setBrushOptionsOpen(true);
       };
       img.src = dataUrl;
     };
     reader.readAsDataURL(uploadedFile);
     event.target.value = '';
+  };
+
+  const setImageSizePreset = async (preset) => {
+    if (!selectedImageItem || !selectedImage) return;
+    const pageNum = selectedImage.pageNumber;
+    let pageWidth = 595.28;
+    let pageHeight = 841.89;
+    try {
+      if (pdfDocument) {
+        const p = await pdfDocument.getPage(pageNum);
+        const vp = p.getViewport({ scale: 1 });
+        if (vp.width && vp.height) {
+          pageWidth = vp.width;
+          pageHeight = vp.height;
+        }
+      }
+    } catch { /* ignore getPage error */ }
+
+    const pageAspect = pageHeight / pageWidth;
+    const naturalW = selectedImageItem.naturalWidth || 400;
+    const naturalH = selectedImageItem.naturalHeight || 400;
+    const imgAspect = selectedImageItem.aspect || (naturalH / naturalW);
+
+    let newWidth = selectedImageItem.width;
+    let newHeight = selectedImageItem.height;
+    let newX = selectedImageItem.x ?? 0;
+    let newY = selectedImageItem.y ?? 0;
+
+    if (preset === 'actual') {
+      const scaleToFit = Math.min(pageWidth / naturalW, pageHeight / naturalH);
+      if (scaleToFit < 1) {
+        newWidth = (naturalW * scaleToFit) / pageWidth;
+        newHeight = (naturalH * scaleToFit) / pageHeight;
+      } else {
+        newWidth = naturalW / pageWidth;
+        newHeight = naturalH / pageHeight;
+      }
+      newWidth = Math.max(0.04, Math.min(1.0, newWidth));
+      newHeight = Math.max(0.04, Math.min(1.0, newHeight));
+      newX = Math.max(0, Math.min(1 - newWidth, newX));
+      newY = Math.max(0, Math.min(1 - newHeight, newY));
+    } else if (preset === 'fit') {
+      const scaleToFit = Math.min(pageWidth / naturalW, pageHeight / naturalH);
+      newWidth = (naturalW * scaleToFit) / pageWidth;
+      newHeight = (naturalH * scaleToFit) / pageHeight;
+      newWidth = Math.max(0.04, Math.min(1.0, newWidth));
+      newHeight = Math.max(0.04, Math.min(1.0, newHeight));
+      newX = Math.max(0, (1 - newWidth) / 2);
+      newY = Math.max(0, (1 - newHeight) / 2);
+    } else if (preset === 'fullWidth') {
+      newWidth = 1.0;
+      newHeight = Math.min(1.0, (1.0 * imgAspect) / pageAspect);
+      newX = 0;
+      newY = Math.max(0, Math.min(1 - newHeight, newY));
+    } else if (preset === 'resetRatio') {
+      newHeight = Math.min(1.0, (newWidth * imgAspect) / pageAspect);
+      newY = Math.max(0, Math.min(1 - newHeight, newY));
+    }
+
+    updateSelectedImage({ width: newWidth, height: newHeight, x: newX, y: newY, naturalWidth: naturalW, naturalHeight: naturalH, aspect: imgAspect });
+  };
+
+  const setImageWidthPercent = async (percent) => {
+    if (!selectedImageItem || !selectedImage) return;
+    const pageNum = selectedImage.pageNumber;
+    let pageWidth = 595.28;
+    let pageHeight = 841.89;
+    try {
+      if (pdfDocument) {
+        const p = await pdfDocument.getPage(pageNum);
+        const vp = p.getViewport({ scale: 1 });
+        if (vp.width && vp.height) {
+          pageWidth = vp.width;
+          pageHeight = vp.height;
+        }
+      }
+    } catch { /* ignore getPage error */ }
+
+    const pageAspect = pageHeight / pageWidth;
+    const naturalW = selectedImageItem.naturalWidth || 400;
+    const naturalH = selectedImageItem.naturalHeight || 400;
+    const imgAspect = selectedImageItem.aspect || (naturalH / naturalW);
+
+    const newWidth = Math.max(0.04, Math.min(1.0, percent / 100));
+    const newHeight = Math.min(1.0, (newWidth * imgAspect) / pageAspect);
+    const newX = Math.max(0, Math.min(1 - newWidth, selectedImageItem.x ?? 0));
+    const newY = Math.max(0, Math.min(1 - newHeight, selectedImageItem.y ?? 0));
+
+    updateSelectedImage({ width: newWidth, height: newHeight, x: newX, y: newY, naturalWidth: naturalW, naturalHeight: naturalH, aspect: imgAspect });
   };
 
   const clearAnnotations = (pageNumber) => {
@@ -1551,19 +1935,33 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
             }
             continue;
           }
-          const text = item.type === 'pageNumber' ? String(index + 1) : item.type === 'watermark' ? (item.text || 'WATERMARK') : (item.text || 'Text');
+          const text = item.type === 'pageNumber' ? String(index + 1) : item.type === 'watermark' ? (item.text || 'WATERMARK') : (item.text !== undefined ? item.text : 'Text');
           const size = (item.type === 'watermark' || item.type === 'text' || item.type === 'pageNumber') ? (item.fontSize || 16) : 16;
           const family = item.type === 'text' ? item.fontFamily : item.type === 'watermark' ? item.fontFamily || 'Helvetica' : 'Helvetica';
           const variant = item.bold && item.italic ? (family === 'TimesRoman' ? 'BoldItalic' : 'BoldOblique') : item.bold ? 'Bold' : item.italic ? (family === 'TimesRoman' ? 'Italic' : 'Oblique') : '';
           const font = fonts[`${family}${variant}`] || fonts[family] || fonts.Helvetica;
-          const textWidth = font.widthOfTextAtSize(text, size);
+          const textWidth = text ? font.widthOfTextAtSize(text, size) : 0;
           const textX = item.type === 'pageNumber' ? (width - textWidth) / 2 : item.type === 'watermark' ? x + (((item.width || 0.5) * width) - textWidth) / 2 : x;
           if (item.type === 'pageNumber' && item.backgroundColor) {
             const padding = Math.max(3, size * 0.2);
             page.drawRectangle({ x: textX - padding, y: Math.max(0, height - yTop - size) - padding / 2, width: textWidth + padding * 2, height: size + padding, color: toColor(item.backgroundColor) });
           }
-          page.drawText(text, { x: textX, y: Math.max(0, height - yTop - size), size, font, color: ink, opacity: item.type === 'watermark' ? item.opacity ?? 0.3 : 1, rotate: item.type === 'watermark' ? degrees(item.rotation || 0) : undefined });
-          if (item.type === 'watermark' && item.underline) {
+          if (item.type === 'text' && item.backgroundColor) {
+            const padding = 2;
+            const boxW = Math.max((item.width || 0) * width, textWidth + padding * 4);
+            const boxH = Math.max((item.height || 0) * height, size * 1.25);
+            page.drawRectangle({
+              x: Math.max(0, textX - padding),
+              y: Math.max(0, height - yTop - boxH + size * 0.2),
+              width: boxW,
+              height: boxH,
+              color: toColor(item.backgroundColor),
+            });
+          }
+          if (text) {
+            page.drawText(text, { x: textX, y: Math.max(0, height - yTop - size), size, font, color: ink, opacity: item.type === 'watermark' ? item.opacity ?? 0.3 : 1, rotate: item.type === 'watermark' ? degrees(item.rotation || 0) : undefined });
+          }
+          if (item.type === 'watermark' && item.underline && text) {
             const baseline = Math.max(0, height - yTop - size);
             page.drawLine({ start: { x: textX, y: baseline - 2 }, end: { x: textX + font.widthOfTextAtSize(text, size), y: baseline - 2 }, thickness: Math.max(0.7, size / 18), color: ink, opacity: item.opacity ?? 0.3 });
           }
@@ -1627,7 +2025,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
     if (tool === 'image') {
       const currentPage = getMostVisiblePage() || activePage || 1;
       setActivePage(currentPage);
-      pendingImagePositionRef.current = { pageNumber: currentPage, x: 0.36, y: 0.35 };
+      pendingImagePositionRef.current = { pageNumber: currentPage, fromToolbar: true };
       imageInputRef.current?.click();
     }
     if (tool === 'pageNumber' && pageCount) {
@@ -1767,7 +2165,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                   {[
                     ['drag', Move, 'Drag'], ['image', ImageIcon, 'Add image'], ['pageNumber', FileText, 'Add page number'], ['shape', Shapes, 'Add shape'],
                     ['draw', Pencil, 'Draw'], ['text', Type, 'Add text'], ['eraser', Eraser, 'Eraser'], ['watermark', Stamp, 'Add watermark'],
-                  ].map(([tool, Icon, label]) => <button key={tool} type="button" className={activeTool === tool ? 'active' : ''} onClick={() => selectPdfTool(tool)}><Icon size={16} />{label}</button>)}
+                  ].map(([tool, ToolIcon, label]) => <button key={tool} type="button" className={activeTool === tool ? 'active' : ''} onClick={() => selectPdfTool(tool)}>{React.createElement(ToolIcon, { size: 16 })}{label}</button>)}
                 </div>
                 <div className="pdf-crop-count">Page {activePage} of {pageCount} · {annotationCount} item{annotationCount === 1 ? '' : 's'} added · Active tool: {activeTool === 'image' ? 'Image' : activeTool === 'pageNumber' ? 'Page number' : activeTool === 'watermark' ? 'Watermark' : activeTool === 'shape' ? 'Shape' : activeTool === 'text' ? 'Text' : activeTool === 'draw' ? 'Draw' : activeTool === 'eraser' ? 'Eraser' : 'Drag'}</div>
                 <button className="btn-primary reducer-action" type="button" onClick={createEditedPdf} disabled={isProcessing || !annotationCount}><Layers2 size={18} /><span>{isProcessing ? 'Applying edits...' : 'Create edited PDF'}</span></button>
@@ -1794,6 +2192,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                     activePage={activePage}
                     selectedShape={selectedShape}
                     selectedImage={selectedImage}
+                    selectedText={selectedText}
                     onPageFocus={setActivePage}
                     onAddItem={addAnnotation}
                     onMoveItem={moveAnnotation}
@@ -1802,16 +2201,21 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                     onEditText={editAnnotationText}
                     onTextAdded={(tool, pageNum, itemId) => {
                       setActiveTool('drag');
-                      setSelectedText(null);
                       setSelectedDrawing(null);
                       setSelectedImage(null);
                       if (tool === 'shape' && itemId) {
                         const itm = (annotations[pageNum] || []).find(i => i.id === itemId);
                         if (itm) activeShapeDraftRef.current = itm;
                         setSelectedShape({ pageNumber: pageNum, id: itemId, groupId: itm?.groupId });
+                        setSelectedText(null);
+                        setBrushOptionsOpen(true);
+                      } else if (tool === 'text' && itemId) {
+                        setSelectedShape(null);
+                        setSelectedText({ pageNumber: pageNum, id: itemId });
                         setBrushOptionsOpen(true);
                       } else {
                         setSelectedShape(null);
+                        setSelectedText(null);
                         activeShapeDraftRef.current = null;
                         setBrushOptionsOpen(false);
                       }
@@ -1879,11 +2283,32 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Text color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose text color"><span><Plus size={22} /></span><input type="color" value={currentTextColor} onChange={event => updateSelectedText({ color: event.target.value })} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); updateSelectedText({ color: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); updateSelectedText({ color: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': currentTextColor }} title={`Selected color ${currentTextColor}`}><input type="color" aria-label="Selected text color" value={currentTextColor} onChange={event => updateSelectedText({ color: event.target.value })} /></label>
                 </div>
               </div>
-              <div className="pdf-draw-font-preview" style={{ color: currentTextColor, fontFamily: currentFontFamily === 'TimesRoman' ? 'Georgia, serif' : currentFontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif', fontSize: `${currentTextSize}px` }}>Sample text</div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.65rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(selectedTextItem?.backgroundColor)}
+                  onChange={e => updateSelectedText({ backgroundColor: e.target.checked ? '#ffffff' : undefined })}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>Whiteout Background (Hide original text)</span>
+              </label>
+              <div className="pdf-draw-font-preview" style={{ color: currentTextColor, fontFamily: currentFontFamily === 'TimesRoman' ? 'Georgia, serif' : currentFontFamily === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif', fontSize: `${currentTextSize}px`, backgroundColor: selectedTextItem?.backgroundColor || 'transparent' }}>Sample text</div>
+              <button
+                type="button"
+                className="pdf-remove-quick-btn"
+                style={{ width: '100%', marginTop: '0.85rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', justifyContent: 'center' }}
+                onClick={() => {
+                  removeAnnotation(selectedText.pageNumber, selectedText.id);
+                  setSelectedText(null);
+                  setBrushOptionsOpen(false);
+                }}
+              >
+                <Trash2 size={14} style={{ marginRight: '6px' }} />
+                <span>Delete Text</span>
+              </button>
             </aside>}
             {showWatermarkSettings && <aside className="pdf-text-properties-panel">
               <header><div><span>PDF Editor</span><h2>Watermark settings</h2></div><button type="button" aria-label="Close watermark settings" onClick={() => setBrushOptionsOpen(false)}><X size={18} /></button></header>
@@ -1915,7 +2340,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Text color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose watermark color"><span><Plus size={22} /></span><input type="color" value={color} onChange={event => { setColor(event.target.value); updateWatermarks({ color: event.target.value }); }} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick watermark color from screen" aria-label="Pick watermark color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateWatermarks({ color: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick watermark color from screen" aria-label="Pick watermark color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateWatermarks({ color: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': color }} title={`Selected watermark color ${color}`}><input type="color" aria-label="Selected watermark color" value={color} onChange={event => { setColor(event.target.value); updateWatermarks({ color: event.target.value }); }} /></label>
                 </div>
               </div>
@@ -1928,7 +2353,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Shape color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose shape color"><span><Plus size={22} /></span><input type="color" value={selectedShapeItem?.color || color} onChange={event => { setColor(event.target.value); updateSelectedShape({ color: event.target.value }); }} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick shape color from screen" aria-label="Pick shape color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateSelectedShape({ color: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick shape color from screen" aria-label="Pick shape color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateSelectedShape({ color: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': selectedShapeItem?.color || color }} title={`Selected shape color ${selectedShapeItem?.color || color}`}><input type="color" aria-label="Selected shape color" value={selectedShapeItem?.color || color} onChange={event => { setColor(event.target.value); updateSelectedShape({ color: event.target.value }); }} /></label>
                 </div>
               </div>
@@ -2120,7 +2545,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Brush color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose drawing color"><span><Plus size={22} /></span><input type="color" value={selectedDrawingItem.color || color} onChange={event => { setColor(event.target.value); updateSelectedDrawing({ color: event.target.value }); }} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick drawing color from screen" aria-label="Pick drawing color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateSelectedDrawing({ color: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick drawing color from screen" aria-label="Pick drawing color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updateSelectedDrawing({ color: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': selectedDrawingItem.color || color }} title={`Selected drawing color ${selectedDrawingItem.color || color}`}><input type="color" aria-label="Selected drawing color" value={selectedDrawingItem.color || color} onChange={event => { setColor(event.target.value); updateSelectedDrawing({ color: event.target.value }); }} /></label>
                 </div>
               </div>
@@ -2133,7 +2558,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Background color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose background color"><span><Plus size={22} /></span><input type="color" value={pageNumberBgColor} onChange={event => { setPageNumberBgColor(event.target.value); updatePageNumbers({ backgroundColor: event.target.value }); }} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick background color from screen" aria-label="Pick background color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setPageNumberBgColor(picked.sRGBHex); updatePageNumbers({ backgroundColor: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick background color from screen" aria-label="Pick background color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setPageNumberBgColor(picked.sRGBHex); updatePageNumbers({ backgroundColor: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': pageNumberBgColor }} title={`Selected background ${pageNumberBgColor}`}><input type="color" aria-label="Selected background color" value={pageNumberBgColor} onChange={event => { setPageNumberBgColor(event.target.value); updatePageNumbers({ backgroundColor: event.target.value }); }} /></label>
                 </div>
               </div>}
@@ -2141,7 +2566,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                 <span>Number color</span>
                 <div className="pdf-draw-color-tools">
                   <label className="pdf-draw-color-wheel" aria-label="Choose page number color"><span><Plus size={22} /></span><input type="color" value={color} onChange={event => { setColor(event.target.value); updatePageNumbers({ color: event.target.value }); }} /></label>
-                  <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updatePageNumbers({ color: picked.sRGBHex }); } catch {} }}><Pipette size={20} /></button>
+                  <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); setColor(picked.sRGBHex); updatePageNumbers({ color: picked.sRGBHex }); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
                   <label className="pdf-draw-selected-color" style={{ '--brush-color': color }} title={`Selected color ${color}`}><input type="color" aria-label="Selected number color" value={color} onChange={event => { setColor(event.target.value); updatePageNumbers({ color: event.target.value }); }} /></label>
                 </div>
               </div>
@@ -2169,6 +2594,75 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
                     onChange={event => updateSelectedImage({ opacity: Number(event.target.value) / 100 })}
                   />
                 </label>
+
+                {/* Size & Fit Controls */}
+                <div style={{ marginTop: '0.85rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '0.45rem' }}>
+                    Image Size & Fit
+                  </span>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginBottom: '0.65rem' }}>
+                    <button
+                      type="button"
+                      className="pdf-remove-quick-btn"
+                      style={{ padding: '0.48rem 0.2rem', fontSize: '0.72rem', fontWeight: 600, justifyContent: 'center' }}
+                      onClick={() => setImageSizePreset('actual')}
+                      title="Keep image in its original 1:1 actual size"
+                    >
+                      Actual Size (1:1)
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-remove-quick-btn"
+                      style={{ padding: '0.48rem 0.2rem', fontSize: '0.72rem', fontWeight: 600, justifyContent: 'center' }}
+                      onClick={() => setImageSizePreset('fit')}
+                      title="Fit entire image within page borders without overflow"
+                    >
+                      Fit Page
+                    </button>
+                    <button
+                      type="button"
+                      className="pdf-remove-quick-btn"
+                      style={{ padding: '0.48rem 0.2rem', fontSize: '0.72rem', fontWeight: 600, justifyContent: 'center' }}
+                      onClick={() => setImageSizePreset('fullWidth')}
+                      title="Expand to 100% page width"
+                    >
+                      Full Width
+                    </button>
+                  </div>
+
+                  <label style={{ display: 'block', marginTop: '0.35rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+                      <span>Width Scale</span>
+                      <strong>{Math.round((selectedImageItem.width || 0.28) * 100)}%</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      value={Math.round((selectedImageItem.width || 0.28) * 100)}
+                      onChange={(event) => setImageWidthPercent(Number(event.target.value))}
+                    />
+                  </label>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
+                    <button
+                      type="button"
+                      className="pdf-remove-quick-btn"
+                      style={{ fontSize: '0.72rem', padding: '0.3rem 0.5rem' }}
+                      onClick={() => setImageSizePreset('resetRatio')}
+                      title="Restore original aspect ratio"
+                    >
+                      <RotateCcw size={12} style={{ marginRight: '4px' }} />
+                      <span>Reset Ratio</span>
+                    </button>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      {selectedImageItem.naturalWidth && selectedImageItem.naturalHeight
+                        ? `${selectedImageItem.naturalWidth} × ${selectedImageItem.naturalHeight}px`
+                        : ''}
+                    </span>
+                  </div>
+                </div>
 
                 <div style={{ marginTop: '0.85rem' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '0.45rem' }}>
@@ -2370,7 +2864,7 @@ const EditPdfPage = ({ theme, toggleTheme }) => {
             <span>{editingExistingText ? 'Text color' : activeTool === 'shape' ? 'Shape color' : 'Brush color'}</span>
             <div className="pdf-draw-color-tools">
               <label className="pdf-draw-color-wheel" aria-label="Choose color"><span><Plus size={22} /></span><input type="color" value={editingExistingText ? currentTextColor : activeTool === 'text' ? textColor : color} onChange={event => editingExistingText ? updateSelectedText({ color: event.target.value }) : activeTool === 'text' ? setTextColor(event.target.value) : setColor(event.target.value)} /></label>
-              <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); editingExistingText ? updateSelectedText({ color: picked.sRGBHex }) : activeTool === 'text' ? setTextColor(picked.sRGBHex) : setColor(picked.sRGBHex); } catch {} }}><Pipette size={20} /></button>
+              <button className="pdf-draw-eyedropper" type="button" title="Pick color from screen" aria-label="Pick color from screen" onClick={async () => { if (!window.EyeDropper) return; try { const picked = await new window.EyeDropper().open(); editingExistingText ? updateSelectedText({ color: picked.sRGBHex }) : activeTool === 'text' ? setTextColor(picked.sRGBHex) : setColor(picked.sRGBHex); } catch { /* ignore eyedropper cancellation */ } }}><Pipette size={20} /></button>
               <label className="pdf-draw-selected-color" style={{ '--brush-color': editingExistingText ? currentTextColor : activeTool === 'text' ? textColor : color }} title={`Selected color ${editingExistingText ? currentTextColor : activeTool === 'text' ? textColor : color}`}><input type="color" aria-label="Selected color" value={editingExistingText ? currentTextColor : activeTool === 'text' ? textColor : color} onChange={event => editingExistingText ? updateSelectedText({ color: event.target.value }) : activeTool === 'text' ? setTextColor(event.target.value) : setColor(event.target.value)} /></label>
             </div>
           </div>}
